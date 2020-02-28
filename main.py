@@ -14,13 +14,14 @@ import tci
 import std
 import settings
 import subprocess
+import ext
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
 from PyQt5.QtWidgets import QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
-from PyQt5.QtGui import QIcon, QFocusEvent, QPixmap, QTextTableCell, QStandardItemModel
+from PyQt5.QtGui import QIcon, QBrush, QPixmap, QColor, QStandardItemModel
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
@@ -29,22 +30,6 @@ from time import gmtime, strftime, localtime
 
 # from tel import telnet_cluster
 
-
-APP_VERSION = '1.1'
-settingsDict = {}
-
-file = open('settings.cfg', "r")
-for configstring in file:
-    if configstring != '' and configstring != ' ' and configstring[0] != '#':
-        configstring = configstring.strip()
-        configstring = configstring.replace("\r", "")
-        configstring = configstring.replace("\n", "")
-        splitString = configstring.split('=')
-        settingsDict.update({splitString[0]: splitString[1]})
-
-file.close()
-print(settingsDict)
-flag = 1
 
 class Adi_file:
 
@@ -242,8 +227,6 @@ class Filter(QObject):
         # print (foundList)
         #
 
-
-
 class logWindow(QWidget):
 
     def __init__(self):
@@ -261,6 +244,7 @@ class logWindow(QWidget):
 
 
         self.initUI()
+
     def refresh_data(self):
         self.tableWidget.clear()
         self.tableWidget.setHorizontalHeaderLabels(["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
@@ -411,10 +395,6 @@ class logWindow(QWidget):
 
         self.setStyleSheet(style)
 
-
-
-
-
     def addRecord(self, recordObject):
         # <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
         # <MODE:3>SSB <OPERATOR:6>UR4LGA <PFX:3>DL1 <QSLMSG:19>TNX For QSO TU 73!.
@@ -475,7 +455,6 @@ class logWindow(QWidget):
         for col in range(allCols):
 
             self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
-
 
 class logSearch(QWidget):
     def __init__(self):
@@ -552,6 +531,48 @@ class logSearch(QWidget):
 class Communicate(QObject):
     closeApp = pyqtSignal()
 
+class About_window(QWidget):
+    def __init__(self, capture, text):
+        super().__init__()
+        self.capture_string = capture
+        self.text_string = text
+        self.initUI()
+
+    def initUI(self):
+        desktop = QApplication.desktop()
+        #self.setGeometry(100,100,210,100)
+        width_coordinate = (desktop.width() / 2) - 100
+        height_coordinate = (desktop.height() / 2) - 100
+        #self.setWindowModified(False)
+        self.setFixedHeight(200)
+        self.setFixedWidth(320)
+
+        self.setGeometry(width_coordinate, height_coordinate, 200, 300)
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowTitle('About | LinLog')
+        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + ";}"
+        self.setStyleSheet(style)
+        self.capture = QLabel(self.capture_string)
+        self.capture.setStyleSheet("font-size: 18px")
+        self.capture.setFixedHeight(20)
+        self.text = QLabel(self.text_string)
+        self.text.setFixedHeight(200)
+        self.text.setStyleSheet("font-size: 12px")
+        self.about_layer = QVBoxLayout()
+        self.image = QPixmap("logo.png")
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setPixmap(self.image)
+        #about_layer.setAlignment(Qt.AlignCenter)
+        self.about_layer.addWidget(self.capture)
+        self.about_layer.addWidget(self.text)
+        self.horizontal_lay = QHBoxLayout()
+        self.horizontal_lay.addWidget(self.image_label)
+        self.horizontal_lay.addLayout(self.about_layer)
+
+        self.setLayout(self.horizontal_lay)
+
 class realTime(QThread):
 
     def __init__(self, logformwindow, parent=None):
@@ -573,7 +594,7 @@ class logForm(QMainWindow):
 
     def menu(self):
 
-        logSettingsAction = QAction('Settings', self)
+        logSettingsAction = QAction('&Settings', self)
         #logSettingsAction.setStatusTip('Name, Call and other of station')
         logSettingsAction.triggered.connect(self.logSettings)
         #
@@ -602,6 +623,10 @@ class logForm(QMainWindow):
         #AboutAction.triggered.connect(self.about)
 
         #
+        aboutAction = QAction('&About', self)
+        # logSettingsAction.setStatusTip('Name, Call and other of station')
+        aboutAction.triggered.connect(self.about_window)
+        menuBar.addAction(aboutAction)
         '''
         catSettingsAction = QAction(QIcon('logo.png'), 'Cat settings', self)
         catSettingsAction.setStatusTip('Name, Call and other of station')
@@ -661,7 +686,11 @@ class logForm(QMainWindow):
         helpMenu.addAction(helpAction)
         helpMenu.addAction(aboutAction)
         '''
-        pass
+        #pass
+
+    def about_window(self):
+        print("About_window")
+        about_window.show()
 
     def searchWindow(self):
 
@@ -942,6 +971,11 @@ class logForm(QMainWindow):
                             'eQSL_QSL_RCVD': eQSL_QSL_RCVD}
 
             logWindow.addRecord(recordObject)
+            if settingsDict['diplom'] == 'enable':
+                for diploms in diplom_list:
+                    if diploms.filter(call) :
+                        diploms.add_qso(recordObject)
+
             if settingsDict['eqsl'] == 'enable':
                 sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject,std=std.std, parent_window=self)
                 sync_eqsl.start()
@@ -963,6 +997,7 @@ class logForm(QMainWindow):
                 internetSearch.update_photo()
             except Exception:
                 pass
+
     def changeEvent(self, event):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -1031,6 +1066,8 @@ class logForm(QMainWindow):
         #print(parameter)
         if menu.isEnabled():
             menu.close()
+        if about_window.isEnabled():
+            about_window.close()
         self.remember_in_cfg(self.parameter)
 
     def remember_in_cfg (self, parameter):
@@ -1250,6 +1287,7 @@ class clusterThread(QThread):
 
 
             if output_data != '':
+                    lastRow = self.telnetCluster.tableWidget.rowCount()
                     self.form_window.set_telnet_stat()
                     #print (output_data)
                     if output_data[0:2].decode(settingsDict['encodeStandart']) == "DX":
@@ -1258,34 +1296,59 @@ class clusterThread(QThread):
                         for i in range(count_chars):
                             if splitString[i] != '':
                                 cleanList.append(splitString[i])
-                        #print("clusterThread: clean list", cleanList)
+                        color= QColor(100,50,50)
+                        search_in_diplom_rules_flag = 0
+                        for i in range(len(diplom_list)):
+                            print ("cicle Diploms:", diplom_list[i])
+                            if diplom_list[i].filter(cleanList[int(settingsDict['telnet-call-position'])].strip()):
+                                search_in_diplom_rules_flag = 1
+                        print("clean list", cleanList[int(settingsDict['telnet-call-position'])].strip())
+
                         if telnetCluster.cluster_filter(cleanList=cleanList):
     #####
                             #print(cleanList) # Check point - output List with data from cluster telnet-server
 
-                            lastRow = self.telnetCluster.tableWidget.rowCount()
+
                             self.telnetCluster.tableWidget.insertRow(lastRow)
+
+                            #self.telnetCluster.tableWidget
                             self.telnetCluster.tableWidget.setItem(lastRow, 0,
                                                                    QTableWidgetItem(
                                                                        strftime("%H:%M:%S", localtime())))
+
+                            #self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
+                            if search_in_diplom_rules_flag == 1:
+                                self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
                             self.telnetCluster.tableWidget.setItem(lastRow, 1,
                                                                    QTableWidgetItem(
                                                                        strftime("%H:%M:%S", gmtime())))
+
+                            if search_in_diplom_rules_flag == 1:
+                                self.telnetCluster.tableWidget.item(lastRow, 1).setBackground(color)
+
                             if (len(cleanList) > 4):
                                 self.telnetCluster.tableWidget.setItem(lastRow, 2,
                                                                        QTableWidgetItem(cleanList[int(settingsDict['telnet-call-position'])]))
+                                if search_in_diplom_rules_flag == 1:
+                                    self.telnetCluster.tableWidget.item(lastRow, 2).setBackground(color)
 
                                 self.telnetCluster.tableWidget.setItem(lastRow, 3,
                                                                        QTableWidgetItem(cleanList[int(settingsDict['telnet-freq-position'])]))
+                                if search_in_diplom_rules_flag == 1:
+                                    self.telnetCluster.tableWidget.item(lastRow, 3).setBackground(color)
 
-                            self.telnetCluster.tableWidget.resizeColumnsToContents()
+    #self.telnetCluster.tableWidget.resizeColumnsToContents()
                             self.telnetCluster.tableWidget.setItem(lastRow, 4,
                                                                    QTableWidgetItem(
-                                                                       output_data.decode(settingsDict['encodeStandart'])))
+                                                                      output_data.decode(settingsDict['encodeStandart'])))
+
+                            if search_in_diplom_rules_flag == 1:
+                                 self.telnetCluster.tableWidget.item(lastRow, 4).setBackground(color)
 
                             self.telnetCluster.tableWidget.resizeColumnsToContents()
                             self.telnetCluster.tableWidget.resizeRowsToContents()
                             self.telnetCluster.tableWidget.scrollToBottom()
+
                             if settingsDict['spot-to-pan'] == 'enable':
                                 freq = std.std().std_freq(freq=cleanList[3])
                                 try:
@@ -1457,7 +1520,6 @@ class telnetCluster(QWidget):
 
         self.setStyleSheet(style)
 
-
 class internetSearch(QWidget):
 
     def __init__(self):
@@ -1504,7 +1566,6 @@ class internetSearch(QWidget):
                 settingsDict['color'] + ";}"
         self.labelImage.setStyleSheet(style)
         self.setStyleSheet(style)
-
 
 class hello_window(QWidget):
 
@@ -1586,10 +1647,24 @@ class settings_file:
         print("Save_and_Exit_button: ", old_data)
 
 
-
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    APP_VERSION = '1.1'
+    settingsDict = {}
+
+    file = open('settings.cfg', "r")
+    for configstring in file:
+        if configstring != '' and configstring != ' ' and configstring[0] != '#':
+            configstring = configstring.strip()
+            configstring = configstring.replace("\r", "")
+            configstring = configstring.replace("\n", "")
+            splitString = configstring.split('=')
+            settingsDict.update({splitString[0]: splitString[1]})
+
+    file.close()
+    print(settingsDict)
+    flag = 1
 
     if settingsDict['my-call'] == "":
         hello_window = hello_window()
@@ -1600,7 +1675,15 @@ if __name__ == '__main__':
         internetSearch = internetSearch()
         logForm = logForm()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
+        #### work with diplom filter and packing exempler of class into list
+        ext.test()
+        diplom_1 = ext.diplom('1.adi', "rules.json")
+        diplom_2 = ext.diplom('2.adi', 'rules2.json')
+        diplom_list = [diplom_1, diplom_2]
+        ########
+        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br>Baston Sergey<br>UR4LGA<br> E-mail: bastonsv@gmail.com")
 
+        #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':
             logWindow.show()
             # Log_window() logWindow()
