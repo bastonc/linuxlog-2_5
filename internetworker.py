@@ -29,12 +29,13 @@ class internetWorker(QThread):
         # print (self.callsign)
         info_from_internet_array = internetWorker.get_image_from_server(self)
         print (info_from_internet_array)
-        pixmap = QPixmap(info_from_internet_array.get('img'))
-        pixmap_resized = pixmap.scaled(int(self.settings['image-width']),
-                                      int(self.settings['image-height']),
-                                      QtCore.Qt.KeepAspectRatio)
-        self.internet_search_window.labelImage.setPixmap(pixmap_resized)
-        # return info_from_internet_array
+        if info_from_internet_array != {}:
+            pixmap = QPixmap(info_from_internet_array.get('img'))
+            pixmap_resized = pixmap.scaled(int(self.settings['image-width']),
+                                          int(self.settings['image-height']),
+                                          QtCore.Qt.KeepAspectRatio)
+            self.internet_search_window.labelImage.setPixmap(pixmap_resized)
+            # return info_from_internet_array
 
     def get_image_from_server(self):
         '''
@@ -46,10 +47,13 @@ class internetWorker(QThread):
         parameter_request = "tquery=" + self.callsign + "&mode: callsign"
         parameter_to_byte = bytearray(parameter_request, "utf-8")
         data_dictionary = {}
+        try:
+            response = urllib.request.urlopen(url_found, parameter_to_byte)
+            html = response.read().decode("utf-8")
+            soup = BeautifulSoup(html, 'html.parser')
+        except Exception:
+            print("get_image_from_server: Don't connection")
 
-        response = urllib.request.urlopen(url_found, parameter_to_byte)
-        html = response.read().decode("utf-8")
-        soup = BeautifulSoup(html, 'html.parser')
         try:
             img = soup.find(id="mypic")
 

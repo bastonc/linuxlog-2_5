@@ -29,7 +29,24 @@ from time import gmtime, strftime, localtime
 
 
 # from tel import telnet_cluster
+class Settings_file:
 
+    def update_file_to_disk(self):
+        filename = 'settings.cfg'
+        with open(filename, 'r') as f:
+            old_data = f.readlines()
+        for index, line in enumerate(old_data):
+            key_from_line = line.split('=')[0]
+            # print ("key_from_line:",key_from_line)
+            for key in self.settingsDict:
+
+                if key_from_line == key:
+                    # print("key",key , "line", line)
+                    old_data[index] = key + "=" + self.settingsDict[key] + "\n"
+        with open(filename, 'w') as f:
+            f.writelines(old_data)
+        print("Update_to_disk: ", old_data)
+        return True
 
 class Adi_file:
 
@@ -175,7 +192,9 @@ class Filter(QObject):
                 text = logForm
                 textCall = text.inputCall.text()
                 foundList = self.searchInBase(textCall)
+                print("foundList: >", foundList)
                 logSearch.overlap(foundList)
+
                 freq = logForm.get_freq()
                 #print("freq in Filter", freq)
                 if textCall != '' and textCall != Filter.previous_call:
@@ -215,17 +234,293 @@ class Filter(QObject):
                 # we don't care about other events
                 return False
 
+
+
     def searchInBase(self, call):
         # print (logWindow.allRecord)
         foundList = []  # create empty list for result list
-        lenRecords = len(logWindow.allRecord)  # get count all Records
+        lenRecords = logWindow.allRows  # get count all Records
         for counter in range(lenRecords):  # start cicle where chek all elements at equivivalent at input call
             if logWindow.allRecord[counter]['CALL'].strip() == call.strip():
                 foundList.append(logWindow.allRecord[counter])
 
+
         return foundList
         # print (foundList)
         #
+####################3
+class Fill_table(QThread):
+    def __init__(self, all_column, window, parent=None):
+        super().__init__()
+        self.all_collumn = all_column
+        self.window = window
+        print("Fill_table(QThread) - init >", self.window.tableWidget)
+        #self.window
+
+    def run(self):
+
+        self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
+        self.allRows = len(self.allRecord)
+        self.window.tableWidget.setRowCount(self.allRows)
+        allCols = len(self.all_collumn)
+        #self.window.tableWidget.setItem(0, 0, self.protectionItem("Test", Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+
+        # if self.allRows == 0:
+        # print("All Rows:", type(self.allRows), self.allRows)
+        # for col in range(allCols):
+        #  print("cols:", col)
+        # self.tableWidget.setItem(0, col, QTableWidgetItem())
+
+        for row in range(self.allRows):
+            for col in range(allCols):
+                pole = self.all_collumn[col]
+                # print(self.allRows, row, self.allRows - row )
+                # print("Number record:", self.allRecord[row][pole])
+                if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
+                        self.allRecord[(self.allRows - 1) - row][
+                            pole] != '':
+                    if col == 0:
+                        self.window.tableWidget.setItem(row, col,
+                                                 self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
+                                                                     Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+
+                        # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+
+                    else:
+                        self.window.tableWidget.setItem(row, col,
+                                                 QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+        self.window.tableWidget.resizeColumnsToContents()
+        self.window.tableWidget.resizeRowsToContents()
+
+    def protectionItem(self, text, flags):
+        tableWidgetItem = QTableWidgetItem(text)
+        tableWidgetItem.setFlags(flags)
+        return tableWidgetItem
+
+class log_Window(QWidget):
+
+        def __init__(self):
+            super().__init__()
+            self.filename = "log.adi"
+            if os.path.isfile(self.filename):
+                pass
+            else:
+                with open(self.filename, "w") as file:
+                    file.write(Adi_file().get_header())
+
+            self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
+                               'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
+            # self.allRecord = parse.getAllRecord(self.allCollumn, self.filename)
+
+            self.initUI()
+
+        def initUI(self):
+
+                self.setGeometry(int(settingsDict['log-window-left']),
+                                 int(settingsDict['log-window-top']),
+                                 int(settingsDict['log-window-width']),
+                                 int(settingsDict['log-window-height']))
+                self.setWindowTitle('LinLog Experimental | All QSO')
+                self.setWindowIcon(QIcon('logo.png'))
+                self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
+                style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+                    'color'] + ";}"
+                self.setStyleSheet(style)
+
+                # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
+                #			'MODE', 'RST_RCVD', 'RST_SENT',	'NAME', 'QTH')
+                #		   )
+                self.tableWidget = QTableWidget()
+                style_table = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+                    'color'] + "; font: 12px}"
+                self.tableWidget.setStyleSheet(style_table)
+                fnt = self.tableWidget.font()
+                fnt.setPointSize(8)
+                self.tableWidget.setSortingEnabled(True)
+                self.tableWidget.setFont(fnt)
+
+                self.tableWidget.setColumnCount(13)
+
+                self.tableWidget.setHorizontalHeaderLabels(
+                    ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+                     "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
+
+                self.refresh_data()
+                self.tableWidget.itemActivated.connect(self.store_change_record)
+
+                self.tableWidget.move(0, 0)
+                self.layout = QVBoxLayout()
+                self.layout.addWidget(self.tableWidget)
+                self.setLayout(self.layout)
+
+                #
+                # logForm.test('test')
+                self.show()
+
+        def refresh_data(self):
+            self.tableWidget.clear()
+            self.tableWidget.setHorizontalHeaderLabels(
+                ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+                 "RST s", "      Name      ", "      QTH      ", " Comments ",
+                 " Time off ", " eQSL Rcvd "])
+
+            self.allRecords = Fill_table(all_column=self.allCollumn, window=self)
+            self.allRecords.start()
+
+            #print("class Fill_table(QThread) - self.all_record >:", return_data)
+
+
+
+        def fill_data_table(self):
+            fill = Fill_table(window=logWindow)
+            fill.start()
+
+        def get_all_record(self):
+            return self.allRecords
+
+        def protectionItem(self, text, flags):
+            tableWidgetItem = QTableWidgetItem(text)
+            tableWidgetItem.setFlags(flags)
+            return tableWidgetItem
+
+        def store_change_record(self):
+
+            print("store_change_record")
+            row = self.tableWidget.currentItem().row()
+            record_number = self.tableWidget.item(row, 0).text()
+            date = self.tableWidget.item(row, 1).text()
+            time = self.tableWidget.item(row, 2).text()
+            call = self.tableWidget.item(row, 4).text()
+            freq = self.allRecord[int(record_number) - 1]['FREQ']
+            rstR = self.tableWidget.item(row, 6).text()
+            rstS = self.tableWidget.item(row, 7).text()
+            name = self.tableWidget.item(row, 8).text()
+            qth = self.tableWidget.item(row, 9).text()
+            operator = self.allRecord[int(record_number) - 1]['OPERATOR']
+            band = self.tableWidget.item(row, 3).text()
+            comment = self.tableWidget.item(row, 10).text()
+            time_off = self.tableWidget.item(row, 11).text()
+            eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
+            mode = self.tableWidget.item(row, 5).text()
+            string_in_file = self.allRecord[int(record_number) - 1]['string_in_file']
+            records_number = self.allRecord[int(record_number) - 1]['records_number']
+
+            if 'string_in_file' in self.allRecord:
+                pass
+
+            else:
+                pass
+
+            new_object = {'BAND': band, 'CALL': call, 'FREQ': freq, 'MODE': mode, 'OPERATOR': operator,
+                          'QSO_DATE': date, 'TIME_ON': time, 'RST_RCVD': rstR, 'RST_SENT': rstS,
+                          'NAME': name, 'QTH': qth, 'COMMENTS': comment, 'TIME_OFF': time_off,
+                          'eQSL_QSL_RCVD': eQSL_QSL_RCVD,
+                          'EOR': 'R\n', 'string_in_file': string_in_file, 'records_number': records_number}
+
+            print("store_change_record: NEW Object", new_object)
+            Adi_file().store_changed_qso(new_object)
+            self.allRecord[int(record_number) - 1] = new_object
+
+        def refresh_interface(self):
+
+            self.update_color_schemes()
+
+        def update_color_schemes(self):
+            style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
+                    settingsDict['color'] + ";}"
+
+            style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+                'color'] + "; font: 12px}"
+            self.tableWidget.setStyleSheet(style_form)
+
+            self.setStyleSheet(style)
+
+        def addRecord(self, recordObject):
+            # <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
+            # <MODE:3>SSB <OPERATOR:6>UR4LGA <PFX:3>DL1 <QSLMSG:19>TNX For QSO TU 73!.
+            # <QSO_DATE:8:D>20131011 <TIME_ON:6>184700 <RST_RCVD:2>57 <RST_SENT:2>57 <TIME_OFF:6>184700
+            # <eQSL_QSL_RCVD:1>Y <APP_LOGGER32_QSO_NUMBER:1>1  <EOR>
+            # record to file
+            stringToAdiFile = "<BAND:" + str(len(recordObject['BAND'])) + ">" + recordObject['BAND'] + "<CALL:" + str(
+                len(recordObject['CALL'])) + ">"
+
+            stringToAdiFile = stringToAdiFile + recordObject['CALL'] + "<FREQ:" + str(len(recordObject['FREQ'])) + ">" + \
+                              recordObject['FREQ']
+            stringToAdiFile = stringToAdiFile + "<MODE:" + str(len(recordObject['MODE'])) + ">" + recordObject[
+                'MODE'] + "<OPERATOR:" + str(len(recordObject['OPERATOR']))
+            stringToAdiFile = stringToAdiFile + ">" + recordObject['OPERATOR'] + "<QSO_DATE:" + str(
+                len(recordObject['QSO_DATE'])) + ">"
+            stringToAdiFile = stringToAdiFile + recordObject['QSO_DATE'] + "<TIME_ON:" + str(
+                len(recordObject['TIME_ON'])) + ">"
+            stringToAdiFile = stringToAdiFile + recordObject['TIME_ON'] + "<RST_RCVD:" + str(
+                len(recordObject['RST_RCVD'])) + ">" + recordObject['RST_RCVD']
+            stringToAdiFile = stringToAdiFile + "<RST_SENT:" + str(len(recordObject['RST_SENT'])) + ">" + recordObject[
+                'RST_SENT'] + "<NAME:" + str(
+                len(recordObject['NAME'])) + ">" + recordObject['NAME'] + "<QTH:" + str(
+                len(recordObject['QTH'])) + ">" + recordObject['QTH'] + "<COMMENTS:" + str(
+                len(recordObject['COMMENTS'])) + ">" + recordObject[
+                                  'COMMENTS'] + "<TIME_OFF:" + str(len(recordObject['TIME_OFF'])) + ">" + recordObject[
+                                  'TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
+            # print(stringToAdiFile)
+            recordObject['string_in_file'] = Adi_file().get_last_string() + 1
+            '''
+            if len(self.allRecord) == 0:
+                recordObject['records_number'] = 0
+            else:
+                recordObject['records_number'] = len(self.allRecord)
+            '''
+            file = open(self.filename, 'a')
+            resultWrite = file.write(stringToAdiFile)
+            # print(resultWrite)
+            if resultWrite > 0:
+                file.close()
+            else:
+                print("QSO not write in logfile")
+                file.close()
+            #####
+
+            # record to allRecord
+            print(recordObject)
+
+            self.allRecord.append(recordObject)
+            all_rows = len(self.allRecord)
+            # record to table
+            allCols = len(self.allCollumn)
+            # row = self.allRows + 1
+            # print(recordObject)
+            # print (row)
+            self.tableWidget.setRowCount(all_rows)
+            self.tableWidget.insertRow(0)
+            self.tableWidget.resizeRowsToContents()
+
+            for col in range(allCols):
+                self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+
+        def search_in_table(self, call):
+            list_dict = []
+            if self.tableWidget.rowCount() > 0:
+                for rows in range(self.tableWidget.rowCount()):
+                    #print(self.tableWidget.item(rows, 4).text())
+                    try:
+                        if self.tableWidget.item(rows, 4).text() == call:
+                            row_in_dict = {"No":self.tableWidget.item(rows,0).text(),
+                                            "Date":self.tableWidget.item(rows,1).text(),
+                                            "Time":self.tableWidget.item(rows,2).text(),
+                                            "Band":self.tableWidget.item(rows,3).text(),
+                                            "Call":self.tableWidget.item(rows,4).text(),
+                                            "Mode":self.tableWidget.item(rows,5).text(),
+                                            "Rstr":self.tableWidget.item(rows,6).text(),
+                                            "Rsts":self.tableWidget.item(rows,7).text(),
+                                            "Name":self.tableWidget.item(rows,8).text(),
+                                            "Qth":self.tableWidget.item(rows,9).text(),
+                                            "Comments":self.tableWidget.item(rows,10).text(),
+                                            "Time_off":self.tableWidget.item(rows,11).text(),
+                                            "Eqsl_sent":self.tableWidget.item(rows,12).text()}
+                            list_dict.append(row_in_dict)
+                    except Exception:
+                        print("Search in table > Don't Load text from table")
+                return list_dict
+
 
 class logWindow(QWidget):
 
@@ -250,6 +545,7 @@ class logWindow(QWidget):
         self.tableWidget.setHorizontalHeaderLabels(["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
                                                     "RST s", "      Name      ", "      QTH      ", " Comments ",
                                                     " Time off ", " eQSL Rcvd "])
+        return_data=[]
 
         self.allRecord = parse.getAllRecord(self.allCollumn, "log.adi")
         self.allRows = len(self.allRecord)
@@ -284,6 +580,11 @@ class logWindow(QWidget):
         self.tableWidget.resizeColumnsToContents()
 
         self.tableWidget.resizeRowsToContents()
+
+    def fill_data_table(self):
+        fill = Fill_table(window=logWindow)
+        fill.start()
+
 
     def get_all_record(self):
         return self.allRecord
@@ -496,8 +797,9 @@ class logSearch(QWidget):
             # print(foundList)
             self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
-            self.tableWidget.setHorizontalHeaderLabels(["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-                                                        "RST s", "      Name      ", "      QTH      "])
+            self.tableWidget.setHorizontalHeaderLabels(
+                ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+                 "RST s", "      Name      ", "      QTH      "])
             self.tableWidget.resizeColumnsToContents()
             allCols = len(logWindow.allCollumn)
             # print(foundList[0]["CALL"])
@@ -512,7 +814,7 @@ class logSearch(QWidget):
             self.foundList = foundList
         else:
             self.tableWidget.clearContents()
-          # print(self.foundList)
+        # print(self.foundList)
 
     def refresh_interface(self):
 
@@ -621,7 +923,10 @@ class logForm(QMainWindow):
 
         #AboutAction = QAction('About', self)
         #AboutAction.triggered.connect(self.about)
-
+        otherMenu = menuBar.addMenu('&Other')
+        window_form_diplom = QAction('New diploma', self)
+        window_form_diplom.triggered.connect(self.new_diplom)
+        otherMenu.addAction(window_form_diplom)
         #
         aboutAction = QAction('&About', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
@@ -687,6 +992,11 @@ class logForm(QMainWindow):
         helpMenu.addAction(aboutAction)
         '''
         #pass
+    def new_diplom(self):
+        #diploma = ext.Diplom_form(settingsDict=settingsDict)
+
+        #diploma.show()
+        new_diploma.show()
 
     def about_window(self):
         print("About_window")
@@ -959,6 +1269,7 @@ class logForm(QMainWindow):
             eQSL_QSL_RCVD = "N"
             all_records = logWindow.get_all_record()            # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
             record_number = len(all_records) + 1
+
             #print("record_number:", record_number)
             datenow = datetime.datetime.now()
             date = datenow.strftime("%Y%m%d")
@@ -1431,6 +1742,8 @@ class telnetCluster(QWidget):
         row = self.tableWidget.currentItem().row()
         freq = self.tableWidget.item(row, 3).text()
         call = self.tableWidget.item(row, 2).text()
+        self.isearch = internetworker.internetWorker(window=internetSearch, callsign=call, settings=settingsDict)
+        self.isearch.start()
         freq = std.std().std_freq(freq)
 
 
@@ -1670,6 +1983,8 @@ if __name__ == '__main__':
         hello_window = hello_window()
         print(hello_window)
     else:
+        #log_window1 = log_Window()
+        #logWindow = log_window1
         logWindow = logWindow()
         logSearch = logSearch()
         internetSearch = internetSearch()
@@ -1682,10 +1997,13 @@ if __name__ == '__main__':
         diplom_list = [diplom_1, diplom_2]
         ########
         about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br>Baston Sergey<br>UR4LGA<br> E-mail: bastonsv@gmail.com")
+        new_diploma = ext.Diplom_form(settingsDict=settingsDict)
+
 
         #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':
-            logWindow.show()
+           pass
+            #logWindow.show()
             # Log_window() logWindow()
         if settingsDict['log-search-window'] == 'true':
             logSearch.show()

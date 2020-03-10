@@ -80,6 +80,7 @@ def getAllRecord(poles, filename):
         if string == "<EOH>\n":  # if we went to end by text header in ADI file (<EOH>) - set key by ready parsing in value = 1
             key = 1
     print (allrecord)
+    file.close()
     #print(allrecord)
     return allrecord
 # call=''
