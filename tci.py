@@ -59,7 +59,7 @@ class Tci_reciever(QThread):
                 #time.sleep(3)
             except Exception:
                 #self.log_form.set_tci_label_found()
-                print("Tci_reciever: Except connection")
+                #print("Tci_reciever: Except connection")
                 self.log_form.set_tci_stat('--', "#ff5555")
                 time.sleep(2)
 

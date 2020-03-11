@@ -189,10 +189,11 @@ class Filter(QObject):
 
         if event.type() == QEvent.FocusOut:
                 # do custom stuff
-                text = logForm
-                textCall = text.inputCall.text()
+                #text = logForm
+                textCall = logForm.inputCall.text()
                 foundList = self.searchInBase(textCall)
-                print("foundList: >", foundList)
+                #print("Event Filter: Qevent.FocusOut: _>", textCall)
+                #print("foundList: >", foundList)
                 logSearch.overlap(foundList)
 
                 freq = logForm.get_freq()
@@ -239,27 +240,41 @@ class Filter(QObject):
     def searchInBase(self, call):
         # print (logWindow.allRecord)
         foundList = []  # create empty list for result list
-        lenRecords = logWindow.allRows  # get count all Records
+        All_records = logWindow.get_all_record()
+        lenRecords = len(All_records)  # get count all Records
+        #print("Search InBase: lenRecords: _>", All_records)
         for counter in range(lenRecords):  # start cicle where chek all elements at equivivalent at input call
-            if logWindow.allRecord[counter]['CALL'].strip() == call.strip():
-                foundList.append(logWindow.allRecord[counter])
+            if All_records[counter]['CALL'].strip() == call.strip():
+                foundList.append(All_records[counter])
 
 
         return foundList
         # print (foundList)
         #
-####################3
+
+#####################
+
+class Communicate(QObject):
+    signalComplited = pyqtSignal(list)
+
 class Fill_table(QThread):
-    def __init__(self, all_column, window, parent=None):
+    def __init__(self, all_column, window, all_record, communicate, parent=None):
         super().__init__()
         self.all_collumn = all_column
         self.window = window
-        print("Fill_table(QThread) - init >", self.window.tableWidget)
+        self.all_record = all_record
+        self.c = communicate
+        #print("Fill_table(QThread) - init >", self.window.tableWidget)
         #self.window
 
     def run(self):
 
         self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
+        self.all_record = self.allRecord
+        self.c = Communicate()
+        self.c.signalComplited.connect(Reciev_allRecords)
+        self.c.signalComplited.emit(self.allRecord)
+
         self.allRows = len(self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
@@ -292,10 +307,24 @@ class Fill_table(QThread):
         self.window.tableWidget.resizeColumnsToContents()
         self.window.tableWidget.resizeRowsToContents()
 
+    def update_All_records(self, all_records_list):
+        self.all_records_list = all_records_list
+        All_records = self.all_records_list
+        print("update_All_records > All_records:_>", All_records)
+
     def protectionItem(self, text, flags):
         tableWidgetItem = QTableWidgetItem(text)
         tableWidgetItem.setFlags(flags)
         return tableWidgetItem
+
+class Reciev_allRecords:
+    def __init__(self, allRecords):
+        self.allRecords = allRecords
+        for i in range(len(self.allRecords)):
+            All_records.append(self.allRecords[i])
+
+        #print("Reciev_allRecords: _>", allRecords)
+        #print("Reciev_allRecords: _>", All_records)
 
 class log_Window(QWidget):
 
@@ -313,6 +342,7 @@ class log_Window(QWidget):
             # self.allRecord = parse.getAllRecord(self.allCollumn, self.filename)
 
             self.initUI()
+
 
         def initUI(self):
 
@@ -358,25 +388,25 @@ class log_Window(QWidget):
                 self.show()
 
         def refresh_data(self):
+            print("refresh_data:_>", All_records)
             self.tableWidget.clear()
             self.tableWidget.setHorizontalHeaderLabels(
                 ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
                  "RST s", "      Name      ", "      QTH      ", " Comments ",
                  " Time off ", " eQSL Rcvd "])
 
-            self.allRecords = Fill_table(all_column=self.allCollumn, window=self)
+            self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
-
+            #time.sleep(2)
+            self.allRows = len(All_records)
             #print("class Fill_table(QThread) - self.all_record >:", return_data)
-
-
 
         def fill_data_table(self):
             fill = Fill_table(window=logWindow)
             fill.start()
 
         def get_all_record(self):
-            return self.allRecords
+            return All_records
 
         def protectionItem(self, text, flags):
             tableWidgetItem = QTableWidgetItem(text)
@@ -463,12 +493,7 @@ class log_Window(QWidget):
                                   'TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
             # print(stringToAdiFile)
             recordObject['string_in_file'] = Adi_file().get_last_string() + 1
-            '''
-            if len(self.allRecord) == 0:
-                recordObject['records_number'] = 0
-            else:
-                recordObject['records_number'] = len(self.allRecord)
-            '''
+
             file = open(self.filename, 'a')
             resultWrite = file.write(stringToAdiFile)
             # print(resultWrite)
@@ -480,10 +505,10 @@ class log_Window(QWidget):
             #####
 
             # record to allRecord
-            print(recordObject)
+            #print(recordObject)
 
-            self.allRecord.append(recordObject)
-            all_rows = len(self.allRecord)
+            All_records.append(recordObject)
+            all_rows = len(All_records)
             # record to table
             allCols = len(self.allCollumn)
             # row = self.allRows + 1
@@ -520,7 +545,6 @@ class log_Window(QWidget):
                     except Exception:
                         print("Search in table > Don't Load text from table")
                 return list_dict
-
 
 class logWindow(QWidget):
 
@@ -648,19 +672,19 @@ class logWindow(QWidget):
             date = self.tableWidget.item(row, 1).text()
             time = self.tableWidget.item(row, 2).text()
             call = self.tableWidget.item(row, 4).text()
-            freq = self.allRecord[int(record_number)-1]['FREQ']
+            freq = All_records[int(record_number)-1]['FREQ']
             rstR = self.tableWidget.item(row, 6).text()
             rstS = self.tableWidget.item(row, 7).text()
             name = self.tableWidget.item(row, 8).text()
             qth = self.tableWidget.item(row, 9).text()
-            operator = self.allRecord[int(record_number)-1]['OPERATOR']
+            operator = All_records[int(record_number)-1]['OPERATOR']
             band = self.tableWidget.item(row, 3).text()
             comment = self.tableWidget.item(row, 10).text()
             time_off = self.tableWidget.item(row, 11).text()
             eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
             mode = self.tableWidget.item(row, 5).text()
-            string_in_file = self.allRecord[int(record_number) - 1]['string_in_file']
-            records_number = self.allRecord[int(record_number) - 1]['records_number']
+            string_in_file = All_records[int(record_number) - 1]['string_in_file']
+            records_number = All_records[int(record_number) - 1]['records_number']
 
             if 'string_in_file' in self.allRecord:
                 pass
@@ -680,7 +704,7 @@ class logWindow(QWidget):
 
             print("store_change_record: NEW Object", new_object)
             Adi_file().store_changed_qso(new_object)
-            self.allRecord[int(record_number) - 1] = new_object
+            All_records[int(record_number) - 1] = new_object
 
     def refresh_interface(self):
 
@@ -742,8 +766,8 @@ class logWindow(QWidget):
         # record to allRecord
         print(recordObject)
 
-        self.allRecord.append(recordObject)
-        all_rows=len(self.allRecord)
+        All_records.append(recordObject)
+        all_rows=len(All_records)
         # record to table
         allCols = len(self.allCollumn)
         #row = self.allRows + 1
@@ -830,8 +854,8 @@ class logSearch(QWidget):
 
         self.setStyleSheet(style)
 
-class Communicate(QObject):
-    closeApp = pyqtSignal()
+#class Communicate(QObject):
+#    closeApp = pyqtSignal()
 
 class About_window(QWidget):
     def __init__(self, capture, text):
@@ -1268,7 +1292,7 @@ class logForm(QMainWindow):
             freq = self.get_freq()
             eQSL_QSL_RCVD = "N"
             all_records = logWindow.get_all_record()            # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
-            record_number = len(all_records) + 1
+            record_number = len(All_records) + 1
 
             #print("record_number:", record_number)
             datenow = datetime.datetime.now()
@@ -1965,7 +1989,9 @@ if __name__ == '__main__':
 
     APP_VERSION = '1.1'
     settingsDict = {}
-
+    global All_records
+    All_records = []
+    signal_complited = Communicate()
     file = open('settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -1985,7 +2011,7 @@ if __name__ == '__main__':
     else:
         #log_window1 = log_Window()
         #logWindow = log_window1
-        logWindow = logWindow()
+        logWindow = log_Window()
         logSearch = logSearch()
         internetSearch = internetSearch()
         logForm = logForm()
