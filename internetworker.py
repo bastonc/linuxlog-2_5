@@ -35,8 +35,8 @@ class internetWorker(QThread):
              #                             int(self.settings['image-height']) - 20,
              #                             QtCore.Qt.KeepAspectRatio)
             pixmap_resized = pixmap.scaledToWidth(int(self.settings['search-internet-width']) - 20)
-            pixmap_resized_height = pixmap_resized.scaledToHeight(int(self.settings['search-internet-height']) - 20)
-            self.internet_search_window.labelImage.setPixmap(pixmap_resized_height)
+            #pixmap_resized_height = pixmap_resized.scaledToHeight(int(self.settings['search-internet-height']) - 20)
+            self.internet_search_window.labelImage.setPixmap(pixmap_resized)
             # return info_from_internet_array
 
     def get_image_from_server(self):
