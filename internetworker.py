@@ -31,10 +31,12 @@ class internetWorker(QThread):
         print (info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
-            pixmap_resized = pixmap.scaled(int(self.settings['image-width']),
-                                          int(self.settings['image-height']),
-                                          QtCore.Qt.KeepAspectRatio)
-            self.internet_search_window.labelImage.setPixmap(pixmap_resized)
+            #pixmap_resized = pixmap.scaled(int(self.settings['image-width']) - 20,
+             #                             int(self.settings['image-height']) - 20,
+             #                             QtCore.Qt.KeepAspectRatio)
+            pixmap_resized = pixmap.scaledToWidth(int(self.settings['search-internet-width']) - 20)
+            pixmap_resized_height = pixmap_resized.scaledToHeight(int(self.settings['search-internet-height']) - 20)
+            self.internet_search_window.labelImage.setPixmap(pixmap_resized_height)
             # return info_from_internet_array
 
     def get_image_from_server(self):
@@ -54,14 +56,19 @@ class internetWorker(QThread):
         except Exception:
             print("get_image_from_server: Don't connection")
 
-        try:
-            img = soup.find(id="mypic")
+        img = soup.find(id="mypic")
 
-            urllib.request.urlretrieve(img['src'], "image/" + self.callsign + ".jpg")
-            data_dictionary.update({'img': "image/" + self.callsign + ".jpg"})
+        file_name = self.callsign.replace("/", "_")
+        print("file_name, img:_>", file_name, img)
+
+
+        try:
+            if img != None:
+                urllib.request.urlretrieve(img['src'], "image/" + file_name + ".jpg")
+                data_dictionary.update({'img': "image/" + file_name + ".jpg"})
             print(data_dictionary)
         except Exception:
-            print("Exception")
+            print("Exception:", Exception)
 
         return data_dictionary
 

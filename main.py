@@ -100,7 +100,7 @@ class Adi_file:
 
         self.strings_in_file[int(object['string_in_file'])-1] = stringToAdiFile
         with open(self.filename, 'w') as file:
-            file.seek(0)
+            #file.seek(0, 2)
             file.writelines(self.strings_in_file)
 
 
@@ -264,12 +264,12 @@ class Fill_table(QThread):
         self.window = window
         self.all_record = all_record
         self.c = communicate
-        #print("Fill_table(QThread) - init >", self.window.tableWidget)
-        #self.window
+
 
     def run(self):
 
         self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
+
         self.all_record = self.allRecord
         self.c = Communicate()
         self.c.signalComplited.connect(Reciev_allRecords)
@@ -278,13 +278,9 @@ class Fill_table(QThread):
         self.allRows = len(self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
-        #self.window.tableWidget.setItem(0, 0, self.protectionItem("Test", Qt.ItemIsSelectable | Qt.ItemIsEnabled))
-
-        # if self.allRows == 0:
-        # print("All Rows:", type(self.allRows), self.allRows)
-        # for col in range(allCols):
-        #  print("cols:", col)
-        # self.tableWidget.setItem(0, col, QTableWidgetItem())
+        self.window.tableWidget.setHorizontalHeaderLabels(
+            ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+             "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
             for col in range(allCols):
@@ -368,32 +364,28 @@ class log_Window(QWidget):
                 fnt.setPointSize(8)
                 self.tableWidget.setSortingEnabled(True)
                 self.tableWidget.setFont(fnt)
-
                 self.tableWidget.setColumnCount(13)
+                #self.tableWidget.setHorizontalHeaderLabels(
+                 #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+                 #    "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
-                self.tableWidget.setHorizontalHeaderLabels(
-                    ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-                     "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
-
-                self.refresh_data()
                 self.tableWidget.itemActivated.connect(self.store_change_record)
-
                 self.tableWidget.move(0, 0)
                 self.layout = QVBoxLayout()
                 self.layout.addWidget(self.tableWidget)
                 self.setLayout(self.layout)
-
-                #
-                # logForm.test('test')
                 self.show()
+                if self.isEnabled():
+                    self.refresh_data()
+
 
         def refresh_data(self):
             print("refresh_data:_>", All_records)
             self.tableWidget.clear()
-            self.tableWidget.setHorizontalHeaderLabels(
-                ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-                 "RST s", "      Name      ", "      QTH      ", " Comments ",
-                 " Time off ", " eQSL Rcvd "])
+            #self.tableWidget.setHorizontalHeaderLabels(
+             #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+             #    "RST s", "      Name      ", "      QTH      ", " Comments ",
+             #    " Time off ", " eQSL Rcvd "])
 
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
@@ -421,25 +413,25 @@ class log_Window(QWidget):
             date = self.tableWidget.item(row, 1).text()
             time = self.tableWidget.item(row, 2).text()
             call = self.tableWidget.item(row, 4).text()
-            freq = self.allRecord[int(record_number) - 1]['FREQ']
+            freq = All_records[int(record_number) - 1]['FREQ']
             rstR = self.tableWidget.item(row, 6).text()
             rstS = self.tableWidget.item(row, 7).text()
             name = self.tableWidget.item(row, 8).text()
             qth = self.tableWidget.item(row, 9).text()
-            operator = self.allRecord[int(record_number) - 1]['OPERATOR']
+            operator = All_records[int(record_number) - 1]['OPERATOR']
             band = self.tableWidget.item(row, 3).text()
             comment = self.tableWidget.item(row, 10).text()
             time_off = self.tableWidget.item(row, 11).text()
             eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
             mode = self.tableWidget.item(row, 5).text()
-            string_in_file = self.allRecord[int(record_number) - 1]['string_in_file']
-            records_number = self.allRecord[int(record_number) - 1]['records_number']
+            string_in_file = All_records[int(record_number) - 1]['string_in_file']
+            records_number = All_records[int(record_number) - 1]['records_number']
 
-            if 'string_in_file' in self.allRecord:
-                pass
+           # if 'string_in_file' in self.allRecord:
+           #     pass
 
-            else:
-                pass
+            #else:
+            #    pass
 
             new_object = {'BAND': band, 'CALL': call, 'FREQ': freq, 'MODE': mode, 'OPERATOR': operator,
                           'QSO_DATE': date, 'TIME_ON': time, 'RST_RCVD': rstR, 'RST_SENT': rstS,
@@ -449,7 +441,7 @@ class log_Window(QWidget):
 
             print("store_change_record: NEW Object", new_object)
             Adi_file().store_changed_qso(new_object)
-            self.allRecord[int(record_number) - 1] = new_object
+            All_records[int(record_number) - 1] = new_object
 
         def refresh_interface(self):
 
@@ -746,27 +738,21 @@ class logWindow(QWidget):
             len(recordObject['COMMENTS'])) + ">" + recordObject[
                               'COMMENTS'] + "<TIME_OFF:"+str(len(recordObject['TIME_OFF']))+">"+recordObject['TIME_OFF']+"<eQSL_QSL_RCVD:1>Y<EOR>\n"
         # print(stringToAdiFile)
-        recordObject['string_in_file'] = Adi_file().get_last_string() + 1
-        '''
-        if len(self.allRecord) == 0:
+        recordObject['string_in_file'] = int(All_records[-1]['string_in_file']) + 1
+
+        if len(All_records) == 0:
             recordObject['records_number'] = 0
         else:
-            recordObject['records_number'] = len(self.allRecord)
-        '''
-        file = open(self.filename, 'a')
-        resultWrite = file.write(stringToAdiFile)
-        # print(resultWrite)
-        if resultWrite > 0:
-            file.close()
-        else:
-           print("QSO not write in logfile")
-           file.close()
-        #####
+            recordObject['records_number'] = len(All_records)
+
+        with open(self.filename, 'a') as file:
+              file.write(stringToAdiFile)
+
 
         # record to allRecord
         print(recordObject)
 
-        All_records.append(recordObject)
+       # All_records.append(recordObject)
         all_rows=len(All_records)
         # record to table
         allCols = len(self.allCollumn)
