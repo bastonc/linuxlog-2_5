@@ -31,11 +31,12 @@ class internetWorker(QThread):
         print (info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
-            #pixmap_resized = pixmap.scaled(int(self.settings['image-width']) - 20,
-             #                             int(self.settings['image-height']) - 20,
-             #                             QtCore.Qt.KeepAspectRatio)
-            pixmap_resized = pixmap.scaledToWidth(int(self.settings['search-internet-width']) - 20)
-            #pixmap_resized_height = pixmap_resized.scaledToHeight(int(self.settings['search-internet-height']) - 20)
+            #pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 8,
+            #                              int(self.settings['search-internet-height']) - 8,
+            #                              QtCore.Qt.KeepAspectRatio)
+            pixmap_resized = pixmap.scaledToWidth(int(self.settings['search-internet-width']) - 8)
+
+            #pixmap_resized_height = pixmap_resized.scaledToHeight(int(self.settings['search-internet-height']) - 8)
             self.internet_search_window.labelImage.setPixmap(pixmap_resized)
             # return info_from_internet_array
 

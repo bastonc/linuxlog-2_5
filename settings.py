@@ -454,10 +454,12 @@ class Menu (QWidget):
                 std.std.message(self, "Can't export to file", "Sorry")
 
     def start_calibrate_cluster(self):
+        print("start_calibrate_cluster:_>", self.settingsDict)
         self.telnetCluster.stop_cluster()
         self.cluster = cluster_in_Thread (self.cluster_host_input.text().strip(),
-                                     self.cluster_port_input.text().strip(),
-                                     self.call_input.text().strip(), self)
+                                          self.cluster_port_input.text().strip(),
+                                          self.call_input.text().strip(),
+                                          settingsDict=self.settingsDict, parent_window=self)
         self.cluster.start()
 
         print("self.start_calibrate_cluster: Hello")
@@ -601,8 +603,9 @@ class Menu (QWidget):
         self.close()
 
 class cluster_in_Thread(QThread):
-    def __init__(self, host, port, call, parent_window, parent=None):
+    def __init__(self, host, port, call, parent_window, settingsDict, parent=None):
         super().__init__()
+        self.settingsDict = settingsDict
         self.host = host
         self.port = port
         self.call =call
@@ -637,8 +640,8 @@ class cluster_in_Thread(QThread):
 
             if output_data != '':
 
-                    if output_data[0:2].decode(main.settingsDict['encodeStandart']) == "DX":
-                        splitString = output_data.decode(main.settingsDict['encodeStandart']).split(' ')
+                    if output_data[0:2].decode(self.settingsDict['encodeStandart']) == "DX":
+                        splitString = output_data.decode(self.settingsDict['encodeStandart']).split(' ')
                         count_chars = len(splitString)
                         for i in range(count_chars):
                             if splitString[i] != '':
@@ -653,8 +656,8 @@ class cluster_in_Thread(QThread):
             self.parent_window.cluster_combo_freq.addItems([str(i) + ":" + value])
             i += 1
 
-        self.parent_window.cluster_combo_call.setCurrentIndex(int(main.settingsDict['telnet-call-position']))
-        self.parent_window.cluster_combo_freq.setCurrentIndex(int(main.settingsDict['telnet-freq-position']))
+        self.parent_window.cluster_combo_call.setCurrentIndex(int(self.settingsDict['telnet-call-position']))
+        self.parent_window.cluster_combo_freq.setCurrentIndex(int(self.settingsDict['telnet-freq-position']))
         self.parent_window.line_text.setText(' '.join(cleanList))
         self.parent_window.telnetCluster.start_cluster()
 
