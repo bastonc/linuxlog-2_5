@@ -1032,7 +1032,15 @@ class logForm(QMainWindow):
                 data[i] = string[0] + '=' + string[1] + '\n'
                 with open('settings.cfg', 'w') as file:
                     file.writelines(data)
-    def key_lay_reverse(self, string):
+
+    def key_lay_reverse(self, string: str):
+        '''
+        This method reciev string on russian and reverse lay
+        in equivalent to english keyboard lay. ЙЦУКЕН => QWERTY
+        :param string: input original string
+        :return:
+        '''
+
         reverse_dict = {"Й":"Q", "Ц":"W", "У":"E", "К":"R", "Е":"T", "Н":"Y", "Г":"U",
                         "Ш":"I", "Щ":"O", "З":"P", "Х":"", "Ъ":"",
                         "Ф":"A", "Ы":"S", "В":"D", "А":"F", "П":"G", "Р":"H", "О":"J",
