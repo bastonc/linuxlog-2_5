@@ -375,6 +375,17 @@ class log_Window(QWidget):
                 if self.isEnabled():
                     self.refresh_data()
 
+        def changeEvent(self, event):
+
+            if event.type() == QtCore.QEvent.WindowStateChange:
+                if self.isMinimized():
+                    settingsDict['log-window'] = 'false'
+                    print("log-window: changeEvent:_>", settingsDict['log-window'])
+                    # telnetCluster.showMinimized()
+                elif self.isVisible():
+                    settingsDict['log-window'] = 'true'
+                    print("log-window: changeEvent:_>", settingsDict['log-window'])
+                QWidget.changeEvent(self, event)
 
         def refresh_data(self):
             print("refresh_data:_>", All_records)
@@ -569,6 +580,18 @@ class logSearch(QWidget):
         self.layout.addWidget(self.tableWidget)
         self.setLayout(self.layout)
         #self.show()
+
+    def changeEvent(self, event):
+
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if self.isMinimized():
+                settingsDict['log-search-window'] = 'false'
+                print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
+                    #telnetCluster.showMinimized()
+            elif self.isVisible():
+                settingsDict['log-search-window'] = 'true'
+                print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
+            QWidget.changeEvent(self, event)
 
     def overlap(self, foundList):
         if foundList != "":
@@ -1009,6 +1032,22 @@ class logForm(QMainWindow):
                 data[i] = string[0] + '=' + string[1] + '\n'
                 with open('settings.cfg', 'w') as file:
                     file.writelines(data)
+    def key_lay_reverse(self, string):
+        reverse_dict = {"Й":"Q", "Ц":"W", "У":"E", "К":"R", "Е":"T", "Н":"Y", "Г":"U",
+                        "Ш":"I", "Щ":"O", "З":"P", "Х":"", "Ъ":"",
+                        "Ф":"A", "Ы":"S", "В":"D", "А":"F", "П":"G", "Р":"H", "О":"J",
+                        "Л":"K", "Д":"L", "Ж":":","Э":"",
+                        "Я":"Z", "Ч":"X", "С":"C", "М":"V", "И":"B", "Т":"N", "Ь":"M",
+                        "Б":"", "Ю":"",".":"/"}
+        new_string = ""
+
+        for char in string:
+                if re.search('[А-Я]', char):
+                    char_reverse = reverse_dict[char]
+                else:
+                    char_reverse = char
+                new_string += char_reverse
+        return new_string
 
     def onChanged(self, text):
         '''метод которій отрабатывает как только произошло изменение в поле ввода'''
@@ -1016,6 +1055,9 @@ class logForm(QMainWindow):
 
         if re.search('[А-Я]', text):
             self.inputCall.setStyleSheet("color: rgb(255,2,2);")
+            string_old = self.inputCall.text()
+            string_reverse = self.key_lay_reverse(string_old)
+            self.inputCall.setText(string_reverse)
         elif re.search('[A-Z]', text):
             style = "QLineEdit{ border: 1px solid " + settingsDict[
                 'solid-color'] + "; border-radius: 50px; background: " + settingsDict[
@@ -1094,16 +1136,31 @@ class logForm(QMainWindow):
             if self.isMinimized():
                 if settingsDict['search-internet-window'] == 'true':
                     internetSearch.showMinimized()
+                    settingsDict['search-internet-window'] = 'true'
                 if settingsDict['log-search-window'] == 'true':
                     logSearch.showMinimized()
+                    settingsDict['log-search-window'] = 'true'
                 if settingsDict['log-window'] == 'true':
                     logWindow.showMinimized()
+                    settingsDict['log-window'] = 'true'
                 if settingsDict['telnet-cluster-window'] == 'true':
                     telnetCluster.showMinimized()
+                    settingsDict['telnet-cluster-window'] = 'true'
             QWidget.changeEvent(self, event)
 
     def showEvent(self, event):
-        print ("Show normal")
+        #print("Show Event", settingsDict['log-window'])
+        if settingsDict['log-window'] == 'true':
+            #print("Show Event", settingsDict['log-window'])
+            logWindow.showNormal()
+
+        if settingsDict['log-search-window'] == 'true':
+            logSearch.showNormal()
+        if settingsDict['telnet-cluster-window'] == 'true':
+            telnetCluster.showNormal()
+        if settingsDict['search-internet-window'] == 'true':
+            internetSearch.showNormal()
+        #print ("Show normal")
 
     def closeEvent(self, event):
         '''
@@ -1113,7 +1170,7 @@ class logForm(QMainWindow):
         '''
         self.parameter={}
         if settingsDict['log-window'] == 'true':
-            logWindow.close()
+
             logWindow_geometry = logWindow.geometry()
             self.parameter.update({'log-window-left': str(logWindow_geometry.left()),
                               'log-window-top': str(logWindow_geometry.top()),
@@ -1122,7 +1179,7 @@ class logForm(QMainWindow):
                               })
 
         if settingsDict['search-internet-window'] == 'true':
-            internetSearch.close()
+
             internetSearch_geometry = internetSearch.geometry()
             self.parameter.update({'search-internet-left': str(internetSearch_geometry.left()),
                               'search-internet-top': str(internetSearch_geometry.top()),
@@ -1130,7 +1187,7 @@ class logForm(QMainWindow):
                               'search-internet-height': str(internetSearch_geometry.height())
                               })
         if settingsDict['log-search-window'] == 'true':
-            logSearch.close()
+
             logSearch_geometry = logSearch.geometry()
             self.parameter.update({'log-search-window-left': str(logSearch_geometry.left()),
                               'log-search-window-top': str(logSearch_geometry.top()),
@@ -1138,7 +1195,7 @@ class logForm(QMainWindow):
                               'log-search-window-height': str(logSearch_geometry.height())
                               })
         if settingsDict['log-form-window'] == 'true':
-            logForm.close()
+
             logForm_geometry = logForm.geometry()
             self.parameter.update({'log-form-window-left': str(logForm_geometry.left()),
                               'log-form-window-top': str(logForm_geometry.top()),
@@ -1146,13 +1203,53 @@ class logForm(QMainWindow):
                               'log-form-window-height': str(logForm_geometry.height())
                               })
         if settingsDict['telnet-cluster-window'] == 'true':
-            telnetCluster.close()
+
             telnetCluster_geometry = telnetCluster.geometry()
             self.parameter.update({'telnet-cluster-window-left': str(telnetCluster_geometry.left()),
                               'telnet-cluster-window-top': str(telnetCluster_geometry.top()),
                               'telnet-cluster-window-width': str(telnetCluster_geometry.width()),
                               'telnet-cluster-window-height': str(telnetCluster_geometry.height())
                               })
+        '''
+        internetSearch_geometry = internetSearch.geometry()
+        settingsDict['search-internet-left'] = str(internetSearch_geometry.left())
+        settingsDict['search-internet-top'] = str(internetSearch_geometry.top())
+        settingsDict['search-internet-width'] = str(internetSearch_geometry.width())
+        settingsDict['search-internet-height'] = str(internetSearch_geometry.height())
+        ###
+        logWindow_geometry = logWindow.geometry()
+        settingsDict['log-window-left'] = str(logWindow_geometry.left())
+        settingsDict['log-window-top'] = str(logWindow_geometry.top())
+        settingsDict['log-window-width'] = str(logWindow_geometry.width())
+        settingsDict['log-window-height'] = str(logWindow_geometry.height())
+        ###
+        logSearch_geometry = logSearch.geometry()
+        settingsDict['log-search-window-left'] = str(logSearch_geometry.left())
+        settingsDict['log-search-window-top'] = str(logSearch_geometry.top())
+        settingsDict['log-search-window-width'] = str(logSearch_geometry.width())
+        settingsDict['log-search-window-height'] = str(logSearch_geometry.height())
+        ###
+        logForm_geometry = logForm.geometry()
+        settingsDict['log-form-window-left'] = str(logForm_geometry.left())
+        settingsDict['log-form-window-top'] = str(logForm_geometry.top())
+        settingsDict['log-form-window-width'] = str(logForm_geometry.width())
+        settingsDict['log-form-window-height'] = str(logForm_geometry.height())
+        ###
+        telnetCluster_geometry = telnetCluster.geometry()
+        settingsDict['telnet-cluster-window-left'] = str(telnetCluster_geometry.left())
+        settingsDict['telnet-cluster-window-top'] = str(telnetCluster_geometry.top())
+        settingsDict['telnet-cluster-window-width'] = str(telnetCluster_geometry.width())
+        settingsDict['telnet-cluster-window-height'] = str(telnetCluster_geometry.height())
+
+        ###
+        '''
+        logWindow.close()
+        internetSearch.close()
+        logSearch.close()
+        logForm.close()
+        telnetCluster.close()
+
+
         #print(parameter)
         if menu.isEnabled():
             menu.close()
@@ -1599,6 +1696,19 @@ class telnetCluster(QWidget):
                 flag = True
         return flag
 
+    def changeEvent(self, event):
+
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if self.isMinimized():
+                settingsDict['telnet-cluster-window'] = 'false'
+                print("telnet-cluster-window: changeEvent:_>", settingsDict['telnet-cluster-window'])
+                    #telnetCluster.showMinimized()
+            elif self.isVisible():
+                settingsDict['telnet-cluster-window'] = 'true'
+                print("telnet-cluster-window: changeEvent:_>", settingsDict['telnet-cluster-window'])
+
+            QWidget.changeEvent(self, event)
+
     def refresh_interface(self):
 
         self.update_color_schemes()
@@ -1643,9 +1753,20 @@ class internetSearch(QWidget):
             'color'] + ";}"
         self.setStyleSheet(style)
         #self.show()
-    #def reset_search(self):
-     #   pixmap = QPixmap("logo.png")
-    #    self.labelImage.setPixmap(pixmap)
+
+    def changeEvent(self, event):
+
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if self.isMinimized():
+                settingsDict['search-internet-window'] = 'false'
+                print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
+                    #telnetCluster.showMinimized()
+            elif self.isVisible():
+                settingsDict['search-internet-window'] = 'true'
+                print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
+
+            QWidget.changeEvent(self, event)
+
     def update_photo(self):
         pixmap = QPixmap("logo.png")
         #self.labelImage.setFixedWidth(self.settings['image-width'])
