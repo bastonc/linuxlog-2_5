@@ -68,7 +68,7 @@ class Tci_reciever(QThread):
             try:
                 #print("Connect to ")
                 reciever = self.ws.recv()
-                #print(reciever)
+                #print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 tci_string=reciever.split(":")
                 if tci_string[0] == 'vfo':
                     values = tci_string[1].split(",")
@@ -91,8 +91,8 @@ class Tci_reciever(QThread):
 
 
                 time.sleep(0.002)
-            except:
-                print("Tci_reciever: Exception in listen port loop")
+            except Exception:
+                #print("Tci_reciever: Exception in listen port loop", Exception)
                 self.log_form.set_tci_stat(' ')
                 #self.log_form.set_tci_label_found()
                 try:

@@ -696,6 +696,7 @@ class logForm(QMainWindow):
         super().__init__()
         self.initUI()
 
+
     def menu(self):
 
         logSettingsAction = QAction('&Settings', self)
@@ -713,11 +714,11 @@ class logForm(QMainWindow):
         window_repeat_qso_action.triggered.connect(self.stat_repeat_qso)
 
 
-        menuBar = self.menuBar()
-        menuBar.setStyleSheet("QWidget{font: 12px;}")
+        self.menuBarw = self.menuBar()
+        self.menuBarw.setStyleSheet("QWidget{font: 12px;}")
       #  settings_menu = menuBar.addMenu('Settings')
-        menuBar.addAction(logSettingsAction)
-        WindowMenu = menuBar.addMenu('&Window')
+        self.menuBarw.addAction(logSettingsAction)
+        WindowMenu = self.menuBarw.addMenu('&Window')
         #WindowMenu.triggered.connect(self.logSettings)
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
@@ -725,15 +726,15 @@ class logForm(QMainWindow):
 
         #AboutAction = QAction('About', self)
         #AboutAction.triggered.connect(self.about)
-        otherMenu = menuBar.addMenu('&Other')
+        self.otherMenu = self.menuBarw.addMenu('&Other')
         window_form_diplom = QAction('New diploma', self)
         window_form_diplom.triggered.connect(self.new_diplom)
-        otherMenu.addAction(window_form_diplom)
+        self.otherMenu.addAction(window_form_diplom)
         #
         aboutAction = QAction('&About', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         aboutAction.triggered.connect(self.about_window)
-        menuBar.addAction(aboutAction)
+        self.menuBarw.addAction(aboutAction)
         '''
         catSettingsAction = QAction(QIcon('logo.png'), 'Cat settings', self)
         catSettingsAction.setStatusTip('Name, Call and other of station')
@@ -794,8 +795,33 @@ class logForm(QMainWindow):
         helpMenu.addAction(aboutAction)
         '''
         #pass
+
+    def menu_add(self, name_menu):
+        # self.otherMenu = self.menuBarw.addMenu('&Other')
+
+        print(name_menu)
+        self.item_menu = self.otherMenu.addMenu(name_menu)
+        edit_diploma = QAction('Edit '+name_menu, self)
+        edit_diploma.triggered.connect(lambda checked, name_menu=name_menu : self.edit_diplom(name_menu))
+        show_stat = QAction('Show statistic', self)
+        show_stat.triggered.connect(lambda checked, name_menu=name_menu : self.show_statistic_diplom(name_menu))
+        del_diploma = QAction ("Delete "+name_menu, self)
+        del_diploma.triggered.connect(lambda checked, name_menu=name_menu : self.del_diplom(name_menu))
+        self.item_menu.addAction(show_stat)
+        self.item_menu.addAction(edit_diploma)
+        self.item_menu.addAction(del_diploma)
+
+    def edit_diplom(self, name):
+        print("edit_diplom:_>", name)
+
+    def show_statistic_diplom(self, name):
+        print("show_statistic_diplom:_>", name)
+
+    def del_diplom (self, name):
+        print("del_diplom:_>", name)
+
     def new_diplom(self):
-        #diploma = ext.Diplom_form(settingsDict=settingsDict)
+        #new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm)
 
         #diploma.show()
         new_diploma.show()
@@ -1273,7 +1299,7 @@ class logForm(QMainWindow):
         :param parameter:
         :return:
         '''
-        print(parameter)
+       # print(parameter)
         filename='settings.cfg'
         with open(filename,'r') as f:
             old_data = f.readlines()
@@ -1348,7 +1374,7 @@ class logForm(QMainWindow):
             mode_string = 'CW'
         if mode == "nfm" or mode == "wfm":
             mode_string = 'FM'
-        if mode == "digil" or mode == "digiu" or mode == "drm":
+        if mode == "digl" or mode == "digu" or mode == "drm":
             mode_string = 'DIGI'
         indexMode = self.comboMode.findText(mode_string)
         self.comboMode.setCurrentIndex(indexMode)
@@ -1494,10 +1520,10 @@ class clusterThread(QThread):
                         color= QColor(100,50,50)
                         search_in_diplom_rules_flag = 0
                         for i in range(len(diplom_list)):
-                            print ("cicle Diploms:", diplom_list[i])
+                            #print ("cicle Diploms:", diplom_list[i])
                             if diplom_list[i].filter(cleanList[int(settingsDict['telnet-call-position'])].strip()):
                                 search_in_diplom_rules_flag = 1
-                        print("clean list", cleanList[int(settingsDict['telnet-call-position'])].strip())
+                      #  print("clean list", cleanList[int(settingsDict['telnet-call-position'])].strip())
 
                         if telnetCluster.cluster_filter(cleanList=cleanList):
     #####
@@ -1915,7 +1941,7 @@ if __name__ == '__main__':
         diplom_list = [diplom_1, diplom_2]
         ########
         about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br>Baston Sergey<br>UR4LGA<br> E-mail: bastonsv@gmail.com")
-        new_diploma = ext.Diplom_form(settingsDict=settingsDict)
+        new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm)
 
 
         #print(diplom_log.filter('ur4lga'))
@@ -1931,7 +1957,7 @@ if __name__ == '__main__':
 
         if settingsDict['log-form-window'] == 'true':
             logForm.show()
-            # logForm.setFocus()
+            #logForm.setFocus()
         if settingsDict['tci'] == 'enable':
 
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
