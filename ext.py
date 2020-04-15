@@ -7,6 +7,7 @@ import settings
 import parse
 import json
 import main
+import std
 class test:
     def __init__(self):
         list = [ { "call":
@@ -29,12 +30,13 @@ class test:
 
 class Diplom_form(QWidget):
 
-    def __init__(self, settingsDict, log_form, diplomname=''):
+    def __init__(self, settingsDict, log_form, adi_file, diplomname=''):
         super().__init__()
-        print ("Diplom_form(QWidget) init_")
+        #print("Diplom_form(QWidget) init_")
         self.logForm = log_form
         self.diplomname = diplomname
         self.settingsDict = settingsDict
+        self.adi = adi_file
         self.initUI()
 
 
@@ -43,7 +45,7 @@ class Diplom_form(QWidget):
             self.setWindowTitle("Create diplom")
         else:
             self.setWindowTitle("Edit diplom")
-            rules = diplom.get_rules(self.diplomname)
+            #rules = diplom.get_rules(diplom, self.diplomname+".rules")
         self.setGeometry(300, 500, 500, 300)
         #self.setFixedWidth(450)
         #self.setFixedHeight(450)
@@ -141,7 +143,7 @@ class Diplom_form(QWidget):
 
     def save_diplom(self):
         list_to_json = []
-        settings_list = ""
+        settings_list = []
         if self.name_input.text().strip() != '':
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
@@ -161,7 +163,7 @@ class Diplom_form(QWidget):
                 if self.sps_table_widget.item(row,0) != None and \
                         self.sps_table_widget.item(row, 1) != None:
                     print('Item content call', self.sps_table_widget.item(row, 0).text())
-                    list_to_json.append({'call': self.sps_table_widget.item(row, 0).text(),
+                    list_to_json.append({'call': self.sps_table_widget.item(row, 0).text().upper(),
                                       'score': self.sps_table_widget.item(row, 1).text(),
                                       'name': name_programm, 'date_e': date_enable,
                                       'date_start':date_start, 'date_finish': date_finish,
@@ -170,21 +172,35 @@ class Diplom_form(QWidget):
             self.write_rules_to_file(list_to_json, name_output_file=name_programm)
             if self.settingsDict['diploms-json'] != "":
                 settings_list = json.loads(self.settingsDict['diploms-json'])
-                print("settings_list", settings_list)
-           # print("settings list", settings_list)
-            for i in range(len(settings_list)):
+                #print("settings_list", settings_list)
+            else:
+                print("settings list is empty")
+                #settings_list.append({'name_programm': name_programm})
+                self.settingsDict['diploms-json'] = json.dumps([{'name_programm': name_programm}])
+                main.Settings_file.update_file_to_disk(self)
+            if len(settings_list)>0:
+                for i in range(len(settings_list)):
+                    #name = str(settings_list[i]['name_programm'])
+                    if name_programm == str(settings_list[i]['name_programm']):
+                        std.std.message(self, "Programm with that name already exists", "Repeats")
+                        repeat_flag = 1
+                        break
+                    else:
+                        repeat_flag = 0
+            else:
+                repeat_flag = 0
 
-                #name = str(settings_list[i]['name_programm'])
-                if name_programm == str(settings_list[i]['name_programm']):
-                    pass
-                else:
-                    settings_list.append({'name_programm':name_programm})
-                    self.settingsDict['diploms-json'] = json.dumps(settings_list)
-                    main.Settings_file.update_file_to_disk(self)
-            #print("self.settingsDict['diploms-json']",self.settingsDict['diploms-json'])
-            print("Summary list to JSON", list_to_json)
-            self.logForm.menu_add(name_menu=self.name_input.text())
-            self.close()
+            if repeat_flag == 0:
+                settings_list.append({'name_programm': name_programm})
+                self.settingsDict['diploms-json'] = json.dumps(settings_list)
+                main.Settings_file.update_file_to_disk(self)
+                print("settings_list:_>", settings_list)
+                print("self.settingsDict['diploms-json']", self.settingsDict['diploms-json'])
+                print("Summary list to JSON", list_to_json)
+                self.logForm.menu_add(name_menu=self.name_input.text())
+                self.adi.create_adi(name_programm+".adi")
+                self.close()
+            self.logForm.diploms_init()
         else:
             self.name_input.setStyleSheet("border: 2px solid #DD5555;")
     def write_rules_to_file(self, data_to_json, name_output_file):
@@ -260,6 +276,7 @@ class diplom:
                                   str(len(list_data['COMMENTS'])) + ">" + list_data['COMMENTS'] + "<TIME_OFF:" + \
                                   str(len(list_data['TIME_OFF'])) + ">" + list_data[
                                       'TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
+                print("string to ADI:", stringToAdiFile)
                 file.write(stringToAdiFile)
 
     def get_count_qso(self):
@@ -267,6 +284,9 @@ class diplom:
 
     def get_all_qso(self):
         return self.allRecord
+
+    def get_data(self):
+        return self.decode_data
 
 
 

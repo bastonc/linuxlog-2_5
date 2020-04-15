@@ -129,3 +129,45 @@ class Eqsl_services (QThread):
         #request_eqsl = requests.get(
          #   'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog%20upload%20%3CADIF%5FVER%3A4%3E1%2E00%20%3CEOH%3E%20%3CBAND%3A3%3AC%3E30M%20%2D%20%3CCALL%3A6%3AC%3EWB4WXX%20%3CMODE%3A3%3AC%3ESSB%20%3CQSO%5FDATE%3A8%3AD%3E20010503%20%3CRST%5FRCVD%3A2%3AC%3E52%20%3CRST%5FSENT%3A2%3AC%3E59%20%2D%20%3CTIME%5FON%3A6%3AC%3E122500%20%3CEOR%3E&EQSL_USER=ur4lga&EQSL_PSWD=a9minx3m')
 
+class check_update (QThread):
+
+    def __init__(self, APP_VERSION, settingsDict, parrentWindow):
+        super().__init__()
+        self.version = APP_VERSION
+        self.settingsDict = settingsDict
+        self.parrent = parrentWindow
+
+
+    def run(self):
+
+        server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
+        path_directory_updater_app = "/upd/"
+
+        action = server_url_get+path_directory_updater_app+self.version+"/"+self.settingsDict['my-call']
+
+        try:
+            response = requests.get(action)
+
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            version = soup.find(id="version").get_text()
+            git_path = soup.find(id="git_path").get_text()
+            date = soup.find(id="date").get_text()
+            std.std.message(self.parrent, "Found new version: "+version+" \n Date:"+date, "UPDATER")
+            print("SOUP", version,"\n", git_path,"\n", date)
+        except Exception:
+            print("Exception in chek_update:_>", Exception)
+            std.std.message(self.parrent, "You have latest version", "UPDATER")
+        #if (response.find('Warning') != -1) or (response.find('Error') != -1):
+         #   message = QMessageBox(self.parrent_window)
+            # message.setFixedHeight(200)
+            # message.setGeometry(500, 300, 1000, 500)
+        #    message.setStyleSheet("font: 12px;")
+        #    message.setWindowTitle("Warning!")
+        #    message.setText("Can't send to eQSL.cc")
+            # message.setText(soup.body.contents[0].strip())
+        #    message.setInformativeText(soup.body.contents[0].strip())
+         #   message.setStandardButtons(QMessageBox.Ok)
+         #   message.exec_()
+        # print(request_eqsl.text)
+        #print("Check_update:_>",response, "\n", response.text)

@@ -15,6 +15,7 @@ import std
 import settings
 import subprocess
 import ext
+import json
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
@@ -148,7 +149,7 @@ class Adi_file:
         index = len(list_data)
         with open ('log.adi', 'a') as file:
             for i in range(index):
-                print(i,list_data[i]['BAND'])
+               # print(i,list_data[i]['BAND'])
                 stringToAdiFile = "<BAND:" + str(len(list_data[i]['BAND'])) + ">" + list_data[i]['BAND'] + "<CALL:" + str(
                     len(list_data[i]['CALL'])) + ">"
 
@@ -177,6 +178,10 @@ class Adi_file:
           #  file.writelines(header)
             #file.writelines(list_data)
 
+    def create_adi(self, name):
+        with open(name, 'w') as f:
+            f.writelines(self.get_header())
+
 class Filter(QObject):
 
     previous_call = ''
@@ -184,23 +189,20 @@ class Filter(QObject):
 
 
     def eventFilter(self, widget, event):
-        # FocusOut event
-        #print(event.type())
+
 
         if event.type() == QEvent.FocusOut:
-                # do custom stuff
-                #text = logForm
+
                 textCall = logForm.inputCall.text()
                 foundList = self.searchInBase(textCall)
-                #print("Event Filter: Qevent.FocusOut: _>", textCall)
-                #print("foundList: >", foundList)
+
                 logSearch.overlap(foundList)
 
                 freq = logForm.get_freq()
-                #print("freq in Filter", freq)
+
                 if textCall != '' and textCall != Filter.previous_call:
                     if settingsDict['search-internet-window'] == 'true':
-                        #print("textCall", textCall)
+
                         Filter.previous_call = textCall
                         self.isearch = internetworker.internetWorker(window=internetSearch, callsign=textCall, settings=settingsDict)
                         self.isearch.start()
@@ -212,18 +214,14 @@ class Filter(QObject):
 
                 if textCall == '' or textCall == ' ':
                     pixmap = QPixmap('logo.png')
-                    #pixmap_resized = pixmap.scaled(int(settingsDict['image-width']),
-                                                  # int(settingsDict['image-height']),
-                                                  # QtCore.Qt.KeepAspectRatio)
-                    #internetSearch.labelImage.setPixmap(pixmap_resized)
-                    #print(img)
 
 
-                # print ('focus out')
+
+
                 return False
 
         if event.type() == QEvent.FocusIn:
-                # do custom stuff
+
                 if logForm.inputCall.text() == '':
                     logForm.inputRstS.setText('59')
                     logForm.inputRstR.setText('59')
@@ -275,6 +273,7 @@ class Fill_table(QThread):
         self.c.signalComplited.emit(self.allRecord)
 
         self.allRows = len(self.allRecord)
+        print(" self.allRows:_> ",  self.allRows)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         self.window.tableWidget.setHorizontalHeaderLabels(
@@ -282,30 +281,34 @@ class Fill_table(QThread):
              "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
+            print("row -", row)
             for col in range(allCols):
+                #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
                 # print(self.allRows, row, self.allRows - row )
                 # print("Number record:", self.allRecord[row][pole])
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
-                        self.allRecord[(self.allRows - 1) - row][
-                            pole] != '':
-                    if col == 0:
-                        self.window.tableWidget.setItem(row, col,
-                                                 self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
-                                                                     Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                        self.allRecord[(self.allRows - 1) - row][pole] != '':
+                    self.window.tableWidget.setItem(row, col,
+                                                    self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
+                                                                        Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                    #if col == 0:
+                    #   self.window.tableWidget.setItem(row, col,
+                    #                             self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
+                    #                                                 Qt.ItemIsSelectable | Qt.ItemIsEnabled))
 
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
 
-                    else:
-                        self.window.tableWidget.setItem(row, col,
-                                                 QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                    #else:
+                    #    self.window.tableWidget.setItem(row, col,
+                     #                            QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
         self.window.tableWidget.resizeColumnsToContents()
         self.window.tableWidget.resizeRowsToContents()
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
         All_records = self.all_records_list
-        print("update_All_records > All_records:_>", All_records)
+        #print("update_All_records > All_records:_>", All_records)
 
     def protectionItem(self, text, flags):
         tableWidgetItem = QTableWidgetItem(text)
@@ -345,7 +348,7 @@ class log_Window(QWidget):
                                  int(settingsDict['log-window-top']),
                                  int(settingsDict['log-window-width']),
                                  int(settingsDict['log-window-height']))
-                self.setWindowTitle('LinLog Experimental | All QSO')
+                self.setWindowTitle('LinuxLog | All QSO')
                 self.setWindowIcon(QIcon('logo.png'))
                 self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
                 style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
@@ -380,15 +383,15 @@ class log_Window(QWidget):
             if event.type() == QtCore.QEvent.WindowStateChange:
                 if self.isMinimized():
                     settingsDict['log-window'] = 'false'
-                    print("log-window: changeEvent:_>", settingsDict['log-window'])
+                    #print("log-window: changeEvent:_>", settingsDict['log-window'])
                     # telnetCluster.showMinimized()
                 elif self.isVisible():
                     settingsDict['log-window'] = 'true'
-                    print("log-window: changeEvent:_>", settingsDict['log-window'])
+                    #print("log-window: changeEvent:_>", settingsDict['log-window'])
                 QWidget.changeEvent(self, event)
 
         def refresh_data(self):
-            print("refresh_data:_>", All_records)
+            #print("refresh_data:_>", All_records)
             self.tableWidget.clear()
             #self.tableWidget.setHorizontalHeaderLabels(
              #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
@@ -397,13 +400,15 @@ class log_Window(QWidget):
 
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
+            #self.tableWidget.resizeColumnsToContents()
+            #self.tableWidget.resizeRowsToContents()
             #time.sleep(2)
             self.allRows = len(All_records)
             #print("class Fill_table(QThread) - self.all_record >:", return_data)
 
-        def fill_data_table(self):
-            fill = Fill_table(window=logWindow)
-            fill.start()
+        #def fill_data_table(self):
+        #    fill = Fill_table(window=logWindow)
+        #    fill.start()
 
         def get_all_record(self):
             return All_records
@@ -415,7 +420,7 @@ class log_Window(QWidget):
 
         def store_change_record(self):
 
-            print("store_change_record")
+            #print("store_change_record")
             row = self.tableWidget.currentItem().row()
             record_number = self.tableWidget.item(row, 0).text()
             date = self.tableWidget.item(row, 1).text()
@@ -447,7 +452,7 @@ class log_Window(QWidget):
                           'eQSL_QSL_RCVD': eQSL_QSL_RCVD,
                           'EOR': 'R\n', 'string_in_file': string_in_file, 'records_number': records_number}
 
-            print("store_change_record: NEW Object", new_object)
+           # print("store_change_record: NEW Object", new_object)
             Adi_file().store_changed_qso(new_object)
             All_records[int(record_number) - 1] = new_object
 
@@ -514,9 +519,9 @@ class log_Window(QWidget):
             # row = self.allRows + 1
             # print(recordObject)
             # print (row)
-            self.tableWidget.setRowCount(all_rows)
-            self.tableWidget.insertRow(0)
-            self.tableWidget.resizeRowsToContents()
+            #self.tableWidget.setRowCount(all_rows)
+            #self.tableWidget.insertRow(0)
+            #self.tableWidget.resizeRowsToContents()
 
             for col in range(allCols):
                 self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
@@ -557,7 +562,7 @@ class logSearch(QWidget):
 
         self.setGeometry(int(settingsDict['log-search-window-left']), int(settingsDict['log-search-window-top']),
                          int(settingsDict['log-search-window-width']), int(settingsDict['log-search-window-height']))
-        self.setWindowTitle('LinLog | Search')
+        self.setWindowTitle('LinuxLog | Search')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowOpacity(float(settingsDict['logSearch-opacity']))
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
@@ -586,18 +591,18 @@ class logSearch(QWidget):
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
                 settingsDict['log-search-window'] = 'false'
-                print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
+                #print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
                     #telnetCluster.showMinimized()
             elif self.isVisible():
                 settingsDict['log-search-window'] = 'true'
-                print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
+               # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
             QWidget.changeEvent(self, event)
 
     def overlap(self, foundList):
         if foundList != "":
             allRows = len(foundList)
             # print(foundList)
-            self.tableWidget.setRowCount(allRows)
+            #self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
                 ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
@@ -653,15 +658,15 @@ class About_window(QWidget):
 
         self.setGeometry(width_coordinate, height_coordinate, 200, 300)
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowTitle('About | LinLog')
+        self.setWindowTitle('About | LinuxLog')
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";}"
         self.setStyleSheet(style)
         self.capture = QLabel(self.capture_string)
         self.capture.setStyleSheet("font-size: 18px")
-        self.capture.setFixedHeight(20)
+        self.capture.setFixedHeight(30)
         self.text = QLabel(self.text_string)
-        self.text.setFixedHeight(200)
+        #self.text.setFixedHeight(200)
         self.text.setStyleSheet("font-size: 12px")
         self.about_layer = QVBoxLayout()
         self.image = QPixmap("logo.png")
@@ -669,13 +674,26 @@ class About_window(QWidget):
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setPixmap(self.image)
         #about_layer.setAlignment(Qt.AlignCenter)
+        self.check_update = QPushButton()
+        self.check_update.setFixedWidth(130)
+        self.check_update.setFixedHeight(60)
+        self.check_update.setText("> Check update <")
+        self.check_update.setStyleSheet("size: 10px;")
+
+        self.check_update.clicked.connect(self.updater)
         self.about_layer.addWidget(self.capture)
+        self.about_layer.addSpacing(5)
+        self.about_layer.addWidget(self.check_update)
         self.about_layer.addWidget(self.text)
         self.horizontal_lay = QHBoxLayout()
         self.horizontal_lay.addWidget(self.image_label)
         self.horizontal_lay.addLayout(self.about_layer)
 
         self.setLayout(self.horizontal_lay)
+
+    def updater(self):
+
+        check.start()
 
 class realTime(QThread):
 
@@ -694,10 +712,15 @@ class logForm(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.diploms_init()
+        #self.diploms = self.get_diploms()
         self.initUI()
 
 
-    def menu(self):
+        #print("self.Diploms in logForm init:_>", self.diploms)
+
+
+    def menu(self, diploms):
 
         logSettingsAction = QAction('&Settings', self)
         #logSettingsAction.setStatusTip('Name, Call and other of station')
@@ -724,8 +747,6 @@ class logForm(QMainWindow):
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
 
-        #AboutAction = QAction('About', self)
-        #AboutAction.triggered.connect(self.about)
         self.otherMenu = self.menuBarw.addMenu('&Other')
         window_form_diplom = QAction('New diploma', self)
         window_form_diplom.triggered.connect(self.new_diplom)
@@ -735,6 +756,14 @@ class logForm(QMainWindow):
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         aboutAction.triggered.connect(self.about_window)
         self.menuBarw.addAction(aboutAction)
+
+        if self.diploms != []:
+
+            for i in range(len(self.diploms)):
+                diplom_data = self.diploms[i].get_data()
+                #print("self.diploms:_>", diplom_data[0]['name'])
+                self.menu_add(diplom_data[0]['name'])
+
         '''
         catSettingsAction = QAction(QIcon('logo.png'), 'Cat settings', self)
         catSettingsAction.setStatusTip('Name, Call and other of station')
@@ -799,7 +828,7 @@ class logForm(QMainWindow):
     def menu_add(self, name_menu):
         # self.otherMenu = self.menuBarw.addMenu('&Other')
 
-        print(name_menu)
+       # print(name_menu)
         self.item_menu = self.otherMenu.addMenu(name_menu)
         edit_diploma = QAction('Edit '+name_menu, self)
         edit_diploma.triggered.connect(lambda checked, name_menu=name_menu : self.edit_diplom(name_menu))
@@ -812,7 +841,12 @@ class logForm(QMainWindow):
         self.item_menu.addAction(del_diploma)
 
     def edit_diplom(self, name):
-        print("edit_diplom:_>", name)
+        all_data = ext.diplom.get_rules(self=ext.diplom, name=name+".rules")
+        edit_window = ext.Diplom_form(settingsDict=settingsDict, log_form=self,
+                        adi_file=adi_file, diplomname=name)
+        edit_window.show()
+
+        print("edit_diplom:_>", name, "all_data:", all_data)
 
     def show_statistic_diplom(self, name):
         print("show_statistic_diplom:_>", name)
@@ -839,12 +873,12 @@ class logForm(QMainWindow):
         styleform = "background :" + settingsDict['form-background']+"; font-weight: 200;"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
-        self.setWindowTitle('LinLog | Form')
+        self.setWindowTitle('LinuxLog | Form')
         self.setWindowIcon(QIcon('logo.png'))
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";}"
         self.setStyleSheet(style)
-        self.menu()
+        self.menu(self.diploms)
 
         # self.test()
         self.labelCall = QLabel("Call")
@@ -1138,8 +1172,9 @@ class logForm(QMainWindow):
 
             logWindow.addRecord(recordObject)
             if settingsDict['diplom'] == 'enable':
-                for diploms in diplom_list:
-                    if diploms.filter(call) :
+                for diploms in self.diploms:
+                    if diploms.filter(call):
+                        #print("filter true for:", diploms, "string:", recordObject)
                         diploms.add_qso(recordObject)
 
             if settingsDict['eqsl'] == 'enable':
@@ -1434,6 +1469,7 @@ class logForm(QMainWindow):
          #   freq_string = freq_string + "000"
 
         return freq_string
+
     ## updates methods
 
     def refresh_interface(self):
@@ -1470,9 +1506,22 @@ class logForm(QMainWindow):
         settingsDict.update(new_settingsDict)
         #print(settingsDict['my-call'])
 
-
     def test(data):
         pass
+
+    def diploms_init(self):
+        self.diploms = self.get_diploms()
+
+    def get_diploms(self):
+        names_diploms=[]
+        if settingsDict['diploms-json'] != '':
+            list_string = json.loads(settingsDict['diploms-json'])
+            for i in range(len(list_string)):
+                list_string[i]['name_programm'] = ext.diplom(list_string[i]['name_programm']+".adi", list_string[i]['name_programm']+".rules")
+                names_diploms.append(list_string[i]['name_programm'])
+        print("names_diploms:_>", names_diploms)
+        return names_diploms
+
 
 class clusterThread(QThread):
     def __init__(self, cluster_window, form_window, parent=None):
@@ -1877,7 +1926,7 @@ class hello_window(QWidget):
 class settings_file:
 
 
-    def save_all_settings():
+    def save_all_settings(self):
         print ("save_all_settings")
         filename = 'settings.cfg'
         with open(filename, 'r') as f:
@@ -1898,15 +1947,10 @@ class settings_file:
 
 
 
-
-
 if __name__ == '__main__':
 
-
+    APP_VERSION = '1.1'
     settingsDict = {}
-    global All_records
-    All_records = []
-
     file = open('settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -1917,9 +1961,18 @@ if __name__ == '__main__':
             settingsDict.update({splitString[0]: splitString[1]})
 
     file.close()
+
+
+
+
+
+    global All_records
+    All_records = []
+
+
     print(settingsDict)
     flag = 1
-    APP_VERSION = '1.1'
+
     app = QApplication(sys.argv)
     signal_complited = Communicate()
 
@@ -1935,14 +1988,16 @@ if __name__ == '__main__':
         logForm = logForm()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         #### work with diplom filter and packing exempler of class into list
-        ext.test()
-        diplom_1 = ext.diplom('1.adi', "rules.json")
-        diplom_2 = ext.diplom('2.adi', 'rules2.json')
-        diplom_list = [diplom_1, diplom_2]
-        ########
-        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br>Baston Sergey<br>UR4LGA<br> E-mail: bastonsv@gmail.com")
-        new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm)
+        #ext.test()
 
+        #diplom_1 = ext.diplom('1.adi', "rules.json")
+        #diplom_2 = ext.diplom('2.adi', 'rules2.json')
+        #diplom_list = logForm.get_diploms()
+        ########
+        adi_file = Adi_file()
+        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+        new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
+        check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
 
         #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':
@@ -1961,9 +2016,7 @@ if __name__ == '__main__':
         if settingsDict['tci'] == 'enable':
 
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
-            # tci_recv.stop_tci()
-            # tci_reciever = tci.Tci_reciever(settingsDict['tci-server']+":"+settingsDict['tci-port'], log_form=logForm)
-            # tci_reciever.start()
+
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster = telnetCluster()
 
