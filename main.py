@@ -62,6 +62,9 @@ class Adi_file:
     def get_last_string(self):
         return len(self.strings_in_file)
 
+    def rename_adi(self, old_name, new_name):
+        os.rename(old_name, new_name)
+
     def store_changed_qso(self, object):
         '''
         1. Function recived object in format (ch.1)
@@ -720,7 +723,7 @@ class logForm(QMainWindow):
         #print("self.Diploms in logForm init:_>", self.diploms)
 
 
-    def menu(self, diploms):
+    def menu(self):
 
         logSettingsAction = QAction('&Settings', self)
         #logSettingsAction.setStatusTip('Name, Call and other of station')
@@ -761,7 +764,7 @@ class logForm(QMainWindow):
 
             for i in range(len(self.diploms)):
                 diplom_data = self.diploms[i].get_data()
-                #print("self.diploms:_>", diplom_data[0]['name'])
+                print("self.diploms:_>", diplom_data[0]['name'])
                 self.menu_add(diplom_data[0]['name'])
 
         '''
@@ -840,15 +843,23 @@ class logForm(QMainWindow):
         self.item_menu.addAction(edit_diploma)
         self.item_menu.addAction(del_diploma)
 
+    def menu_rename_diplom(self):
+        self.menuBarw.clear()
+        #self.otherMenu.clear()
+
+
+
     def edit_diplom(self, name):
         all_data = ext.diplom.get_rules(self=ext.diplom, name=name+".rules")
-        edit_window = ext.Diplom_form(settingsDict=settingsDict, log_form=self,
-                        adi_file=adi_file, diplomname=name)
-        edit_window.show()
+        self.edit_window = ext.Diplom_form(settingsDict=settingsDict, log_form=self,
+                        adi_file=adi_file, diplomname=name, list_data=all_data)
+        self.edit_window.show()
 
         print("edit_diplom:_>", name, "all_data:", all_data)
 
     def show_statistic_diplom(self, name):
+        self.stat_diplom = ext.static_diplom(diplom_name=name, settingsDict=settingsDict)
+        self.stat_diplom.show()
         print("show_statistic_diplom:_>", name)
 
     def del_diplom (self, name):
@@ -878,7 +889,7 @@ class logForm(QMainWindow):
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";}"
         self.setStyleSheet(style)
-        self.menu(self.diploms)
+        self.menu()
 
         # self.test()
         self.labelCall = QLabel("Call")
@@ -1568,6 +1579,7 @@ class clusterThread(QThread):
                                 cleanList.append(splitString[i])
                         color= QColor(100,50,50)
                         search_in_diplom_rules_flag = 0
+                        diplom_list = logForm.get_diploms()
                         for i in range(len(diplom_list)):
                             #print ("cicle Diploms:", diplom_list[i])
                             if diplom_list[i].filter(cleanList[int(settingsDict['telnet-call-position'])].strip()):

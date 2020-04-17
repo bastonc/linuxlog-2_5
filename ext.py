@@ -30,21 +30,22 @@ class test:
 
 class Diplom_form(QWidget):
 
-    def __init__(self, settingsDict, log_form, adi_file, diplomname=''):
+    def __init__(self, settingsDict, log_form, adi_file, diplomname='', list_data=[]):
         super().__init__()
         #print("Diplom_form(QWidget) init_")
         self.logForm = log_form
         self.diplomname = diplomname
         self.settingsDict = settingsDict
         self.adi = adi_file
+        self.list_data = list_data
         self.initUI()
-
 
     def initUI(self):
         if self.diplomname == '':
             self.setWindowTitle("Create diplom")
         else:
-            self.setWindowTitle("Edit diplom")
+            self.setWindowTitle("Edit diplom "+self.diplomname)
+
             #rules = diplom.get_rules(diplom, self.diplomname+".rules")
         self.setGeometry(300, 500, 500, 300)
         #self.setFixedWidth(450)
@@ -135,6 +136,29 @@ class Diplom_form(QWidget):
         self.global_layout.addLayout(self.sps_layout)
         self.global_layout.addLayout(self.button_layout)
         self.setLayout(self.global_layout)
+        if self.diplomname != '':
+            self.add_info(self.list_data)
+
+    def add_info(self, list_data):
+        #print ("list_data:_>",list_data)
+        self.name_input.setText(list_data[0]['name'])
+        self.score_input.setText(list_data[0]['score_complite'])
+        self.repeat_combo.setCurrentIndex(list_data[0]['repeats'])
+        if list_data[0]['date_e'] == 'y':
+            self.date_checkbox.setChecked(True)
+        else:
+            self.date_checkbox.setChecked(False)
+        if list_data[0]['prefix_only'] == 'y':
+            self.prefix_check_box.setChecked(True)
+        else:
+            self.prefix_check_box.setChecked(False)
+
+        rows = len(list_data)
+        self.sps_table_widget.setRowCount(rows)
+        for row in range(rows):
+            self.sps_table_widget.setItem(row, 0, QTableWidgetItem(list_data[row]['call']))
+            self.sps_table_widget.setItem(row, 1, QTableWidgetItem(list_data[row]['score']))
+        self.sps_table_widget.resizeRowsToContents()
 
     def add_row(self):
 
@@ -147,6 +171,11 @@ class Diplom_form(QWidget):
         if self.name_input.text().strip() != '':
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
+            if self.prefix_check_box.isEnabled():
+                prefix_only = 'y'
+            else:
+                prefix_only = 'n'
+
             if self.date_checkbox.isChecked():
                 date_enable = "y"
                 date_start = self.start_date_input.text().strip()
@@ -158,6 +187,7 @@ class Diplom_form(QWidget):
                 date_finish = ""
             repeats = self.repeat_combo.currentIndex()
             count_sps = self.sps_table_widget.rowCount()
+            print("count_sps:_>", count_sps)
             for row in range(count_sps):
 
                 if self.sps_table_widget.item(row,0) != None and \
@@ -167,8 +197,9 @@ class Diplom_form(QWidget):
                                       'score': self.sps_table_widget.item(row, 1).text(),
                                       'name': name_programm, 'date_e': date_enable,
                                       'date_start':date_start, 'date_finish': date_finish,
-                                      'repeats':repeats, 'score_complite': score_complite})
-                    #print("list_to_json", list_to_json)
+                                      'repeats':repeats, 'score_complite': score_complite,
+                                      'prefix_only': prefix_only})
+                    
             self.write_rules_to_file(list_to_json, name_output_file=name_programm)
             if self.settingsDict['diploms-json'] != "":
                 settings_list = json.loads(self.settingsDict['diploms-json'])
@@ -181,7 +212,7 @@ class Diplom_form(QWidget):
             if len(settings_list)>0:
                 for i in range(len(settings_list)):
                     #name = str(settings_list[i]['name_programm'])
-                    if name_programm == str(settings_list[i]['name_programm']):
+                    if name_programm == str(settings_list[i]['name_programm']) and self.diplomname == '':
                         std.std.message(self, "Programm with that name already exists", "Repeats")
                         repeat_flag = 1
                         break
@@ -191,15 +222,31 @@ class Diplom_form(QWidget):
                 repeat_flag = 0
 
             if repeat_flag == 0:
-                settings_list.append({'name_programm': name_programm})
-                self.settingsDict['diploms-json'] = json.dumps(settings_list)
-                main.Settings_file.update_file_to_disk(self)
-                print("settings_list:_>", settings_list)
-                print("self.settingsDict['diploms-json']", self.settingsDict['diploms-json'])
-                print("Summary list to JSON", list_to_json)
-                self.logForm.menu_add(name_menu=self.name_input.text())
-                self.adi.create_adi(name_programm+".adi")
-                self.close()
+                if self.diplomname =='':
+                    settings_list.append({'name_programm': name_programm})
+                    self.settingsDict['diploms-json'] = json.dumps(settings_list)
+                    main.Settings_file.update_file_to_disk(self)
+
+                    self.logForm.menu_add(name_menu=self.name_input.text())
+                    self.adi.create_adi(name_programm+".adi")
+                    self.close()
+                else:
+                    programs = len(settings_list)
+                    for i in range(programs):
+                        if settings_list[i]['name_programm'] == self.diplomname:
+                            self.adi.rename_adi(settings_list[i]['name_programm']+".adi", self.name_input.text() + ".adi")
+                            settings_list[i]['name_programm'] = self.name_input.text()
+
+
+                    #print(settings_list)
+                    self.settingsDict['diploms-json'] = json.dumps(settings_list)
+                    main.Settings_file.update_file_to_disk(self)
+
+                    self.logForm.menu_rename_diplom()
+                    self.logForm.diploms_init()
+                    self.logForm.menu()
+                    self.close()
+
             self.logForm.diploms_init()
         else:
             self.name_input.setStyleSheet("border: 2px solid #DD5555;")
@@ -287,6 +334,77 @@ class diplom:
 
     def get_data(self):
         return self.decode_data
+
+class static_diplom(QWidget):
+    def __init__(self, diplom_name, settingsDict):
+        super().__init__()
+        self.diplom_name = diplom_name
+        self.settingsDict = settingsDict
+        self.initUI()
+        self.update()
+
+    def initUI(self):
+        #self.setGeometry(300, 500, 500, 300)
+        style = "QWidget{background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict[
+            'color'] + ";}"
+        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: 200;"
+        self.setGeometry(int(self.settingsDict['diplom-statistic-window-left']), int(self.settingsDict['diplom-statistic-window-top']),
+                         int(self.settingsDict['diplom-statistic-window-width']),
+                         int(self.settingsDict['diplom-statistic-window-height']))
+
+        self.setStyleSheet(style)
+        self.setWindowTitle("Statistic diplom: " + str(self.diplom_name))
+
+        self.score_final_label = QLabel()
+        self.score_final_label.setStyleSheet("font-size: 12px;")
+        self.score_total_label = QLabel()
+        self.score_total_label.setStyleSheet("font-size: 12px; font-weight: bold;")
+        self.top_layout = QHBoxLayout()
+        self.top_layout.addWidget(self.score_final_label)
+        self.top_layout.addWidget(self.score_total_label)
+        self.table_widget = QTableWidget()
+        self.table_widget.setStyleSheet(styleform)
+
+        self.vertical_layout = QVBoxLayout()
+        self.vertical_layout.addLayout(self.top_layout)
+        self.vertical_layout.addWidget(self.table_widget)
+
+        self.setLayout(self.vertical_layout)
+
+    def update(self):
+        self.all_column = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
+                           'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
+        self.rules = diplom.get_rules(diplom, self.diplom_name + '.rules')
+        self.score_final_label.setText("Total score need: " + str(self.rules[0]['score_complite']))
+        self.all_records = parse.getAllRecord(self.all_column, self.diplom_name+'.adi')
+        records_count = len(self.all_records)
+        column_count = len(self.all_column)
+        self.table_widget.move(0, 0)
+        fnt = self.table_widget.font()
+        fnt.setPointSize(9)
+        self.table_widget.setFont(fnt)
+        self.table_widget.verticalHeader().hide()
+        self.table_widget.setSortingEnabled(True)
+        self.table_widget.setRowCount(records_count)
+        self.table_widget.setColumnCount(column_count)
+        self.table_widget.setHorizontalHeaderLabels(
+            ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+             "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
+        for record in range(records_count):
+            for column in range(column_count):
+                self.table_widget.setItem(record, column,
+                                      QTableWidgetItem(self.all_records[record][self.all_column[column]]))
+        self.table_widget.resizeRowsToContents()
+        self.table_widget.resizeColumnsToContents()
+        total_score = 0
+        for record in self.all_records:
+            for i in range(len(self.rules)):
+                if record['CALL'] == self.rules[i]['call']:
+                    total_score += int(self.rules[i]['score'])
+
+        self.score_total_label.setText("Total score: " + str(total_score))
+
+
 
 
 
