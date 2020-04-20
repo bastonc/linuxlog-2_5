@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QWidget, QTableWidget, QPushButton,QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, QPushButton,QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtCore import Qt
 import settings
 import parse
@@ -26,7 +26,7 @@ class test:
                 ]
         with open("rules.json", 'w') as f:
             f.write(json.dumps(list))
-        print("json.dumps", json.dumps(list))
+        #print("json.dumps", json.dumps(list))
 
 class Diplom_form(QWidget):
 
@@ -85,6 +85,7 @@ class Diplom_form(QWidget):
         score_text = QLabel("How many points do you need")
         score_text.setStyleSheet(style)
         self.score_input = QLineEdit()
+        self.score_input.setStyleSheet(styleform)
         self.score_input.setText("0")
         self.score_layout.addWidget(score_text)
         self.score_layout.addWidget(self.score_input)
@@ -123,14 +124,32 @@ class Diplom_form(QWidget):
         #
         self.button_layout = QHBoxLayout()
         self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.close)
         self.ok_button = QPushButton("Create diploma")
         self.ok_button.clicked.connect(self.save_diplom)
         self.button_layout.addWidget(self.cancel_button)
         self.button_layout.addWidget(self.ok_button)
+        #
+        self.color_label = QLabel()
+        self.color_label.setStyleSheet(style)
+        self.color_label.setText("Select color for telnet highlight")
+        self.color_button = QPushButton()
+        #self.color_button.setFixedWidth(100)
+        self.color_button.clicked.connect(self.select_color)
+        if self.diplomname == '':
+            self.color_button.setText("Select color")
 
+        self.color_layout = QHBoxLayout()
+        self.color_layout.addWidget(self.color_label)
+        self.color_layout.addWidget(self.color_button)
+        #
         self.global_layout = QVBoxLayout()
         self.global_layout.addLayout(self.name_layout)
         self.global_layout.addLayout(self.date_layout)
+        #self.spaceItem = QSpacerItem(15, 10)
+        #self.global_layout.addSpacerItem(self.spaceItem)
+        self.global_layout.addLayout(self.color_layout)
+        #self.global_layout.addSpacerItem(self.spaceItem)
         self.global_layout.addLayout(self.score_layout)
         self.global_layout.addLayout(self.repeat_layout)
         self.global_layout.addLayout(self.sps_layout)
@@ -139,8 +158,25 @@ class Diplom_form(QWidget):
         if self.diplomname != '':
             self.add_info(self.list_data)
 
+    def select_color(self):
+        color = QColorDialog.getColor(initial=QColor(self.color_button.text()), parent=None, title="Select color for cluster highlight")
+        if color.isValid():
+            self.colorR = color.red()
+            self.colorG = color.green()
+            self.colorB = color.blue()
+            self.color_name = color.name()
+            self.color_button.setStyleSheet("background:"+color.name())
+            self.color_button.setText(color.name())
+
+
     def add_info(self, list_data):
         #print ("list_data:_>",list_data)
+        self.color_name = list_data[0]['color_name']
+        self.colorR = list_data[0]['colorR']
+        self.colorG = list_data[0]['colorG']
+        self.colorB = list_data[0]['colorB']
+        self.color_button.setStyleSheet("background:"+self.color_name)
+        self.color_button.setText(self.color_name)
         self.name_input.setText(list_data[0]['name'])
         self.score_input.setText(list_data[0]['score_complite'])
         self.repeat_combo.setCurrentIndex(list_data[0]['repeats'])
@@ -159,6 +195,7 @@ class Diplom_form(QWidget):
             self.sps_table_widget.setItem(row, 0, QTableWidgetItem(list_data[row]['call']))
             self.sps_table_widget.setItem(row, 1, QTableWidgetItem(list_data[row]['score']))
         self.sps_table_widget.resizeRowsToContents()
+
 
     def add_row(self):
 
@@ -187,15 +224,19 @@ class Diplom_form(QWidget):
                 date_finish = ""
             repeats = self.repeat_combo.currentIndex()
             count_sps = self.sps_table_widget.rowCount()
-            print("count_sps:_>", count_sps)
+            #print("count_sps:_>", count_sps)
             for row in range(count_sps):
 
                 if self.sps_table_widget.item(row,0) != None and \
                         self.sps_table_widget.item(row, 1) != None:
-                    print('Item content call', self.sps_table_widget.item(row, 0).text())
+                   # print('Item content call', self.sps_table_widget.item(row, 0).text())
                     list_to_json.append({'call': self.sps_table_widget.item(row, 0).text().upper(),
                                       'score': self.sps_table_widget.item(row, 1).text(),
                                       'name': name_programm, 'date_e': date_enable,
+                                      'colorR':self.colorR,
+                                      'colorG': self.colorG,
+                                      'colorB': self.colorB,
+                                      'color_name': self.color_name,
                                       'date_start':date_start, 'date_finish': date_finish,
                                       'repeats':repeats, 'score_complite': score_complite,
                                       'prefix_only': prefix_only})
@@ -262,7 +303,7 @@ class diplom:
     '''
     def __init__(self, file, file_rules):
         self.file = file
-        self.file_rules = file_rules
+        self.file_rules = file_rules.strip()
         self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
                            'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
         self.allRecord = parse.getAllRecord(self.allCollumn, self.file)
@@ -273,14 +314,73 @@ class diplom:
         with open(name, "r") as f:
              return json.load(f)
 
-    def filter (self, call):
-        self.call = call
-        for i in range(len(self.decode_data)):
-            #print("decode in filter", i, " - ", self.decode_data[i])
-            if self.call == self.decode_data[i]['call']:
-                return True
+    def search_call_in_base(self, call):
+        search_calls = []
 
-        return False
+        #records = parse.getAllRecord(self.allCollumn, self.file)
+        record_count = len(self.allRecord)
+        for record in range(record_count):
+            if self.allRecord[record]['CALL'] == call:
+                search_calls.append(self.allRecord[record])
+                #print("AllRecords:_>", self.allRecord[record])
+                #print("Search_call_in_base:_>", records[record])
+        return search_calls
+
+    def get_color_bg(self):
+        color = QColor(int(self.decode_data[0]['colorR']),
+                       int(self.decode_data[0]['colorG']),
+                        int(self.decode_data[0]['colorB']))
+
+        return color
+
+
+
+    def filter (self, call_dict):
+        flag = 'true'
+        self.call = call_dict['call']
+        #print("count_in_rules:_>",len(self.decode_data))
+        for index_in_rules in range(len(self.decode_data)):
+            #print("decode in filter", index_in_rules, " - ", self.decode_data[index_in_rules], "call", self.call)
+            if self.call == self.decode_data[index_in_rules]['call']:
+                if call_dict['mode'] == 'cluster':
+                    return True
+                else:
+                    found_records = self.search_call_in_base(self.call)
+                    # 3 - not resolved
+                    if str(self.decode_data[index_in_rules]['repeats']) == '3':
+                        if found_records == []:
+                            flag = 'true'  #True
+                        else:
+                            flag = 'false' #False
+                    # 0 - resolved other band
+                    if str(self.decode_data[index_in_rules]['repeats']) == '0':
+                        found_qso_count = len(found_records)
+                        for i in range(found_qso_count):
+                            if call_dict['band'] == found_records[i]['BAND']:
+                                flag = 'false' # False
+
+                    # 1 - resolved other mode
+                    if str(self.decode_data[index_in_rules]['repeats']) == '1':
+                        found_qso_count = len(found_records)
+                        for i in range(found_qso_count):
+                           if call_dict['mode'] == found_records[i]['MODE']:
+                                flag = 'false'  # False
+
+                    # 2 - resolved other mode and bands
+                    if str(self.decode_data[index_in_rules]['repeats']) == '2':
+                        found_qso_count = len(found_records)
+                        for i in range(found_qso_count):
+                            if call_dict['mode'] == found_records[i]['MODE'] or \
+                                    call_dict['band'] == found_records[i]['BAND']:
+                                flag = 'false'  # False
+            else:
+                flag = 'false'
+        if flag == 'true':
+            return True
+        if flag == 'false':
+            return False
+
+
 
     def add_qso(self, list_data):
         '''
@@ -297,7 +397,7 @@ class diplom:
                 :param list_data: List with Dictionary with QSO-data
                 :return:
                 '''
-        print("List_data", list_data)
+        #print("List_data", list_data)
         index = len(list_data)
         with open(self.file, 'a') as file:
 
@@ -323,9 +423,10 @@ class diplom:
                                   str(len(list_data['COMMENTS'])) + ">" + list_data['COMMENTS'] + "<TIME_OFF:" + \
                                   str(len(list_data['TIME_OFF'])) + ">" + list_data[
                                       'TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
-                print("string to ADI:", stringToAdiFile)
+                #print("string to ADI:", stringToAdiFile)
                 file.write(stringToAdiFile)
-
+                #print ("list_data:_>", list_data)
+                self.allRecord.append(list_data)
     def get_count_qso(self):
         return len(self.allRecord)
 

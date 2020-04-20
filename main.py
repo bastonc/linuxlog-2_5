@@ -239,7 +239,7 @@ class Filter(QObject):
 
 
     def searchInBase(self, call):
-        # print (logWindow.allRecord)
+        #print ("search_in Base:_>", call)
         foundList = []  # create empty list for result list
         All_records = logWindow.get_all_record()
         lenRecords = len(All_records)  # get count all Records
@@ -248,7 +248,7 @@ class Filter(QObject):
             if All_records[counter]['CALL'].strip() == call.strip():
                 foundList.append(All_records[counter])
 
-
+        #print("search_in Base:_>",foundList)
         return foundList
         # print (foundList)
         #
@@ -276,7 +276,7 @@ class Fill_table(QThread):
         self.c.signalComplited.emit(self.allRecord)
 
         self.allRows = len(self.allRecord)
-        print(" self.allRows:_> ",  self.allRows)
+        #print(" self.allRows:_> ",  self.allRows)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         self.window.tableWidget.setHorizontalHeaderLabels(
@@ -284,7 +284,7 @@ class Fill_table(QThread):
              "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
-            print("row -", row)
+            #print("row -", row)
             for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
@@ -604,8 +604,8 @@ class logSearch(QWidget):
     def overlap(self, foundList):
         if foundList != "":
             allRows = len(foundList)
-            # print(foundList)
-            #self.tableWidget.setRowCount(allRows)
+            #print("overlap", foundList)
+            self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
                 ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
@@ -616,7 +616,7 @@ class logSearch(QWidget):
             for row in range(allRows):
                 for col in range(allCols):
                     pole = logWindow.allCollumn[col]
-                    # print(foundList[row][pole])
+                    #print("foundList[row][pole]", foundList[row][pole])
                     self.tableWidget.setItem(row, col, QTableWidgetItem(foundList[row][pole]))
 
             self.tableWidget.resizeRowsToContents()
@@ -764,7 +764,7 @@ class logForm(QMainWindow):
 
             for i in range(len(self.diploms)):
                 diplom_data = self.diploms[i].get_data()
-                print("self.diploms:_>", diplom_data[0]['name'])
+                #print("self.diploms:_>", diplom_data[0]['name'])
                 self.menu_add(diplom_data[0]['name'])
 
         '''
@@ -855,12 +855,12 @@ class logForm(QMainWindow):
                         adi_file=adi_file, diplomname=name, list_data=all_data)
         self.edit_window.show()
 
-        print("edit_diplom:_>", name, "all_data:", all_data)
+        #print("edit_diplom:_>", name, "all_data:", all_data)
 
     def show_statistic_diplom(self, name):
         self.stat_diplom = ext.static_diplom(diplom_name=name, settingsDict=settingsDict)
         self.stat_diplom.show()
-        print("show_statistic_diplom:_>", name)
+        #print("show_statistic_diplom:_>", name)
 
     def del_diplom (self, name):
         print("del_diplom:_>", name)
@@ -872,7 +872,7 @@ class logForm(QMainWindow):
         new_diploma.show()
 
     def about_window(self):
-        print("About_window")
+       # print("About_window")
         about_window.show()
 
     def searchWindow(self):
@@ -1182,9 +1182,10 @@ class logForm(QMainWindow):
                             'eQSL_QSL_RCVD': eQSL_QSL_RCVD}
 
             logWindow.addRecord(recordObject)
+            call_dict = {'call': call, 'mode': mode, 'band': band}
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
-                    if diploms.filter(call):
+                    if diploms.filter(call_dict):
                         #print("filter true for:", diploms, "string:", recordObject)
                         diploms.add_qso(recordObject)
 
@@ -1530,7 +1531,7 @@ class logForm(QMainWindow):
             for i in range(len(list_string)):
                 list_string[i]['name_programm'] = ext.diplom(list_string[i]['name_programm']+".adi", list_string[i]['name_programm']+".rules")
                 names_diploms.append(list_string[i]['name_programm'])
-        print("names_diploms:_>", names_diploms)
+        #print("names_diploms:_>", names_diploms)
         return names_diploms
 
 
@@ -1577,12 +1578,19 @@ class clusterThread(QThread):
                         for i in range(count_chars):
                             if splitString[i] != '':
                                 cleanList.append(splitString[i])
-                        color= QColor(100,50,50)
+                        #color = QColor(100, 50, 50)
                         search_in_diplom_rules_flag = 0
+                        call_dict = {'call': cleanList[int(settingsDict['telnet-call-position'])].strip(),
+                                     'mode': 'cluster',
+                                     'band': 'cluster'}
                         diplom_list = logForm.get_diploms()
+
                         for i in range(len(diplom_list)):
+
+                            #print("get_color:_>", color)
                             #print ("cicle Diploms:", diplom_list[i])
-                            if diplom_list[i].filter(cleanList[int(settingsDict['telnet-call-position'])].strip()):
+                            if diplom_list[i].filter(call_dict):
+                                color = diplom_list[i].get_color_bg()
                                 search_in_diplom_rules_flag = 1
                       #  print("clean list", cleanList[int(settingsDict['telnet-call-position'])].strip())
 
@@ -1990,7 +1998,7 @@ if __name__ == '__main__':
 
     if settingsDict['my-call'] == "":
         hello_window = hello_window()
-        print(hello_window)
+        #print(hello_window)
     else:
         #log_window1 = log_Window()
         #logWindow = log_window1
