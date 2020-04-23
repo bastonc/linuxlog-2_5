@@ -750,7 +750,7 @@ class logForm(QMainWindow):
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
 
-        self.otherMenu = self.menuBarw.addMenu('&Other')
+        self.otherMenu = self.menuBarw.addMenu('&Diploms')
         window_form_diplom = QAction('New diploma', self)
         window_form_diplom.triggered.connect(self.new_diplom)
         self.otherMenu.addAction(window_form_diplom)
@@ -863,7 +863,8 @@ class logForm(QMainWindow):
         #print("show_statistic_diplom:_>", name)
 
     def del_diplom (self, name):
-        print("del_diplom:_>", name)
+        ext.diplom.del_dilpom(ext.diplom, name, settingsDict, self)
+        #print("del_diplom:_>", name)
 
     def new_diplom(self):
         #new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm)
@@ -1183,10 +1184,11 @@ class logForm(QMainWindow):
 
             logWindow.addRecord(recordObject)
             call_dict = {'call': call, 'mode': mode, 'band': band}
+            print ("call_dict:_>", call_dict)
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
                     if diploms.filter(call_dict):
-                        #print("filter true for:", diploms, "string:", recordObject)
+                        print("filter true for:", diploms, "string:", recordObject)
                         diploms.add_qso(recordObject)
 
             if settingsDict['eqsl'] == 'enable':

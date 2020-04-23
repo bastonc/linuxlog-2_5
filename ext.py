@@ -8,6 +8,7 @@ import parse
 import json
 import main
 import std
+import os
 class test:
     def __init__(self):
         list = [ { "call":
@@ -107,12 +108,31 @@ class Diplom_form(QWidget):
         self.sps_table_widget.setStyleSheet(styleform)
         self.sps_table_widget.setFixedWidth(240)
         self. sps_table_widget.setFixedHeight(200)
-        self.sps_table_widget.setColumnCount(2)
-        #self.sps_table_widget.setColumnWidth(1, 1)
+        self.sps_table_widget.setColumnCount(3)
+        self.sps_table_widget.setColumnWidth(0, 80)
+        self.sps_table_widget.setColumnWidth(1, 50)
+        self.sps_table_widget.setColumnWidth(2, 70)
         self.sps_table_widget.setRowCount(10)
-        self.sps_table_widget.setHorizontalHeaderLabels(['call', 'scores'])
+        self.sps_table_widget.setHorizontalHeaderLabels(['call', 'score', 'mode'])
         self.sps_table_widget.horizontalHeaderItem(0).setToolTip("Enter special call")
         self.sps_table_widget.horizontalHeaderItem(1).setToolTip("Enter scores for QSO")
+        self.sps_table_widget.horizontalHeaderItem(2).setToolTip("Select mode")
+        #self.combo_mode = QComboBox()
+        #self.combo_mode2 = QComboBox()
+        #self.combo_mode.addItems(['SSB', 'CW', 'DIGI'])
+        #self.combo_mode2.addItems(['SSB', 'CW', 'DIGI'])
+        row_count = self.sps_table_widget.rowCount()
+        self.combo_mode_list = []
+        if self.diplomname == '':
+
+
+            for row in range(row_count):
+                self.combo_mode_list.append({'combo'+str(row): QComboBox()})
+                self.combo_mode_list[row]['combo' + str(row)].addItems(['SSB', 'CW', 'DIGI'])
+                self.sps_table_widget.setCellWidget(row, 2, self.combo_mode_list[row]['combo'+str(row)])
+
+
+
         add_row = QPushButton("Add rows")
         add_row.clicked.connect(self.add_row)
         self.prefix_lay = QVBoxLayout()
@@ -194,18 +214,42 @@ class Diplom_form(QWidget):
         for row in range(rows):
             self.sps_table_widget.setItem(row, 0, QTableWidgetItem(list_data[row]['call']))
             self.sps_table_widget.setItem(row, 1, QTableWidgetItem(list_data[row]['score']))
+            self.combo_mode_list.append({'combo' + str(row): QComboBox()})
+            self.combo_mode_list[row]['combo' + str(row)].addItems(['SSB', 'CW', 'DIGI'])
+            self.combo_mode_list[row]['combo'+str(row)].setCurrentText(list_data[row]['mode'])
+            self.sps_table_widget.setCellWidget(row, 2, self.combo_mode_list[row]['combo'+str(row)])
         self.sps_table_widget.resizeRowsToContents()
 
 
     def add_row(self):
 
         self.sps_table_widget.insertRow(self.sps_table_widget.rowCount())
+        counter = self.sps_table_widget.rowCount()
+        len(self.combo_mode_list)
+        self.combo_mode_list.append({'combo' + str(counter - 1): QComboBox()})
+        print ("all rows:_>", counter, len(self.combo_mode_list))
+        self.combo_mode_list[len(self.combo_mode_list) - 1 ]['combo' + str(counter - 1)].addItems(['SSB', 'CW', 'DIGI'])
+        self.sps_table_widget.setCellWidget(counter - 1 , 2, self.combo_mode_list[len(self.combo_mode_list) - 1]['combo' + str(counter - 1)])
+        for i in range(len(self.combo_mode_list)):
+            print("all keys:_>", self.combo_mode_list[i].keys())
         #pass
 
     def save_diplom(self):
         list_to_json = []
         settings_list = []
+        flag = 0
         if self.name_input.text().strip() != '':
+            flag = 1
+        else:
+            flag = 0
+            self.name_input.setStyleSheet("border: 2px solid #DD5555;")
+        print(self.color_button.text())
+        if self.color_button.text() != 'Select color':
+            flag = 1
+        else:
+            flag = 0
+            self.color_button.setStyleSheet("border: 2px solid #DD5555;")
+        if flag == 1:
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
             if self.prefix_check_box.isEnabled():
@@ -232,6 +276,7 @@ class Diplom_form(QWidget):
                    # print('Item content call', self.sps_table_widget.item(row, 0).text())
                     list_to_json.append({'call': self.sps_table_widget.item(row, 0).text().upper(),
                                       'score': self.sps_table_widget.item(row, 1).text(),
+                                      'mode' : self.combo_mode_list[row]['combo'+str(row)].currentText(),
                                       'name': name_programm, 'date_e': date_enable,
                                       'colorR':self.colorR,
                                       'colorG': self.colorG,
@@ -289,8 +334,9 @@ class Diplom_form(QWidget):
                     self.close()
 
             self.logForm.diploms_init()
-        else:
-            self.name_input.setStyleSheet("border: 2px solid #DD5555;")
+        elif flag == 0:
+            pass
+
     def write_rules_to_file(self, data_to_json, name_output_file):
         filename = str(name_output_file).strip()+'.rules'
         with open(filename, 'w') as f:
@@ -341,16 +387,20 @@ class diplom:
         #print("count_in_rules:_>",len(self.decode_data))
         for index_in_rules in range(len(self.decode_data)):
             #print("decode in filter", index_in_rules, " - ", self.decode_data[index_in_rules], "call", self.call)
-            if self.call == self.decode_data[index_in_rules]['call']:
+            if call_dict['call'] == self.decode_data[index_in_rules]['call']:
                 if call_dict['mode'] == 'cluster':
                     return True
                 else:
                     found_records = self.search_call_in_base(self.call)
                     # 3 - not resolved
                     if str(self.decode_data[index_in_rules]['repeats']) == '3':
-                        if found_records == []:
-                            flag = 'true'  #True
+                        #print("Found Records:_>", found_records)
+                        if not found_records:
+                            return True
+                            #flag = 'true'  #True
+                            print("if not found_records", flag)
                         else:
+                            print("else", flag)
                             flag = 'false' #False
                     # 0 - resolved other band
                     if str(self.decode_data[index_in_rules]['repeats']) == '0':
@@ -374,10 +424,14 @@ class diplom:
                                     call_dict['band'] == found_records[i]['BAND']:
                                 flag = 'false'  # False
             else:
+                print("else comparsion call", flag)
                 flag = 'false'
         if flag == 'true':
+            print("return", flag)
             return True
+
         if flag == 'false':
+            print("return", flag)
             return False
 
 
@@ -435,6 +489,26 @@ class diplom:
 
     def get_data(self):
         return self.decode_data
+
+    def del_dilpom(self, name_diplom, settingsDict, logForm):
+        self.settingsDict = settingsDict
+        if self.settingsDict['diploms-json'] != '':
+            list_string = json.loads(self.settingsDict['diploms-json'])
+            #print(type(list_string))
+            count_diploms = len(list_string)
+            for i in range(count_diploms):
+                if list_string[i]['name_programm'] == name_diplom:
+                    del list_string[i]
+            self.settingsDict['diploms-json'] = json.dumps(list_string)
+            main.Settings_file.update_file_to_disk(self)
+
+
+        print("del_dilpom", list_string)
+        os.remove(name_diplom+'.rules')
+        os.remove(name_diplom + '.adi')
+        logForm.menu_rename_diplom()
+        logForm.diploms_init()
+        logForm.menu()
 
 class static_diplom(QWidget):
     def __init__(self, diplom_name, settingsDict):
@@ -500,7 +574,8 @@ class static_diplom(QWidget):
         total_score = 0
         for record in self.all_records:
             for i in range(len(self.rules)):
-                if record['CALL'] == self.rules[i]['call']:
+                if record['CALL'] == self.rules[i]['call'] and \
+                        record['MODE'] == self.rules[i]['mode']:
                     total_score += int(self.rules[i]['score'])
 
         self.score_total_label.setText("Total score: " + str(total_score))
