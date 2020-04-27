@@ -695,8 +695,10 @@ class About_window(QWidget):
         self.setLayout(self.horizontal_lay)
 
     def updater(self):
-
-        check.start()
+        self.check_update.setEnabled(False)
+        self.check_update.setText("Found update")
+        self.check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=about_window)
+        self.check.start()
 
 class realTime(QThread):
 
@@ -1971,7 +1973,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.1'
+    APP_VERSION = '1.2'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -2019,7 +2021,7 @@ if __name__ == '__main__':
         adi_file = Adi_file()
         about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
-        check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
+       # check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
 
         #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':

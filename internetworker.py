@@ -147,107 +147,130 @@ class check_update (QThread):
         path_directory_updater_app = "/upd/"
 
         action = server_url_get+path_directory_updater_app+self.version+"/"+self.settingsDict['my-call']
+        flag = 0
+        data_flag = 0
+        try:
+            response = requests.get(action)
+            flag = 1
+        except Exception:
+            flag = 0
 
-        #try:
-        response = requests.get(action)
-
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-        version = soup.find(id="version").get_text()
-        git_path = soup.find(id="git_path").get_text()
-        date = soup.find(id="date").get_text()
-        update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
-                             "Found new version "+version+" install it?",
-                             buttons=QMessageBox.Yes | QMessageBox.No,
-                             defaultButton=QMessageBox.Yes)
-        if update_result == QMessageBox.Yes:
-            print("Yes")
+        if flag == 1:
+            soup = BeautifulSoup(response.text, 'html.parser')
             try:
-                adi_name_list = []
-                for file in os.listdir():
-                    if file.endswith(".adi"):
-                        adi_name_list.append(file)
-                rules_name_list = []
-                for file in os.listdir():
-                    if file.endswith(".rules"):
-                        rules_name_list.append(file)
-                print("Rules name List:_>", rules_name_list)
-                print("Adi name List:_>", adi_name_list)
-                home = expanduser("~")
-                print("Home path:_>", home)
-                os.mkdir(home+"/linuxlog-backup")
-                for i in range(len(adi_name_list)):
-                    os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
-                for i in range(len(rules_name_list)):
-                    os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
-                os.system("cp settings.cfg " + home+"/linuxlog-backup")
-                # archive dir
-                os.system("tar -cf linlog.tar.gz " + home + "/linlog")
-
-                # delete dir linlog
-                os.system("rm -rf " + home + "/linlog/")
-                # clone from git repository to ~/linlog
-                os.system("git clone " + git_path + " " + home + "/linlog")
-
-                # copy adi and rules file from linuxlog-backup to ~/linlog
-                for i in range(len(adi_name_list)):
-                    os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
-                for i in range(len(rules_name_list)):
-                    os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
-
-                # read and replace string in new settings.cfg
-
-                file = open(home+"/linlog/settings.cfg", "r")
-                settings_list = {}
-                for configstring in file:
-                    if configstring != '' and configstring != ' ' and configstring[0] != '#':
-                        configstring = configstring.strip()
-                        configstring = configstring.replace("\r", "")
-                        configstring = configstring.replace("\n", "")
-                        splitString = configstring.split('=')
-                        settings_list.update({splitString[0]: splitString[1]})
-                file.close()
-                settings_list['diploms-json'] = self.settingsDict['diploms-json']
-                settings_list['background-color'] = self.settingsDict['background-color']
-                settings_list['form-background'] = self.settingsDict['form-background']
-                settings_list['color'] = self.settingsDict['color']
-                settings_list['solid-color'] = self.settingsDict['solid-color']
-                settings_list['my-call'] = self.settingsDict['my-call']
-                print("settings list^_>", settings_list)
-
-                filename = home+"/linlog/settings.cfg"
-                with open(filename, 'r') as f:
-                    old_data = f.readlines()
-                for index, line in enumerate(old_data):
-                    key_from_line = line.split('=')[0]
-                    # print ("key_from_line:",key_from_line)
-                    for key in settings_list:
-
-                        if key_from_line == key:
-                            # print("key",key , "line", line)
-                            old_data[index] = key + "=" + settings_list[key] + "\n"
-                with open(filename, 'w') as f:
-                    f.writelines(old_data)
-                # done!
-
-                #delete backup dir
-                os.system("rm -rf " + home + "/linuxlog-backup")
+                version = soup.find(id="version").get_text()
+                git_path = soup.find(id="git_path").get_text()
+                date = soup.find(id="date").get_text()
+                data_flag = 1
             except Exception:
-                std.std.message(self.parrent, "Don't found adi/rules files", "Oops")
+                std.std.message(self.parrent, "You have latest version", "UPDATER")
+                self.parrent.check_update.setText("> Check update <")
+                self.parrent.check_update.setEnabled(True)
+            if data_flag == 1:
+                update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
+                                     "Found new version "+version+" install it?",
+                                     buttons=QMessageBox.Yes | QMessageBox.No,
+                                     defaultButton=QMessageBox.Yes)
+                if update_result == QMessageBox.Yes:
+                    print("Yes")
+                    try:
+                        self.parrent.check_update.setText("Updating")
+                        adi_name_list = []
+                        for file in os.listdir():
+                            if file.endswith(".adi"):
+                                adi_name_list.append(file)
+                        rules_name_list = []
+                        for file in os.listdir():
+                            if file.endswith(".rules"):
+                                rules_name_list.append(file)
+                        print("Rules name List:_>", rules_name_list)
+                        print("Adi name List:_>", adi_name_list)
+                        home = expanduser("~")
+                        print("Home path:_>", home)
+                        os.mkdir(home+"/linuxlog-backup")
+                        for i in range(len(adi_name_list)):
+                            os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
+                        for i in range(len(rules_name_list)):
+                            os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
+                        os.system("cp settings.cfg " + home+"/linuxlog-backup")
+                        # archive dir
+                        os.system("tar -cf linlog.tar.gz " + home + "/linlog")
+
+                        # delete dir linlog
+                        os.system("rm -rf " + home + "/linlog/")
+                        # clone from git repository to ~/linlog
+                        os.system("git clone " + git_path + " " + home + "/linlog")
+
+                        # copy adi and rules file from linuxlog-backup to ~/linlog
+                        for i in range(len(adi_name_list)):
+                            os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
+                        for i in range(len(rules_name_list)):
+                            os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
+
+                        # read and replace string in new settings.cfg
+
+                        file = open(home+"/linlog/settings.cfg", "r")
+                        settings_list = {}
+                        for configstring in file:
+                            if configstring != '' and configstring != ' ' and configstring[0] != '#':
+                                configstring = configstring.strip()
+                                configstring = configstring.replace("\r", "")
+                                configstring = configstring.replace("\n", "")
+                                splitString = configstring.split('=')
+                                settings_list.update({splitString[0]: splitString[1]})
+                        file.close()
+                        settings_list['diploms-json'] = self.settingsDict['diploms-json']
+                        settings_list['background-color'] = self.settingsDict['background-color']
+                        settings_list['form-background'] = self.settingsDict['form-background']
+                        settings_list['color'] = self.settingsDict['color']
+                        settings_list['solid-color'] = self.settingsDict['solid-color']
+                        settings_list['my-call'] = self.settingsDict['my-call']
+                        print("settings list^_>", settings_list)
+
+                        filename = home+"/linlog/settings.cfg"
+                        with open(filename, 'r') as f:
+                            old_data = f.readlines()
+                        for index, line in enumerate(old_data):
+                            key_from_line = line.split('=')[0]
+                            # print ("key_from_line:",key_from_line)
+                            for key in settings_list:
+
+                                if key_from_line == key:
+                                    # print("key",key , "line", line)
+                                    old_data[index] = key + "=" + settings_list[key] + "\n"
+                        with open(filename, 'w') as f:
+                            f.writelines(old_data)
+                        # done!
+
+                        #delete backup dir
+                        os.system("rm -rf " + home + "/linuxlog-backup")
+
+                        std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
+                                                                             "Please restart LinuxLog", "UPDATER")
+                        self.version = version
+                        self.parrent.check_update.setText("> Check update <")
+                        self.parrent.check_update.setEnabled(True)
+                        self.parrent.text.setText("Version:"+version+"\n\nBaston Sergey\nbastonsv@gmail.com")
+                    except Exception:
+                        std.std.message(self.parrent, "Don't found adi/rules files", "Oops")
 
 
-                        #print("Files names:_>", file)
-                    #    inp = open(os.path.join(dirpath, file_name), 'r')
-                    #    for line in inp:
-                    #        if pattern in line:
-                    #            print(inp)
+                                #print("Files names:_>", file)
+                            #    inp = open(os.path.join(dirpath, file_name), 'r')
+                            #    for line in inp:
+                            #        if pattern in line:
+                            #            print(inp)
 
+
+                else:
+                    print("No")
+                    self.parrent.check_update.setText("> Check update <")
+                    self.parrent.check_update.setEnabled(True)
 
         else:
-            print("No")
-
+            std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
         #std.std.message(self.parrent, "Found new version: "+version+" \n Date:"+date, "UPDATER")
-        print("SOUP", version,"\n", git_path,"\n", date)
+       # print("SOUP", version,"\n", git_path,"\n", date)
         #except Exception:
         #    print("Exception in chek_update:_>", Exception)
          #   std.std.message(self.parrent, "You have latest version", "UPDATER")
