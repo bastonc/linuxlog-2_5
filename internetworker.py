@@ -4,6 +4,9 @@
 import urllib
 import std
 import requests
+import shutil
+import os
+from os.path import expanduser
 from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtGui import QPixmap
@@ -145,19 +148,111 @@ class check_update (QThread):
 
         action = server_url_get+path_directory_updater_app+self.version+"/"+self.settingsDict['my-call']
 
-        try:
-            response = requests.get(action)
+        #try:
+        response = requests.get(action)
 
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            version = soup.find(id="version").get_text()
-            git_path = soup.find(id="git_path").get_text()
-            date = soup.find(id="date").get_text()
-            std.std.message(self.parrent, "Found new version: "+version+" \n Date:"+date, "UPDATER")
-            print("SOUP", version,"\n", git_path,"\n", date)
-        except Exception:
-            print("Exception in chek_update:_>", Exception)
-            std.std.message(self.parrent, "You have latest version", "UPDATER")
+        soup = BeautifulSoup(response.text, 'html.parser')
+        version = soup.find(id="version").get_text()
+        git_path = soup.find(id="git_path").get_text()
+        date = soup.find(id="date").get_text()
+        update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
+                             "Found new version "+version+" install it?",
+                             buttons=QMessageBox.Yes | QMessageBox.No,
+                             defaultButton=QMessageBox.Yes)
+        if update_result == QMessageBox.Yes:
+            print("Yes")
+            try:
+                adi_name_list = []
+                for file in os.listdir():
+                    if file.endswith(".adi"):
+                        adi_name_list.append(file)
+                rules_name_list = []
+                for file in os.listdir():
+                    if file.endswith(".rules"):
+                        rules_name_list.append(file)
+                print("Rules name List:_>", rules_name_list)
+                print("Adi name List:_>", adi_name_list)
+                home = expanduser("~")
+                print("Home path:_>", home)
+                os.mkdir(home+"/linuxlog-backup")
+                for i in range(len(adi_name_list)):
+                    os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
+                for i in range(len(rules_name_list)):
+                    os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
+                os.system("cp settings.cfg " + home+"/linuxlog-backup")
+                # archive dir
+                os.system("tar -cf linlog.tar.gz " + home + "/linlog")
+
+                # delete dir linlog
+                os.system("rm -rf " + home + "/linlog/")
+                # clone from git repository to ~/linlog
+                os.system("git clone " + git_path + " " + home + "/linlog")
+
+                # copy adi and rules file from linuxlog-backup to ~/linlog
+                for i in range(len(adi_name_list)):
+                    os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
+                for i in range(len(rules_name_list)):
+                    os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
+
+                # read and replace string in new settings.cfg
+
+                file = open(home+"/linlog/settings.cfg", "r")
+                settings_list = {}
+                for configstring in file:
+                    if configstring != '' and configstring != ' ' and configstring[0] != '#':
+                        configstring = configstring.strip()
+                        configstring = configstring.replace("\r", "")
+                        configstring = configstring.replace("\n", "")
+                        splitString = configstring.split('=')
+                        settings_list.update({splitString[0]: splitString[1]})
+                file.close()
+                settings_list['diploms-json'] = self.settingsDict['diploms-json']
+                settings_list['background-color'] = self.settingsDict['background-color']
+                settings_list['form-background'] = self.settingsDict['form-background']
+                settings_list['color'] = self.settingsDict['color']
+                settings_list['solid-color'] = self.settingsDict['solid-color']
+                settings_list['my-call'] = self.settingsDict['my-call']
+                print("settings list^_>", settings_list)
+
+                filename = home+"/linlog/settings.cfg"
+                with open(filename, 'r') as f:
+                    old_data = f.readlines()
+                for index, line in enumerate(old_data):
+                    key_from_line = line.split('=')[0]
+                    # print ("key_from_line:",key_from_line)
+                    for key in settings_list:
+
+                        if key_from_line == key:
+                            # print("key",key , "line", line)
+                            old_data[index] = key + "=" + settings_list[key] + "\n"
+                with open(filename, 'w') as f:
+                    f.writelines(old_data)
+                # done!
+
+                #delete backup dir
+                os.system("rm -rf " + home + "/linuxlog-backup")
+            except Exception:
+                std.std.message(self.parrent, "Don't found adi/rules files", "Oops")
+
+
+                        #print("Files names:_>", file)
+                    #    inp = open(os.path.join(dirpath, file_name), 'r')
+                    #    for line in inp:
+                    #        if pattern in line:
+                    #            print(inp)
+
+
+        else:
+            print("No")
+
+        #std.std.message(self.parrent, "Found new version: "+version+" \n Date:"+date, "UPDATER")
+        print("SOUP", version,"\n", git_path,"\n", date)
+        #except Exception:
+        #    print("Exception in chek_update:_>", Exception)
+         #   std.std.message(self.parrent, "You have latest version", "UPDATER")
+
+
         #if (response.find('Warning') != -1) or (response.find('Error') != -1):
          #   message = QMessageBox(self.parrent_window)
             # message.setFixedHeight(200)
