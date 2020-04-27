@@ -1328,6 +1328,8 @@ class logForm(QMainWindow):
 
         ###
         '''
+
+
         logWindow.close()
         internetSearch.close()
         logSearch.close()
