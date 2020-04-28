@@ -57,7 +57,8 @@ class Menu (QWidget):
         self.tab.addTab(self.io_tab, "Log file")
         self.tab.addTab(self.service_widget, "Services")
     # create General Tab
-        formstyle = "background :"+self.settingsDict['form-background']
+        formstyle = "background: "+self.settingsDict['form-background']+"; color: "+\
+                    self.settingsDict['color-table']+"; font-weight: bold;"
         self.general_tab.layout = QVBoxLayout(self) # create vertical lay
         self.call_label = QLabel("You Callsign")
         self.call_input = QLineEdit()
@@ -70,7 +71,7 @@ class Menu (QWidget):
         self.back_color_input = QPushButton()
         self.back_color_input.clicked.connect(self.back_color_select)
         self.back_color_input.setFixedWidth(70)
-        self.back_color_input.setStyleSheet("background:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['background-color'] )
+        self.back_color_input.setStyleSheet("background:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['background-color'] + ";")
         self.back_color_input.setText(self.settingsDict['background-color'])
         #self.back_color_input.setStyleSheet(formstyle)
         self.text_color_label = QLabel("Text color")
@@ -78,17 +79,26 @@ class Menu (QWidget):
         self.text_color_input = QPushButton()
         self.text_color_input.clicked.connect(self.text_color_select)
         self.text_color_input.setFixedWidth(70)
-        self.text_color_input.setStyleSheet("background:" + self.settingsDict['color'] + "; color:" + self.settingsDict['color'])
+        self.text_color_input.setStyleSheet("background:" + self.settingsDict['color'] + "; color:" + self.settingsDict['color'] + ";")
         self.text_color_input.setText(self.settingsDict['color'])
 
         #self.text_color_input.setStyleSheet(formstyle)
-        self.form_color_label = QLabel("Form color")
+        self.form_color_label = QLabel("Form background color")
         self.form_color_label.setStyleSheet(self.label_style)
         self.form_color_input = QPushButton()
         self.form_color_input.clicked.connect(self.form_color_select)
         self.form_color_input.setFixedWidth(70)
-        self.form_color_input.setStyleSheet("background:" + self.settingsDict['form-background'] + "; color:" + self.settingsDict['form-background'])
+        self.form_color_input.setStyleSheet("background: " + self.settingsDict['form-background'] + "; color:" + self.settingsDict['form-background'] + ";")
         self.form_color_input.setText(self.settingsDict['form-background'])
+        #
+        self.text_form_color_label = QLabel("Form text color")
+        self.text_form_color_label.setStyleSheet(self.label_style)
+        self.text_form_color_button = QPushButton()
+        self.text_form_color_button.clicked.connect(self.form_text_color_select)
+        self.text_form_color_button.setFixedWidth(70)
+        self.text_form_color_button.setStyleSheet("background: " + self.settingsDict['color-table']+ "; color: " + self.settingsDict['color-table'] + ";")
+        self.text_form_color_button.setText(self.settingsDict['color-table'])
+
         # setup all elements to vertical lay
         self.general_tab.layout.addWidget(self.call_label)
         self.general_tab.layout.addWidget(self.call_input)
@@ -102,6 +112,9 @@ class Menu (QWidget):
         self.general_tab.layout.addSpacing(20)
         self.general_tab.layout.addWidget(self.form_color_label)
         self.general_tab.layout.addWidget(self.form_color_input)
+        self.general_tab.layout.addWidget(self.text_form_color_label)
+        self.general_tab.layout.addWidget(self.text_form_color_button)
+
         self.general_tab.setLayout(self.general_tab.layout)
 
     # create Cluster tab
@@ -470,7 +483,7 @@ class Menu (QWidget):
         self.update_color_schemes()
 
     def text_color_select(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(initial=QColor(self.text_color_input.text()), parent=None, title="Select color for text in window")
 
         if color.isValid():
             self.text_color_input.setText(color.name())
@@ -478,18 +491,25 @@ class Menu (QWidget):
             self.text_color_input.autoFillBackground()
 
     def form_color_select(self):
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(initial=QColor(self.form_color_input.text()), parent=None, title="Select color for text in tables")
 
         if color.isValid():
             self.form_color_input.setText(color.name())
             self.form_color_input.setStyleSheet("background:" + color.name() + ";")
             self.form_color_input.autoFillBackground()
 
+    def form_text_color_select(self):
+        color = QColorDialog.getColor(initial=QColor(self.text_form_color_button.text()), parent=None, title="Select color for text in tables")
+
+        if color.isValid():
+            self.text_form_color_button.setText(color.name())
+            self.text_form_color_button.setStyleSheet("background:" + color.name() + ";")
+            self.text_form_color_button.autoFillBackground()
     #self.back_color_input.clicked.connect(self.text_color_select)
 
     def back_color_select(self):
         #self.dlg.show()
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(initial=QColor(self.back_color_input.text()), parent=None, title="Select color for background color")
 
         if color.isValid():
             #self.back_color_input.setText()
@@ -511,6 +531,7 @@ class Menu (QWidget):
         self.settingsDict['background-color'] = self.back_color_input.text()
         self.settingsDict['color'] = self.text_color_input.text()
         self.settingsDict['form-background'] = self.form_color_input.text()
+        self.settingsDict['color-table'] = self.text_form_color_button.text()
         self.settingsDict['telnet-host'] = self.cluster_host_input.text()
         self.settingsDict['telnet-port'] = self.cluster_port_input.text()
         self.settingsDict['list-by-band'] = self.cluster_filter_band_input.text()

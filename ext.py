@@ -54,7 +54,7 @@ class Diplom_form(QWidget):
         self.setWindowIcon(QIcon('logo.png'))
         style = "QWidget{background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict[
             'color'] + ";}"
-        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: 200;"
+        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: bold; color:"+ self.settingsDict['color-table']+";"
         self.setGeometry(int(self.settingsDict['log-form-window-left']), int(self.settingsDict['log-form-window-top']),
                          int(self.settingsDict['log-form-window-width']), int(self.settingsDict['log-form-window-height']))
 

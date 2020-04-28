@@ -292,19 +292,19 @@ class Fill_table(QThread):
                 # print("Number record:", self.allRecord[row][pole])
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
-                    self.window.tableWidget.setItem(row, col,
-                                                    self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
-                                                                        Qt.ItemIsSelectable | Qt.ItemIsEnabled))
-                    #if col == 0:
-                    #   self.window.tableWidget.setItem(row, col,
-                    #                             self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
-                    #                                                 Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                    #self.window.tableWidget.setItem(row, col,
+                     #                               self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
+                      #                                                  Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                    if col == 0:
+                       self.window.tableWidget.setItem(row, col,
+                                                 self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
+                                                                     Qt.ItemIsSelectable | Qt.ItemIsEnabled))
 
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
 
-                    #else:
-                    #    self.window.tableWidget.setItem(row, col,
-                     #                            QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                    else:
+                        self.window.tableWidget.setItem(row, col,
+                                                 QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
         self.window.tableWidget.resizeColumnsToContents()
         self.window.tableWidget.resizeRowsToContents()
 
@@ -354,8 +354,8 @@ class log_Window(QWidget):
                 self.setWindowTitle('LinuxLog | All QSO')
                 self.setWindowIcon(QIcon('logo.png'))
                 self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
-                style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-                    'color'] + ";}"
+                style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+                    'color'] + ";"
                 self.setStyleSheet(style)
 
                 # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
@@ -364,8 +364,8 @@ class log_Window(QWidget):
                 self.tableWidget = QTableWidget()
                 self.tableWidget.move(0, 0)
                 self.tableWidget.verticalHeader().hide()
-                style_table = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                    'color'] + "; font: 12px}"
+                style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+                    'color-table'] + "; font: 12px; font-weight: bold; "
                 self.tableWidget.setStyleSheet(style_table)
                 fnt = self.tableWidget.font()
                 fnt.setPointSize(8)
@@ -467,8 +467,8 @@ class log_Window(QWidget):
             style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
                     settingsDict['color'] + ";}"
 
-            style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                'color'] + "; font: 12px}"
+            style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+                'color-table'] + "; font: 12px; font-weight: bold;"
             self.tableWidget.setStyleSheet(style_form)
 
             self.setStyleSheet(style)
@@ -568,16 +568,16 @@ class logSearch(QWidget):
         self.setWindowTitle('LinuxLog | Search')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowOpacity(float(settingsDict['logSearch-opacity']))
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px;}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + "; font: 12px;"
         self.setStyleSheet(style)
 
         # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
         #			'MODE', 'RST_RCVD', 'RST_SENT',	'NAME', 'QTH')
         #		   )
         self.tableWidget = QTableWidget()
-        style_table = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px}"
+        style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px; font-weight: bold;"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
@@ -635,7 +635,7 @@ class logSearch(QWidget):
                 settingsDict['color'] + ";}"
 
         style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px}"
+            'color-table'] + "; font: 12px}"
         self.tableWidget.setStyleSheet(style_form)
 
         self.setStyleSheet(style)
@@ -884,13 +884,14 @@ class logForm(QMainWindow):
 
     def initUI(self):
 
-        styleform = "background :" + settingsDict['form-background']+"; font-weight: 200;"
+        styleform = "background :" + settingsDict['form-background']+\
+                    "; font-weight: bold; color: " + settingsDict['color-table'] + ";"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
         self.setWindowIcon(QIcon('logo.png'))
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + ";"
         self.setStyleSheet(style)
         self.menu()
 
@@ -1136,15 +1137,15 @@ class logForm(QMainWindow):
         self.inputCall.setText(text.upper())
 
         if re.search('[А-Я]', text):
-            self.inputCall.setStyleSheet("color: rgb(255,2,2);")
+            #self.inputCall.setStyleSheet("color: rgb(255,2,2);")
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
-        elif re.search('[A-Z]', text):
-            style = "QLineEdit{ border: 1px solid " + settingsDict[
-                'solid-color'] + "; border-radius: 50px; background: " + settingsDict[
-                        'form-background'] + "; font-weight: bold;}"
-            self.inputCall.setStyleSheet(style)
+        #elif re.search('[A-Z]', text):
+            #style = "border: 1px solid " + settingsDict[
+            #    'solid-color'] + "; border-radius: 50px; background: " + settingsDict[
+             #           'form-background'] + "; font-weight: bold;"
+           # self.inputCall.setStyleSheet(style)
             # pyautogui.hotkey('ctrl', 'shift')
             # print(text)
 
@@ -1509,7 +1510,7 @@ class logForm(QMainWindow):
         self.comboBand.setStyleSheet(style)
         self.labelStatusCat.setStyleSheet(style)
         style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px}"
+            'color-table'] + "; font: 12px}"
         self.inputCall.setStyleSheet(style_form)
         self.inputRstR.setStyleSheet(style_form)
         self.inputRstS.setStyleSheet(style_form)
@@ -1687,14 +1688,14 @@ class telnetCluster(QWidget):
         self.setWindowTitle('Telnet cluster')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowOpacity(float(settingsDict['clusterWindow-opacity']))
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + ";"
         self.setStyleSheet(style)
         self.labelIonosphereStat = QLabel()
         self.labelIonosphereStat.setStyleSheet("font: 12px;")
-        style = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px}"
-        self.tableWidget.setStyleSheet(style)
+        style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px; font-weight: bold;"
+        self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
         self.tableWidget.setFont(fnt)
@@ -1827,7 +1828,7 @@ class telnetCluster(QWidget):
                 settingsDict['color'] + ";}"
         self.labelIonosphereStat.setStyleSheet(style)
         style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + "; font: 12px}"
+            'color-table'] + "; font: 12px}"
         self.tableWidget.setStyleSheet(style_form)
 
         self.setStyleSheet(style)
@@ -1905,20 +1906,20 @@ class hello_window(QWidget):
         self.setGeometry(width_coordinate, height_coordinate, 400, 250)
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('Welcome to LinLog')
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + ";"
         self.setStyleSheet(style)
-        style_caption = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + "; font-size: 36px;}"
+        style_caption = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + "; font-size: 36px;"
         self.caption_label = QLabel("Hi friend")
         self.caption_label.setStyleSheet(style_caption)
-        style_text = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + "; font-size: 12px;}"
+        style_text = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + "; font-size: 12px;"
         self.welcome_text_label = QLabel("It's first runing.\nPlease enter you callsign")
         self.welcome_text_label.setStyleSheet(style_text)
         self.call_input = QLineEdit()
         self.call_input.setStyleSheet("QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color'] + ";}")
+            'color-table'] + ";}")
         self.call_input.setFixedWidth(150)
         self.ok_button = QPushButton("GO")
         self.ok_button.clicked.connect(self.ok_button_push)
@@ -1936,7 +1937,7 @@ class hello_window(QWidget):
     def ok_button_push(self):
         if self.call_input.text().strip() != "":
             settingsDict['my-call'] = self.call_input.text().strip().upper()
-            settings_file.save_all_settings()
+            settings_file.save_all_settings(self)
             hello_window.close()
             subprocess.call(["python3", "main.py"])
             #subprocess.call("./main")
