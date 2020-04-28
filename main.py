@@ -263,27 +263,28 @@ class Fill_table(QThread):
         super().__init__()
         self.all_collumn = all_column
         self.window = window
-        self.all_record = all_record
+        #self.all_record = all_record
         self.c = communicate
 
 
     def run(self):
 
         self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
-        self.all_record = self.allRecord
+        #self.all_record = self.allRecord
         self.c = Communicate()
         self.c.signalComplited.connect(Reciev_allRecords)
         self.c.signalComplited.emit(self.allRecord)
 
         self.allRows = len(self.allRecord)
-        #print(" self.allRows:_> ",  self.allRows)
+        #print(" self.allRecords:_> ",  self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         self.window.tableWidget.setHorizontalHeaderLabels(
-            ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+            ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
              "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
+            #self.window.tableWidget.insertRow(row)
             #print("row -", row)
             for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
@@ -301,6 +302,20 @@ class Fill_table(QThread):
                                                                      Qt.ItemIsSelectable | Qt.ItemIsEnabled))
 
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                    elif col == 1:
+                        date = str(self.allRecord[(self.allRows - 1) - row][pole])
+                        date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                        #print(time_formated)
+                        self.window.tableWidget.setItem(row, col,
+                                                        QTableWidgetItem(date_formated))
+
+                    elif col == 2:
+                        time = str(self.allRecord[(self.allRows - 1) - row][pole])
+                        time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                        print(time_formated)
+                        self.window.tableWidget.setItem(row, col,
+                                                        QTableWidgetItem(time_formated))
+
 
                     else:
                         self.window.tableWidget.setItem(row, col,
@@ -372,6 +387,7 @@ class log_Window(QWidget):
                 self.tableWidget.setSortingEnabled(True)
                 self.tableWidget.setFont(fnt)
                 self.tableWidget.setColumnCount(13)
+
                 self.tableWidget.itemActivated.connect(self.store_change_record)
 
                 self.layout = QVBoxLayout()
@@ -396,6 +412,7 @@ class log_Window(QWidget):
         def refresh_data(self):
             #print("refresh_data:_>", All_records)
             self.tableWidget.clear()
+            #self.tableWidget.insertRow()
             #self.tableWidget.setHorizontalHeaderLabels(
              #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
              #    "RST s", "      Name      ", "      QTH      ", " Comments ",
@@ -404,6 +421,7 @@ class log_Window(QWidget):
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
             #self.tableWidget.resizeColumnsToContents()
+            self.tableWidget.resizeRowsToContents()
             #self.tableWidget.resizeRowsToContents()
             #time.sleep(2)
             self.allRows = len(All_records)
@@ -426,8 +444,10 @@ class log_Window(QWidget):
             #print("store_change_record")
             row = self.tableWidget.currentItem().row()
             record_number = self.tableWidget.item(row, 0).text()
-            date = self.tableWidget.item(row, 1).text()
-            time = self.tableWidget.item(row, 2).text()
+            date = str(self.tableWidget.item(row, 1).text())
+            date_formated = date.replace("-", "")
+            time = str(self.tableWidget.item(row, 2).text())
+            time_formated = time.replace(":", "")
             call = self.tableWidget.item(row, 4).text()
             freq = All_records[int(record_number) - 1]['FREQ']
             rstR = self.tableWidget.item(row, 6).text()
@@ -450,7 +470,7 @@ class log_Window(QWidget):
             #    pass
 
             new_object = {'BAND': band, 'CALL': call, 'FREQ': freq, 'MODE': mode, 'OPERATOR': operator,
-                          'QSO_DATE': date, 'TIME_ON': time, 'RST_RCVD': rstR, 'RST_SENT': rstS,
+                          'QSO_DATE': date_formated, 'TIME_ON': time_formated, 'RST_RCVD': rstR, 'RST_SENT': rstS,
                           'NAME': name, 'QTH': qth, 'COMMENTS': comment, 'TIME_OFF': time_off,
                           'eQSL_QSL_RCVD': eQSL_QSL_RCVD,
                           'EOR': 'R\n', 'string_in_file': string_in_file, 'records_number': records_number}
@@ -527,7 +547,16 @@ class log_Window(QWidget):
             self.tableWidget.resizeRowsToContents()
 
             for col in range(allCols):
-                self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+                if col == 1:
+                    date = str(recordObject[self.allCollumn[col]])
+                    date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                    self.tableWidget.setItem(0, col, QTableWidgetItem(date_formated))
+                elif col == 2:
+                    time = str(recordObject[self.allCollumn[col]])
+                    time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                    self.tableWidget.setItem(0, col, QTableWidgetItem(time_formated))
+                else:
+                    self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
 
         def search_in_table(self, call):
             list_dict = []
