@@ -522,9 +522,9 @@ class log_Window(QWidget):
             # row = self.allRows + 1
             # print(recordObject)
             # print (row)
-            #self.tableWidget.setRowCount(all_rows)
-            #self.tableWidget.insertRow(0)
-            #self.tableWidget.resizeRowsToContents()
+            self.tableWidget.setRowCount(all_rows)
+            self.tableWidget.insertRow(0)
+            self.tableWidget.resizeRowsToContents()
 
             for col in range(allCols):
                 self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
