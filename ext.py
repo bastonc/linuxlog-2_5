@@ -69,18 +69,14 @@ class Diplom_form(QWidget):
         self.name_layout.addWidget(self.name_input)
         self.name_layout.addStretch(300)
         #
-        self.date_layout = QHBoxLayout()
-        self.start_end_date = QVBoxLayout()
-        self.start_date_input = QLineEdit()
-        self.start_date_input.setFixedWidth(80)
-        self.end_date_input = QLineEdit()
-        self.end_date_input.setFixedWidth(80)
-        self.start_end_date.addWidget(self.start_date_input)
-        self.start_end_date.addWidget(self.end_date_input)
-        self.date_checkbox = QCheckBox()
-        self. date_checkbox.setText("Enable Date in diplom")
-        self.date_layout.addLayout(self.start_end_date)
-        self.date_layout.addWidget(self.date_checkbox)
+
+
+
+
+
+
+
+
         #
         self.score_layout = QHBoxLayout()
         score_text = QLabel("How many points do you need")
@@ -101,8 +97,8 @@ class Diplom_form(QWidget):
         self.repeat_layout.addStretch(100)
         #
         self.sps_layout = QHBoxLayout()
-        self.prefix_check_box = QCheckBox()
-        self.prefix_check_box.setText("Use only \n prefix")
+
+
         self.sps_text = QLabel("Special calls \n or prefix:")
         self.sps_table_widget = QTableWidget()
         self.sps_table_widget.setStyleSheet(styleform)
@@ -136,7 +132,7 @@ class Diplom_form(QWidget):
         add_row = QPushButton("Add rows")
         add_row.clicked.connect(self.add_row)
         self.prefix_lay = QVBoxLayout()
-        self.prefix_lay.addWidget(self.prefix_check_box)
+        #self.prefix_lay.addWidget(self.prefix_check_box)
         self.prefix_lay.addWidget(self.sps_text)
         self.sps_layout.addLayout(self.prefix_lay)
         self.sps_layout.addWidget(self.sps_table_widget)
@@ -165,7 +161,7 @@ class Diplom_form(QWidget):
         #
         self.global_layout = QVBoxLayout()
         self.global_layout.addLayout(self.name_layout)
-        self.global_layout.addLayout(self.date_layout)
+        #self.global_layout.addLayout(self.date_layout)
         #self.spaceItem = QSpacerItem(15, 10)
         #self.global_layout.addSpacerItem(self.spaceItem)
         self.global_layout.addLayout(self.color_layout)
@@ -200,14 +196,14 @@ class Diplom_form(QWidget):
         self.name_input.setText(list_data[0]['name'])
         self.score_input.setText(list_data[0]['score_complite'])
         self.repeat_combo.setCurrentIndex(list_data[0]['repeats'])
-        if list_data[0]['date_e'] == 'y':
-            self.date_checkbox.setChecked(True)
-        else:
-            self.date_checkbox.setChecked(False)
-        if list_data[0]['prefix_only'] == 'y':
-            self.prefix_check_box.setChecked(True)
-        else:
-            self.prefix_check_box.setChecked(False)
+        #if list_data[0]['date_e'] == 'y':
+        #    self.date_checkbox.setChecked(True)
+        #else:
+        #    self.date_checkbox.setChecked(False)
+        #if list_data[0]['prefix_only'] == 'y':
+        #    self.prefix_check_box.setChecked(True)
+        #else:
+           #self.prefix_check_box.setChecked(False)
 
         rows = len(list_data)
         self.sps_table_widget.setRowCount(rows)
@@ -252,20 +248,20 @@ class Diplom_form(QWidget):
         if flag == 1:
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
-            if self.prefix_check_box.isEnabled():
-                prefix_only = 'y'
-            else:
-                prefix_only = 'n'
+            #if self.prefix_check_box.isEnabled():
+             #   prefix_only = 'y'
+           # else:
+            #    prefix_only = 'n'
 
-            if self.date_checkbox.isChecked():
-                date_enable = "y"
-                date_start = self.start_date_input.text().strip()
-                date_finish = self.end_date_input.text().strip()
+            #if self.date_checkbox.isChecked():
+            #    date_enable = "y"
+            #    date_start = self.start_date_input.text().strip()
+            #    date_finish = self.end_date_input.text().strip()
 
-            else:
-                date_enable = "n"
-                date_start = ""
-                date_finish = ""
+            #else:
+            #    date_enable = "n"
+            #    date_start = ""
+            #    date_finish = ""
             repeats = self.repeat_combo.currentIndex()
             count_sps = self.sps_table_widget.rowCount()
             #print("count_sps:_>", count_sps)
@@ -277,14 +273,13 @@ class Diplom_form(QWidget):
                     list_to_json.append({'call': self.sps_table_widget.item(row, 0).text().upper(),
                                       'score': self.sps_table_widget.item(row, 1).text(),
                                       'mode' : self.combo_mode_list[row]['combo'+str(row)].currentText(),
-                                      'name': name_programm, 'date_e': date_enable,
+                                      'name': name_programm,
                                       'colorR':self.colorR,
                                       'colorG': self.colorG,
                                       'colorB': self.colorB,
                                       'color_name': self.color_name,
-                                      'date_start':date_start, 'date_finish': date_finish,
                                       'repeats':repeats, 'score_complite': score_complite,
-                                      'prefix_only': prefix_only})
+                                      })
                     
             self.write_rules_to_file(list_to_json, name_output_file=name_programm)
             if self.settingsDict['diploms-json'] != "":

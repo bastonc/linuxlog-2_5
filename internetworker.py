@@ -223,12 +223,20 @@ class check_update (QThread):
                             splitString = configstring.split('=')
                             settings_list.update({splitString[0]: splitString[1]})
                     file.close()
-                    settings_list['diploms-json'] = self.settingsDict['diploms-json']
-                    settings_list['background-color'] = self.settingsDict['background-color']
-                    settings_list['form-background'] = self.settingsDict['form-background']
-                    settings_list['color'] = self.settingsDict['color']
-                    settings_list['solid-color'] = self.settingsDict['solid-color']
-                    settings_list['my-call'] = self.settingsDict['my-call']
+                    for key_new in settings_list:
+                        for key_old in self.settingsDict:
+                            if key_new == key_old:
+                                 settings_list[key_new] = self.settingsDict[key_old]
+
+                    #settings_list['diploms-json'] = self.settingsDict['diploms-json']
+                    #settings_list['background-color'] = self.settingsDict['background-color']
+                    #settings_list['form-background'] = self.settingsDict['form-background']
+                    #settings_list['color'] = self.settingsDict['color']
+                    #settings_list['solid-color'] = self.settingsDict['solid-color']
+                    #settings_list['my-call'] = self.settingsDict['my-call']
+                    #settings_list['encodeStandart'] = self.settingsDict['encodeStandart']
+                    #settings_list['my-call'] = self.settingsDict['my-call']
+
                     print("settings list^_>", settings_list)
 
                     filename = home+"/linlog/settings.cfg"
