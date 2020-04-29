@@ -31,7 +31,7 @@ class internetWorker(QThread):
     def run(self):
         # print (self.callsign)
         info_from_internet_array = internetWorker.get_image_from_server(self)
-        print (info_from_internet_array)
+      #  print (info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
             #pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 8,
@@ -49,7 +49,7 @@ class internetWorker(QThread):
         принимает callsign - позывной
         '''
         url_found = "https://www.qrz.com/lookup"
-        print(self.callsign)
+       # print(self.callsign)
         parameter_request = "tquery=" + self.callsign + "&mode: callsign"
         parameter_to_byte = bytearray(parameter_request, "utf-8")
         data_dictionary = {}
@@ -63,14 +63,14 @@ class internetWorker(QThread):
         img = soup.find(id="mypic")
 
         file_name = self.callsign.replace("/", "_")
-        print("file_name, img:_>", file_name, img)
+       # print("file_name, img:_>", file_name, img)
 
 
         try:
             if img != None:
                 urllib.request.urlretrieve(img['src'], "image/" + file_name + ".jpg")
                 data_dictionary.update({'img': "image/" + file_name + ".jpg"})
-            print(data_dictionary)
+           # print(data_dictionary)
         except Exception:
             print("Exception:", Exception)
 
@@ -90,10 +90,10 @@ class Eqsl_services (QThread):
         server_url_post = 'https://logbook.qrz.com/api'
         key_account = "KEY=81FE-08CA-D97D-8709&"
         action = "ACTION=INSERT&ADIF=<band:3>80m<mode:3>SSB<call:5>RN6XC<qso_date:8>20140121<station_callsign:6>UR4LGA<time_on:4>0346<eor>"
-        print ("key+action", key_account + action)
+       # print ("key+action", key_account + action)
         response = requests.post(server_url_post, data=key_account + action)
 
-        print ("send_to_qrz", response.text)
+       # print ("send_to_qrz", response.text)
 
     def run(self):
 
@@ -102,18 +102,18 @@ class Eqsl_services (QThread):
         data_string_code_to_url = urllib.parse.quote(data_qso_string)
         user_pasword_eqsl = '&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
         #data_qso_string = 'ADIFData=LinLog%20upload%20%3CBAND%3A'+str(len(band))+'%3AC%3E'+str(band)+'%20%2D%20%3CCALL%3A'+str(len(call))+'%3AC%3'+str(call)+'%20%3CMODE%3A'+str(len(mode))+'%3AC%3E'+str(mode)+'%20%3CQSO%5FDATE%3A'+str(len(qso_date))+'%3AD%3E'+str(qso_date)+'%20%3CRST%5FRCVD%3A'+str(len(rst_rsvd))+'%3AC%3E'+str(rst_rsvd)+'%20%3CRST%5FSENT%3A'+str(len(rst_send))+'%3AC%3E'+str(rst_send)+'%20%2D%20%3CTIME%5FON%3A'+str(len(time_on))+'%3AC%3E'+str(time_on)+'%20%3CEOR%3E&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
-        print ("end_qso_to_eqsl", api_url_eqsl+data_string_code_to_url)
+       # print ("end_qso_to_eqsl", api_url_eqsl+data_string_code_to_url)
 
         request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
 
         if request_eqsl.status_code != 200:
 
             std.std().message("Can't send to eQSL", "")
-            print("request_eqsl.status_code", request_eqsl.status_code)
+           # print("request_eqsl.status_code", request_eqsl.status_code)
         else:
             soup = BeautifulSoup(request_eqsl.text, 'html.parser')
             response = soup.body.contents[0]
-            print ("SOUP", soup.body.contents[0].strip())
+           # print ("SOUP", soup.body.contents[0].strip())
             if (response.find('Warning')!= -1) or (response.find('Error')!= -1):
                 message = QMessageBox(self.parrent_window)
                 #message.setFixedHeight(200)
@@ -172,7 +172,7 @@ class check_update (QThread):
                                      buttons=QMessageBox.Yes | QMessageBox.No,
                                      defaultButton=QMessageBox.Yes)
                 if update_result == QMessageBox.Yes:
-                    print("Yes")
+                   # print("Yes")
                     #try:
                     self.parrent.check_update.setText("Updating")
                     adi_name_list = []
@@ -183,10 +183,10 @@ class check_update (QThread):
                     for file in os.listdir():
                         if file.endswith(".rules"):
                             rules_name_list.append(file)
-                    print("Rules name List:_>", rules_name_list)
-                    print("Adi name List:_>", adi_name_list)
+                   # print("Rules name List:_>", rules_name_list)
+                   # print("Adi name List:_>", adi_name_list)
                     home = expanduser("~")
-                    print("Home path:_>", home)
+                   # print("Home path:_>", home)
                     os.mkdir(home+"/linuxlog-backup")
                     for i in range(len(adi_name_list)):
                         os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
@@ -228,16 +228,9 @@ class check_update (QThread):
                             if key_new == key_old:
                                  settings_list[key_new] = self.settingsDict[key_old]
 
-                    #settings_list['diploms-json'] = self.settingsDict['diploms-json']
-                    #settings_list['background-color'] = self.settingsDict['background-color']
-                    #settings_list['form-background'] = self.settingsDict['form-background']
-                    #settings_list['color'] = self.settingsDict['color']
-                    #settings_list['solid-color'] = self.settingsDict['solid-color']
-                    #settings_list['my-call'] = self.settingsDict['my-call']
-                    #settings_list['encodeStandart'] = self.settingsDict['encodeStandart']
-                    #settings_list['my-call'] = self.settingsDict['my-call']
 
-                    print("settings list^_>", settings_list)
+
+                   # print("settings list^_>", settings_list)
 
                     filename = home+"/linlog/settings.cfg"
                     with open(filename, 'r') as f:
@@ -263,41 +256,13 @@ class check_update (QThread):
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
                     self.parrent.text.setText("Version:"+version+"\n\nBaston Sergey\nbastonsv@gmail.com")
-                #except Exception:
-                        #std.std.message(self.parrent, "Don't found adi/rules files", "Oops")
-
-
-                                #print("Files names:_>", file)
-                            #    inp = open(os.path.join(dirpath, file_name), 'r')
-                            #    for line in inp:
-                            #        if pattern in line:
-                            #            print(inp)
 
 
                 else:
-                    print("No")
+                  #  print("No")
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
 
         else:
             std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
-        #std.std.message(self.parrent, "Found new version: "+version+" \n Date:"+date, "UPDATER")
-       # print("SOUP", version,"\n", git_path,"\n", date)
-        #except Exception:
-        #    print("Exception in chek_update:_>", Exception)
-         #   std.std.message(self.parrent, "You have latest version", "UPDATER")
 
-
-        #if (response.find('Warning') != -1) or (response.find('Error') != -1):
-         #   message = QMessageBox(self.parrent_window)
-            # message.setFixedHeight(200)
-            # message.setGeometry(500, 300, 1000, 500)
-        #    message.setStyleSheet("font: 12px;")
-        #    message.setWindowTitle("Warning!")
-        #    message.setText("Can't send to eQSL.cc")
-            # message.setText(soup.body.contents[0].strip())
-        #    message.setInformativeText(soup.body.contents[0].strip())
-         #   message.setStandardButtons(QMessageBox.Ok)
-         #   message.exec_()
-        # print(request_eqsl.text)
-        #print("Check_update:_>",response, "\n", response.text)

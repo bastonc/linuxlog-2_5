@@ -393,7 +393,7 @@ class Menu (QWidget):
 
         #self.setLayout(self.mainLayout)
         #self.show()
-        print("Menu() initUi")
+        #print("Menu() initUi")
 
     def initData (self):
         #init data in general tab
@@ -427,7 +427,7 @@ class Menu (QWidget):
 
 
     def closeEvent(self, e):
-        print("Close menu", e)
+        #print("Close menu", e)
         self.close()
 
     def import_adi(self):
@@ -438,13 +438,13 @@ class Menu (QWidget):
         #fileimport.setFilter()
         fname = fileimport.getOpenFileName(self, 'Import adi file', '/home', "*.adi", options=options)[0]
         if fname:
-            print(fname)
+           # print(fname)
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
                                'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR']
             try:
                 allRecords = parse.getAllRecord(self.allCollumn, fname)
                 main.Adi_file.record_dict_qso(self, allRecords)
-                print(allRecords)
+               # print(allRecords)
                 self.logWindow.refresh_data()
                 std.std.message(self, "Import complete!", "Ok")
             except Exception:
@@ -452,23 +452,23 @@ class Menu (QWidget):
                 std.std.message(self, "Can't import\nCheck encoding file", "STOP!")
 
     def export_adi(self):
-        print("export_adi")
+       # print("export_adi")
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(self, "Export adi", "",
                                                   "Adi (*.adi)", options=options)
         if file_name:
-            print(file_name)
+           # print(file_name)
             copy_file = shutil.copyfile('log.adi', file_name+'.adi')
 
             if copy_file!='':
-                print("Export complete")
+                #print("Export complete")
                 std.std.message(self, "Export to\n"+copy_file+"\n completed", "Export complited")
             else:
                 std.std.message(self, "Can't export to file", "Sorry")
 
     def start_calibrate_cluster(self):
-        print("start_calibrate_cluster:_>", self.settingsDict)
+       # print("start_calibrate_cluster:_>", self.settingsDict)
         self.telnetCluster.stop_cluster()
         self.cluster = cluster_in_Thread (self.cluster_host_input.text().strip(),
                                           self.cluster_port_input.text().strip(),
@@ -476,7 +476,7 @@ class Menu (QWidget):
                                           settingsDict=self.settingsDict, parent_window=self)
         self.cluster.start()
 
-        print("self.start_calibrate_cluster: Hello")
+       # print("self.start_calibrate_cluster: Hello")
 
     def refresh_interface(self):
 
@@ -619,7 +619,7 @@ class Menu (QWidget):
                     old_data[index] = key+"="+self.settingsDict[key]+"\n"
         with open(filename, 'w') as f:
             f.writelines(old_data)
-        print ("Save_and_Exit_button: ", old_data)
+        #print ("Save_and_Exit_button: ", old_data)
         Menu.close(self)
 
     def cancel_button(self):
@@ -654,7 +654,7 @@ class cluster_in_Thread(QThread):
         cleanList = []
         output_data = ""
         i = 0
-        print('Starting Telnet cluster:', self.host, ':', self.port, '\nCall:', self.call, '\n\n')
+        #print('Starting Telnet cluster:', self.host, ':', self.port, '\nCall:', self.call, '\n\n')
         while 1:
             try:
                 output_data = telnetObj.read_some()

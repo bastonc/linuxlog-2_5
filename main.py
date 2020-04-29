@@ -312,7 +312,7 @@ class Fill_table(QThread):
                     elif col == 2:
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                        print(time_formated)
+                        #print(time_formated)
                         self.window.tableWidget.setItem(row, col,
                                                         QTableWidgetItem(time_formated))
 
@@ -1220,7 +1220,7 @@ class logForm(QMainWindow):
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
                     if diploms.filter(call_dict):
-                        print("filter true for:", diploms, "string:", recordObject)
+                        #print("filter true for:", diploms, "string:", recordObject)
                         diploms.add_qso(recordObject)
 
             if settingsDict['eqsl'] == 'enable':

@@ -43,7 +43,7 @@ class Tci_reciever(QThread):
         self.ws = websocket.WebSocket()
 
     def set_flag(self, flag):
-        print("set_flag:", flag)
+        #print("set_flag:", flag)
         self.flag = flag
 
 

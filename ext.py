@@ -223,11 +223,11 @@ class Diplom_form(QWidget):
         counter = self.sps_table_widget.rowCount()
         len(self.combo_mode_list)
         self.combo_mode_list.append({'combo' + str(counter - 1): QComboBox()})
-        print ("all rows:_>", counter, len(self.combo_mode_list))
+        #print ("all rows:_>", counter, len(self.combo_mode_list))
         self.combo_mode_list[len(self.combo_mode_list) - 1 ]['combo' + str(counter - 1)].addItems(['SSB', 'CW', 'DIGI'])
         self.sps_table_widget.setCellWidget(counter - 1 , 2, self.combo_mode_list[len(self.combo_mode_list) - 1]['combo' + str(counter - 1)])
-        for i in range(len(self.combo_mode_list)):
-            print("all keys:_>", self.combo_mode_list[i].keys())
+       # for i in range(len(self.combo_mode_list)):
+           # print("all keys:_>", self.combo_mode_list[i].keys())
         #pass
 
     def save_diplom(self):
@@ -239,7 +239,7 @@ class Diplom_form(QWidget):
         else:
             flag = 0
             self.name_input.setStyleSheet("border: 2px solid #DD5555;")
-        print(self.color_button.text())
+        #print(self.color_button.text())
         if self.color_button.text() != 'Select color':
             flag = 1
         else:
@@ -286,7 +286,7 @@ class Diplom_form(QWidget):
                 settings_list = json.loads(self.settingsDict['diploms-json'])
                 #print("settings_list", settings_list)
             else:
-                print("settings list is empty")
+               # print("settings list is empty")
                 #settings_list.append({'name_programm': name_programm})
                 self.settingsDict['diploms-json'] = json.dumps([{'name_programm': name_programm}])
                 main.Settings_file.update_file_to_disk(self)
@@ -377,39 +377,173 @@ class diplom:
 
 
     def filter (self, call_dict):
-        flag = 'true'
+        count_sps_call = len(self.decode_data)
+        call_found_status = 'no'
+        for i in range(count_sps_call):
+            if self.decode_data[i]['call'] == call_dict['call']:
+                call_found_status = 'ok'
+        # if filter for cluster
+        if call_dict['mode'] == 'cluster' and call_found_status == 'ok':
+            return True
+        else:
+
+
+            #print("repeats:_>", self.decode_data[0]['repeats'])
+            found_records_in_base_list = self.search_call_in_base(call_dict['call'])
+
+            # repeat 0 - resolved other bands
+            if str(self.decode_data[0]['repeats']) == '0' and call_found_status == 'ok':
+
+                #print("Found QSO(s) in base", len(found_records_in_base_list))
+
+                if len(found_records_in_base_list) == 0:
+
+                    return True
+                else:
+                    count_records_in_base_list = len(found_records_in_base_list)
+                    flag = True
+                    for i in range(count_records_in_base_list):
+                        if found_records_in_base_list[i]['BAND'] == call_dict['band']:
+                            flag = False
+                    if flag:
+                        return True
+                    else:
+                        return False
+
+            # repeat 1 - resolved other mods
+            if str(self.decode_data[0]['repeats']) == '1' and call_found_status == 'ok':
+                #print("Found QSO(s) in base", found_records_in_base_list)
+                if len(found_records_in_base_list) == 0:
+                    for i in range(count_sps_call):
+                        if call_dict['mode'] == self.decode_data[i]['mode']\
+                                and call_dict['call'] == self.decode_data[i]['call']:
+                            return True
+                        else:
+                            return False
+
+                else:
+                    count_records_in_base_list = len(found_records_in_base_list)
+                    flag = True
+
+                    for i in range(count_sps_call):
+                        if call_dict['mode'] == self.decode_data[i]['mode']\
+                                and call_dict['call'] == self.decode_data[i]['call']:
+
+                            for j in range(count_records_in_base_list):
+                                if call_dict['mode'] == found_records_in_base_list[j]['MODE']:
+                                    flag = False
+                        else:
+                            flag = False
+                    if flag:
+                        return True
+                    else:
+                        return False
+
+            # repeat 2 - resolved other mods and bands
+            if str(self.decode_data[0]['repeats']) == '2' and call_found_status == 'ok':
+                #print("Found QSO(s) in base", len(found_records_in_base_list),
+                 #     found_records_in_base_list)
+                mode_status = 'no'
+                for i in range(count_sps_call):
+                    #print("call_dict['mode']", call_dict['mode'], "self.decode_data[i]['mode']",
+                        #  self.decode_data[i]['mode'])
+                    if call_dict['mode'] == self.decode_data[i]['mode'] \
+                            and call_dict['call'] == self.decode_data[i]['call']:
+                        mode_status = 'ok'
+
+                count_records_in_base_list = len(found_records_in_base_list)
+                #print ("mode status:_>", mode_status)
+                #print("Found in Base", len(found_records_in_base_list), found_records_in_base_list)
+                if count_records_in_base_list == 0 and mode_status == 'ok':
+                    #print("mode ok")
+                    return True
+                if count_records_in_base_list > 0 and mode_status == 'ok':
+                    flag = True
+                    for j in range(count_records_in_base_list):
+                        if call_dict['mode'] == found_records_in_base_list[j]['MODE'] \
+                           or call_dict['band'] == found_records_in_base_list[j]['BAND']:
+                            #print("QSO on this Band and this Mode found", found_records_in_base_list[j])
+                            flag = False
+
+
+                    if flag:
+                        #print("Filter out True")
+                        return True
+                    else:
+                        #print("Filter out False")
+                        return False
+
+            # repeat 3 - resolved other mods and bands
+            if str(self.decode_data[0]['repeats']) == '3' \
+                and call_found_status == 'ok' \
+                and len(found_records_in_base_list) == 0:
+                flag = False
+                for i in range(count_sps_call):
+
+                    if call_dict['mode'] == self.decode_data[i]['mode'] \
+                            and call_dict['call'] == self.decode_data[i]['call']:
+                        mode_status = 'ok'
+                        flag = True
+            else:
+                flag = False
+            if flag:
+                return True
+            else:
+                return False
+
+
+
+
+
+        '''
+        flag = 'nothing'
         self.call = call_dict['call']
         #print("count_in_rules:_>",len(self.decode_data))
         for index_in_rules in range(len(self.decode_data)):
             #print("decode in filter", index_in_rules, " - ", self.decode_data[index_in_rules], "call", self.call)
+            #print ("Filter call from Rules file:_>", self.decode_data[index_in_rules]['call'])
             if call_dict['call'] == self.decode_data[index_in_rules]['call']:
+                found_flag = 'true'
                 if call_dict['mode'] == 'cluster':
                     return True
                 else:
                     found_records = self.search_call_in_base(self.call)
+                    print("Filter: repeats rules:_>", self.decode_data[index_in_rules]['repeats'])
+                    print("Filter: found records:_>", found_records)
                     # 3 - not resolved
                     if str(self.decode_data[index_in_rules]['repeats']) == '3':
                         #print("Found Records:_>", found_records)
                         if not found_records:
                             return True
                             #flag = 'true'  #True
-                            print("if not found_records", flag)
+                            #print("if not found_records", flag)
                         else:
-                            print("else", flag)
+                           # print("else", flag)
                             flag = 'false' #False
                     # 0 - resolved other band
                     if str(self.decode_data[index_in_rules]['repeats']) == '0':
                         found_qso_count = len(found_records)
-                        for i in range(found_qso_count):
-                            if call_dict['band'] == found_records[i]['BAND']:
-                                flag = 'false' # False
+                        #print("Filter. Count found QSO:_>", found_qso_count)
+                        if not found_records:
+                            return True
+                        else:
+                            for i in range(found_qso_count):
+                                #print("rules 0 iterator:_>", i)
+                               # print("call_dict Band:_>", call_dict['band'], "foundrecords Band:_>", found_records[i]['BAND'])
+                                if call_dict['band'] == found_records[i]['BAND']:
+                                    flag = 'false' # False
+                                else:
+                                    flag = 'true'
 
                     # 1 - resolved other mode
                     if str(self.decode_data[index_in_rules]['repeats']) == '1':
                         found_qso_count = len(found_records)
                         for i in range(found_qso_count):
-                           if call_dict['mode'] == found_records[i]['MODE']:
+                           if call_dict['mode'] == found_records[i]['MODE'] \
+                                   and call_dict['call'] == found_records[i]['CALL']:
                                 flag = 'false'  # False
+                           else:
+                               flag = 'true'
 
                     # 2 - resolved other mode and bands
                     if str(self.decode_data[index_in_rules]['repeats']) == '2':
@@ -419,8 +553,11 @@ class diplom:
                                     call_dict['band'] == found_records[i]['BAND']:
                                 flag = 'false'  # False
             else:
-                print("else comparsion call", flag)
-                flag = 'false'
+                if call_dict['mode'] == 'cluster':
+                    flag = 'false'
+
+               # print("else comparsion call", flag)
+                #flag = 'false'
         if flag == 'true':
             print("return", flag)
             return True
@@ -429,7 +566,7 @@ class diplom:
             print("return", flag)
             return False
 
-
+        '''
 
     def add_qso(self, list_data):
         '''
@@ -498,7 +635,7 @@ class diplom:
             main.Settings_file.update_file_to_disk(self)
 
 
-        print("del_dilpom", list_string)
+       # print("del_dilpom", list_string)
         os.remove(name_diplom+'.rules')
         os.remove(name_diplom + '.adi')
         logForm.menu_rename_diplom()
@@ -517,7 +654,7 @@ class static_diplom(QWidget):
         #self.setGeometry(300, 500, 500, 300)
         style = "QWidget{background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict[
             'color'] + ";}"
-        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: 200;"
+        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: bold; color:"+ self.settingsDict['color-table']
         self.setGeometry(int(self.settingsDict['diplom-statistic-window-left']), int(self.settingsDict['diplom-statistic-window-top']),
                          int(self.settingsDict['diplom-statistic-window-width']),
                          int(self.settingsDict['diplom-statistic-window-height']))
