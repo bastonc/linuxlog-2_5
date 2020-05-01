@@ -724,9 +724,10 @@ class About_window(QWidget):
         self.setLayout(self.horizontal_lay)
 
     def updater(self):
+
         self.check_update.setEnabled(False)
         self.check_update.setText("Found update")
-        self.check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=about_window)
+        self.check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=self)
         self.check.start()
 
 class realTime(QThread):
@@ -905,7 +906,10 @@ class logForm(QMainWindow):
 
     def about_window(self):
        # print("About_window")
-        about_window.show()
+       self.about_window = About_window("LinuxLog",
+                                   "Version: " + APP_VERSION + "<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+
+       self.about_window.show()
 
     def searchWindow(self):
 
@@ -1370,8 +1374,8 @@ class logForm(QMainWindow):
         #print(parameter)
         if menu.isEnabled():
             menu.close()
-        if about_window.isEnabled():
-            about_window.close()
+        if self.about_window.isEnabled():
+            self.about_window.close()
         self.remember_in_cfg(self.parameter)
 
     def remember_in_cfg (self, parameter):
@@ -2051,7 +2055,6 @@ if __name__ == '__main__':
         #diplom_list = logForm.get_diploms()
         ########
         adi_file = Adi_file()
-        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
        # check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
 
