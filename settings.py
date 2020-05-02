@@ -58,7 +58,7 @@ class Menu (QWidget):
         self.tab.addTab(self.service_widget, "Services")
     # create General Tab
         formstyle = "background: "+self.settingsDict['form-background']+"; color: "+\
-                    self.settingsDict['color-table']+"; font-weight: bold;"
+                    self.settingsDict['color-table']+"; "
         self.general_tab.layout = QVBoxLayout(self) # create vertical lay
         self.call_label = QLabel("You Callsign")
         self.call_input = QLineEdit()
