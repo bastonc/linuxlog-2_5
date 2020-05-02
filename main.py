@@ -2018,7 +2018,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.2'
+    APP_VERSION = '1.21'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
