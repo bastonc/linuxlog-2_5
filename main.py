@@ -724,33 +724,47 @@ class check_update ():
                     for file in os.listdir():
                         if file.endswith(".adi"):
                             adi_name_list.append(file)
+                    print("found all .adi file")
                     rules_name_list = []
                     for file in os.listdir():
                         if file.endswith(".rules"):
                             rules_name_list.append(file)
+                    print("found all .rules file")
                    # print("Rules name List:_>", rules_name_list)
                    # print("Adi name List:_>", adi_name_list)
                     home = expanduser("~")
-                   # print("Home path:_>", home)
+                    print("Home path:_>", home)
+                    if os.path.isdir(home+'/linuxlog-backup'):
+                        os.system("rm -rf "+home+"/linuxlog-backup")
+                    else:
+                        pass
+                    print("Create buckup folder (linuxlog-buckup)")
                     os.mkdir(home+"/linuxlog-backup")
                     for i in range(len(adi_name_list)):
                         os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
+                    print("Copy all .adi file to backup folder")
                     for i in range(len(rules_name_list)):
                         os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
+                    print("Copy all .rules file to backup folder")
                     os.system("cp settings.cfg " + home+"/linuxlog-backup")
+                    print("Copy settings.cfg to backup folder")
+
                     # archive dir
                     if os.path.isdir(home+'/linlog-old'):
                      pass
                     else:
                         os.system("mkdir "+home+"/linlog-old")
                     os.system("tar -cf "+home+"/linlog-old/linlog"+version+".tar.gz " + home + "/linlog/")
-
+                    print("Create archive with linlog folder")
+                    print("Delete Linlog folder")
                     # delete dir linlog
-                    os.system("rm -rf " + home + "/linlog/")
+                    os.system("rm -rf " + home + "/linlog")
                     # clone from git repository to ~/linlog
-                    os.system("git clone " + git_path + " " + home + "/linlog")
+                    print("Git clone to new linlog folder")
+                    os.system("git clone " + git_path + " " + home + "/linlog/")
 
                     # copy adi and rules file from linuxlog-backup to ~/linlog
+
                     for i in range(len(adi_name_list)):
                         os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
                     for i in range(len(rules_name_list)):
@@ -791,6 +805,7 @@ class check_update ():
                     with open(filename, 'w') as f:
                         f.writelines(old_data)
                     # done!
+
                     os.system("chmod +x "+home+"/linlog/linlog")
 
                     #delete backup dir
@@ -2155,7 +2170,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.21'
+    APP_VERSION = '1.2'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
