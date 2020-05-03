@@ -16,10 +16,14 @@ import settings
 import subprocess
 import ext
 import json
+import requests
+from os.path import expanduser
+from bs4 import BeautifulSoup
+
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
-from PyQt5.QtWidgets import QApplication, QAction, QStyle, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
+from PyQt5.QtWidgets import QApplication, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
 from PyQt5.QtGui import QIcon, QBrush, QPixmap, QColor, QStandardItemModel
@@ -279,9 +283,9 @@ class Fill_table(QThread):
         #print(" self.allRecords:_> ",  self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
-        #self.window.tableWidget.setHorizontalHeaderLabels(
-        #    ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-        #     "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
+        self.window.tableWidget.setHorizontalHeaderLabels(
+            ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+             "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
             #self.window.tableWidget.insertRow(row)
@@ -320,9 +324,8 @@ class Fill_table(QThread):
                     else:
                         self.window.tableWidget.setItem(row, col,
                                                  QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
-        #self.window.tableWidget.resizeRowsToContents()
-        #self.window.tableWidget.resizeColumnsToContents()
-
+        self.window.tableWidget.resizeColumnsToContents()
+        self.window.tableWidget.resizeRowsToContents()
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -381,10 +384,10 @@ class log_Window(QWidget):
                 self.tableWidget.move(0, 0)
                 self.tableWidget.verticalHeader().hide()
                 style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                    'color-table'] + "; font: 12px;"
+                    'color-table'] + "; font: 12px; font-weight: bold; "
                 self.tableWidget.setStyleSheet(style_table)
                 fnt = self.tableWidget.font()
-                fnt.setPointSize(9)
+                fnt.setPointSize(8)
                 self.tableWidget.setSortingEnabled(True)
                 self.tableWidget.setFont(fnt)
                 self.tableWidget.setColumnCount(13)
@@ -414,12 +417,11 @@ class log_Window(QWidget):
             #print("refresh_data:_>", All_records)
             self.tableWidget.clear()
             #self.tableWidget.insertRow()
-            self.tableWidget.setHorizontalHeaderLabels(
-                ["No", "      Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
-                 "RST s", "      Name      ", "      QTH      ", " Comments ",
-                 " Time off ", " eQSL Rcvd "])
-            self.tableWidget.resizeColumnsToContents()
-            #self.tableWidget.resizeRowsToContents()
+            #self.tableWidget.setHorizontalHeaderLabels(
+             #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+             #    "RST s", "      Name      ", "      QTH      ", " Comments ",
+             #    " Time off ", " eQSL Rcvd "])
+
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
             #self.tableWidget.resizeColumnsToContents()
@@ -486,11 +488,11 @@ class log_Window(QWidget):
             self.update_color_schemes()
 
         def update_color_schemes(self):
-            style = "background-color:" + settingsDict['background-color'] + "; color:" + \
-                    settingsDict['color'] + ";"
+            style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
+                    settingsDict['color'] + ";}"
 
             style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                'color-table'] + "; font: 12px;"
+                'color-table'] + "; font: 12px; font-weight: bold;"
             self.tableWidget.setStyleSheet(style_form)
 
             self.setStyleSheet(style)
@@ -671,8 +673,144 @@ class logSearch(QWidget):
 
         self.setStyleSheet(style)
 
-#class Communicate(QObject):
-#    closeApp = pyqtSignal()
+class check_update ():
+
+
+
+    def __init__(self, APP_VERSION, settingsDict, parrentWindow):
+        super().__init__()
+        self.version = APP_VERSION
+        self.settingsDict = settingsDict
+        self.parrent = parrentWindow
+        self.run()
+
+
+    def run(self):
+
+        server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
+        path_directory_updater_app = "/upd/"
+
+        action = server_url_get+path_directory_updater_app+self.version+"/"+self.settingsDict['my-call']
+        flag = 0
+        data_flag = 0
+        try:
+            response = requests.get(action)
+            flag = 1
+        except Exception:
+            flag = 0
+
+        if flag == 1:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            try:
+                version = soup.find(id="version").get_text()
+                git_path = soup.find(id="git_path").get_text()
+                date = soup.find(id="date").get_text()
+                data_flag = 1
+            except Exception:
+                std.std.message(self.parrent, "You have latest version", "UPDATER")
+                self.parrent.check_update.setText("> Check update <")
+                self.parrent.check_update.setEnabled(True)
+            if data_flag == 1:
+                update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
+                                     "Found new version "+version+" install it?",
+                                     buttons=QMessageBox.Yes | QMessageBox.No,
+                                     defaultButton=QMessageBox.Yes)
+                if update_result == QMessageBox.Yes:
+                   # print("Yes")
+                    #try:
+                    self.parrent.check_update.setText("Updating")
+                    adi_name_list = []
+                    for file in os.listdir():
+                        if file.endswith(".adi"):
+                            adi_name_list.append(file)
+                    rules_name_list = []
+                    for file in os.listdir():
+                        if file.endswith(".rules"):
+                            rules_name_list.append(file)
+                   # print("Rules name List:_>", rules_name_list)
+                   # print("Adi name List:_>", adi_name_list)
+                    home = expanduser("~")
+                   # print("Home path:_>", home)
+                    os.mkdir(home+"/linuxlog-backup")
+                    for i in range(len(adi_name_list)):
+                        os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
+                    for i in range(len(rules_name_list)):
+                        os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
+                    os.system("cp settings.cfg " + home+"/linuxlog-backup")
+                    # archive dir
+                    if os.path.isdir(home+'/linlog-old'):
+                     pass
+                    else:
+                        os.system("mkdir "+home+"/linlog-old")
+                    os.system("tar -cf "+home+"/linlog-old/linlog"+version+".tar.gz " + home + "/linlog/")
+
+                    # delete dir linlog
+                    os.system("rm -rf " + home + "/linlog/")
+                    # clone from git repository to ~/linlog
+                    os.system("git clone " + git_path + " " + home + "/linlog")
+
+                    # copy adi and rules file from linuxlog-backup to ~/linlog
+                    for i in range(len(adi_name_list)):
+                        os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
+                    for i in range(len(rules_name_list)):
+                        os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
+
+                    # read and replace string in new settings.cfg
+
+                    file = open(home+"/linlog/settings.cfg", "r")
+                    settings_list = {}
+                    for configstring in file:
+                        if configstring != '' and configstring != ' ' and configstring[0] != '#':
+                            configstring = configstring.strip()
+                            configstring = configstring.replace("\r", "")
+                            configstring = configstring.replace("\n", "")
+                            splitString = configstring.split('=')
+                            settings_list.update({splitString[0]: splitString[1]})
+                    file.close()
+                    for key_new in settings_list:
+                        for key_old in self.settingsDict:
+                            if key_new == key_old:
+                                 settings_list[key_new] = self.settingsDict[key_old]
+
+
+
+                   # print("settings list^_>", settings_list)
+
+                    filename = home+"/linlog/settings.cfg"
+                    with open(filename, 'r') as f:
+                        old_data = f.readlines()
+                    for index, line in enumerate(old_data):
+                        key_from_line = line.split('=')[0]
+                        # print ("key_from_line:",key_from_line)
+                        for key in settings_list:
+
+                            if key_from_line == key:
+                                # print("key",key , "line", line)
+                                old_data[index] = key + "=" + settings_list[key] + "\n"
+                    with open(filename, 'w') as f:
+                        f.writelines(old_data)
+                    # done!
+
+                    #delete backup dir
+                    os.system("rm -rf " + home + "/linuxlog-backup")
+
+                    std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
+                                                                         "Please restart LinuxLog", "UPDATER")
+                    self.version = version
+                    self.parrent.check_update.setText("> Check update <")
+                    self.parrent.check_update.setEnabled(True)
+                    self.parrent.text.setText("Version:"+version+"\n\nBaston Sergey\nbastonsv@gmail.com")
+
+
+                else:
+                  #  print("No")
+                    self.parrent.check_update.setText("> Check update <")
+                    self.parrent.check_update.setEnabled(True)
+
+        else:
+            std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
+
+
 
 class About_window(QWidget):
     def __init__(self, capture, text):
@@ -690,7 +828,7 @@ class About_window(QWidget):
         self.setFixedHeight(200)
         self.setFixedWidth(320)
 
-        self.setGeometry(int(width_coordinate), int(height_coordinate), 200, 300)
+        self.setGeometry(width_coordinate, height_coordinate, 200, 300)
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('About | LinuxLog')
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
@@ -726,11 +864,10 @@ class About_window(QWidget):
         self.setLayout(self.horizontal_lay)
 
     def updater(self):
-
         self.check_update.setEnabled(False)
         self.check_update.setText("Found update")
-        self.check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=self)
-        self.check.start()
+        self.check = check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=self)
+        #self.check.start()
 
 class realTime(QThread):
 
@@ -908,8 +1045,7 @@ class logForm(QMainWindow):
 
     def about_window(self):
        # print("About_window")
-
-       about_window.show()
+        about_window.show()
 
     def searchWindow(self):
 
@@ -918,7 +1054,7 @@ class logForm(QMainWindow):
     def initUI(self):
 
         styleform = "background :" + settingsDict['form-background']+\
-                    "; color: " + settingsDict['color-table'] + ";"
+                    "; font-weight: bold; color: " + settingsDict['color-table'] + ";"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
@@ -937,7 +1073,6 @@ class logForm(QMainWindow):
         self.inputCall.setFocusPolicy(Qt.StrongFocus)
         self.inputCall.setStyleSheet(styleform)
         self.inputCall.setFixedWidth(108)
-        self.inputCall.setFixedHeight(30)
         self.inputCall.textChanged[str].connect(
             self.onChanged)  # событие изминения текста, привязываем в слот функцию onChanged
         self._filter = Filter()
@@ -952,7 +1087,6 @@ class logForm(QMainWindow):
 
         self.inputRstR = QLineEdit(self)
         self.inputRstR.setFixedWidth(30)
-        self.inputRstR.setFixedHeight(30)
         self.inputRstR.setStyleSheet(styleform)
         self.inputRstR.returnPressed.connect(self.logFormInput)
 
@@ -962,7 +1096,6 @@ class logForm(QMainWindow):
         self.labelRstS.setFont(QtGui.QFont('SansSerif', 7))
         self.inputRstS = QLineEdit(self)
         self.inputRstS.setFixedWidth(30)
-        self.inputRstS.setFixedHeight(30)
         self.inputRstS.setStyleSheet(styleform)
         self.inputRstS.returnPressed.connect(self.logFormInput)
 
@@ -970,7 +1103,6 @@ class logForm(QMainWindow):
         self.labelName.setFont(QtGui.QFont('SansSerif', 9))
         self.inputName = QLineEdit(self)
         self.inputName.setFixedWidth(137)
-        self.inputName.setFixedHeight(30)
         self.inputName.setStyleSheet(styleform)
         self.inputName.returnPressed.connect(self.logFormInput)
 
@@ -979,22 +1111,18 @@ class logForm(QMainWindow):
 
         self.inputQth = QLineEdit(self)
         self.inputQth.setFixedWidth(137)
-        self.inputQth.setFixedHeight(30)
         self.inputQth.setStyleSheet(styleform)
         self.inputQth.returnPressed.connect(self.logFormInput)
 
         self.comboMode = QComboBox(self)
-        self.comboMode.setFixedWidth(78)
-        self.comboMode.setFixedHeight(30)
-
+        self.comboMode.setFixedWidth(65)
         self.comboMode.addItems(["SSB", "ESSB", "CW", "AM", "FM", "DSB", "DIGI"])
         indexMode = self.comboMode.findText(settingsDict['mode'])
         self.comboMode.setCurrentIndex(indexMode)
         self.comboMode.activated[str].connect(self.rememberMode)
 
         self.comboBand = QComboBox(self)
-        self.comboBand.setFixedWidth(78)
-        self.comboBand.setFixedHeight(30)
+        self.comboBand.setFixedWidth(65)
         self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200"])
         indexBand = self.comboBand.findText(settingsDict['band'])
         self.comboBand.setCurrentIndex(indexBand)
@@ -1735,13 +1863,13 @@ class telnetCluster(QWidget):
         self.labelIonosphereStat = QLabel()
         self.labelIonosphereStat.setStyleSheet("font: 12px;")
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px; "
+            'color-table'] + "; font: 12px; font-weight: bold;"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
         self.tableWidget.setFont(fnt)
         self.tableWidget.setRowCount(0)
-        #self.tableWidget.horizontalHeader().setStyleSheet("font: 12px;")
+        self.tableWidget.horizontalHeader().setStyleSheet("font: 12px; width:100%;")
         self.tableWidget.setColumnCount(5)
         self.tableWidget.setHorizontalHeaderLabels(["Time Loc", "Time GMT", "Call", "Freq", " Spot"])
         self.tableWidget.verticalHeader().hide()
@@ -1755,7 +1883,7 @@ class telnetCluster(QWidget):
         self.setLayout(self.layout)
 
         # logForm.test('test')
-
+        self.show()
         self.start_cluster()
 
     def stop_cluster(self):
@@ -1927,8 +2055,8 @@ class internetSearch(QWidget):
         self.update_color_schemes()
 
     def update_color_schemes(self):
-        style = "background-color:" + settingsDict['background-color'] + "; color:" + \
-                settingsDict['color'] + ";"
+        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
+                settingsDict['color'] + ";}"
         self.labelImage.setStyleSheet(style)
         self.setStyleSheet(style)
 
@@ -1959,10 +2087,9 @@ class hello_window(QWidget):
         self.welcome_text_label = QLabel("It's first runing.\nPlease enter you callsign")
         self.welcome_text_label.setStyleSheet(style_text)
         self.call_input = QLineEdit()
-        self.call_input.setStyleSheet("background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + ";")
+        self.call_input.setStyleSheet("QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + ";}")
         self.call_input.setFixedWidth(150)
-        #self.call_input.setBaseSize(70,10)
         self.ok_button = QPushButton("GO")
         self.ok_button.clicked.connect(self.ok_button_push)
         #self.caption_label.setAlignment(Qt.AlignCenter)
@@ -2055,7 +2182,6 @@ if __name__ == '__main__':
         logSearch = logSearch()
         internetSearch = internetSearch()
         logForm = logForm()
-        telnetCluster = telnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         #### work with diplom filter and packing exempler of class into list
         #ext.test()
@@ -2065,11 +2191,9 @@ if __name__ == '__main__':
         #diplom_list = logForm.get_diploms()
         ########
         adi_file = Adi_file()
+        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
-        about_window = About_window("LinuxLog",
-                                    "Version: " + APP_VERSION + "<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
-
-        # check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
+       # check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
 
         #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':
@@ -2090,7 +2214,7 @@ if __name__ == '__main__':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
 
         if settingsDict['telnet-cluster-window'] == 'true':
-            telnetCluster.show()
+            telnetCluster = telnetCluster()
 
         menu = settings.Menu(settingsDict,
                              telnetCluster,
