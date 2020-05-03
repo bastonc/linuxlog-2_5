@@ -758,10 +758,10 @@ class check_update ():
                     print("Create archive with linlog folder")
                     print("Delete Linlog folder")
                     # delete dir linlog
-                    os.system("rm -rf " + home + "/linlog")
+                    os.system("rm -rf " + home + "/linlog && git clone " + git_path + " " + home + "/linlog/")
                     # clone from git repository to ~/linlog
                     print("Git clone to new linlog folder")
-                    os.system("git clone " + git_path + " " + home + "/linlog/")
+                    #os.system("git clone " + git_path + " " + home + "/linlog/")
 
                     # copy adi and rules file from linuxlog-backup to ~/linlog
 
