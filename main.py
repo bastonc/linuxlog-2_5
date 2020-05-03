@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QApplication, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
-from PyQt5.QtGui import QIcon, QBrush, QPixmap, QColor, QStandardItemModel
+from PyQt5.QtGui import QIcon, QFont, QBrush, QPixmap, QColor, QStandardItemModel
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
@@ -283,9 +283,9 @@ class Fill_table(QThread):
         #print(" self.allRecords:_> ",  self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
-        self.window.tableWidget.setHorizontalHeaderLabels(
-            ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-             "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
+        #self.window.tableWidget.setHorizontalHeaderLabels(
+        #    ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
+         #    "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
 
         for row in range(self.allRows):
             #self.window.tableWidget.insertRow(row)
@@ -384,7 +384,7 @@ class log_Window(QWidget):
                 self.tableWidget.move(0, 0)
                 self.tableWidget.verticalHeader().hide()
                 style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                    'color-table'] + "; font: 12px; font-weight: bold; "
+                    'color-table'] + "; font: 12px; "
                 self.tableWidget.setStyleSheet(style_table)
                 fnt = self.tableWidget.font()
                 fnt.setPointSize(8)
@@ -417,10 +417,11 @@ class log_Window(QWidget):
             #print("refresh_data:_>", All_records)
             self.tableWidget.clear()
             #self.tableWidget.insertRow()
-            #self.tableWidget.setHorizontalHeaderLabels(
-             #   ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-             #    "RST s", "      Name      ", "      QTH      ", " Comments ",
-             #    " Time off ", " eQSL Rcvd "])
+
+            self.tableWidget.setHorizontalHeaderLabels(
+                ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
+                 "RST s", "      Name      ", "      QTH      ", " Comments ",
+                 " Time off ", " eQSL Rcvd "])
 
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
@@ -488,11 +489,11 @@ class log_Window(QWidget):
             self.update_color_schemes()
 
         def update_color_schemes(self):
-            style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
-                    settingsDict['color'] + ";}"
+            style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                    settingsDict['color'] + ";"
 
             style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                'color-table'] + "; font: 12px; font-weight: bold;"
+                'color-table'] + "; font: 12px;"
             self.tableWidget.setStyleSheet(style_form)
 
             self.setStyleSheet(style)
@@ -610,7 +611,7 @@ class logSearch(QWidget):
         #		   )
         self.tableWidget = QTableWidget()
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px; font-weight: bold;"
+            'color-table'] + "; font: 12px;"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
@@ -664,11 +665,11 @@ class logSearch(QWidget):
         self.update_color_schemes()
 
     def update_color_schemes(self):
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
-                settingsDict['color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                settingsDict['color'] + ";"
 
-        style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px}"
+        style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px"
         self.tableWidget.setStyleSheet(style_form)
 
         self.setStyleSheet(style)
@@ -790,6 +791,7 @@ class check_update ():
                     with open(filename, 'w') as f:
                         f.writelines(old_data)
                     # done!
+                    os.system("chmod +x "+home+"/linlog/linlog")
 
                     #delete backup dir
                     os.system("rm -rf " + home + "/linuxlog-backup")
@@ -828,7 +830,7 @@ class About_window(QWidget):
         self.setFixedHeight(200)
         self.setFixedWidth(320)
 
-        self.setGeometry(width_coordinate, height_coordinate, 200, 300)
+        self.setGeometry(int(width_coordinate), int(height_coordinate), 200, 300)
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('About | LinuxLog')
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
@@ -1052,9 +1054,10 @@ class logForm(QMainWindow):
         logSearch.hide()
 
     def initUI(self):
-
+        font = QFont("Cantarell Light", 10, QFont.Normal)
+        QApplication.setFont(font)
         styleform = "background :" + settingsDict['form-background']+\
-                    "; font-weight: bold; color: " + settingsDict['color-table'] + ";"
+                    "; color: " + settingsDict['color-table'] + ";"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
@@ -1073,6 +1076,7 @@ class logForm(QMainWindow):
         self.inputCall.setFocusPolicy(Qt.StrongFocus)
         self.inputCall.setStyleSheet(styleform)
         self.inputCall.setFixedWidth(108)
+        self.inputCall.setFixedHeight(30)
         self.inputCall.textChanged[str].connect(
             self.onChanged)  # событие изминения текста, привязываем в слот функцию onChanged
         self._filter = Filter()
@@ -1087,6 +1091,7 @@ class logForm(QMainWindow):
 
         self.inputRstR = QLineEdit(self)
         self.inputRstR.setFixedWidth(30)
+        self.inputRstR.setFixedHeight(30)
         self.inputRstR.setStyleSheet(styleform)
         self.inputRstR.returnPressed.connect(self.logFormInput)
 
@@ -1096,6 +1101,7 @@ class logForm(QMainWindow):
         self.labelRstS.setFont(QtGui.QFont('SansSerif', 7))
         self.inputRstS = QLineEdit(self)
         self.inputRstS.setFixedWidth(30)
+        self.inputRstS.setFixedHeight(30)
         self.inputRstS.setStyleSheet(styleform)
         self.inputRstS.returnPressed.connect(self.logFormInput)
 
@@ -1103,6 +1109,7 @@ class logForm(QMainWindow):
         self.labelName.setFont(QtGui.QFont('SansSerif', 9))
         self.inputName = QLineEdit(self)
         self.inputName.setFixedWidth(137)
+        self.inputName.setFixedHeight(30)
         self.inputName.setStyleSheet(styleform)
         self.inputName.returnPressed.connect(self.logFormInput)
 
@@ -1111,18 +1118,21 @@ class logForm(QMainWindow):
 
         self.inputQth = QLineEdit(self)
         self.inputQth.setFixedWidth(137)
+        self.inputQth.setFixedHeight(30)
         self.inputQth.setStyleSheet(styleform)
         self.inputQth.returnPressed.connect(self.logFormInput)
 
         self.comboMode = QComboBox(self)
-        self.comboMode.setFixedWidth(65)
+        self.comboMode.setFixedWidth(80)
+        self.comboMode.setFixedHeight(30)
         self.comboMode.addItems(["SSB", "ESSB", "CW", "AM", "FM", "DSB", "DIGI"])
         indexMode = self.comboMode.findText(settingsDict['mode'])
         self.comboMode.setCurrentIndex(indexMode)
         self.comboMode.activated[str].connect(self.rememberMode)
 
         self.comboBand = QComboBox(self)
-        self.comboBand.setFixedWidth(65)
+        self.comboBand.setFixedWidth(80)
+        self.comboBand.setFixedHeight(30)
         self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200"])
         indexBand = self.comboBand.findText(settingsDict['band'])
         self.comboBand.setCurrentIndex(indexBand)
@@ -1665,8 +1675,8 @@ class logForm(QMainWindow):
         self.update_color_schemes()
 
     def update_color_schemes(self):
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
-                settingsDict['color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                settingsDict['color'] + ";"
         self.labelCall.setStyleSheet(style)
         self.labelRstR.setStyleSheet(style)
         self.labelRstS.setStyleSheet(style)
@@ -1678,8 +1688,8 @@ class logForm(QMainWindow):
         self.comboMode.setStyleSheet(style)
         self.comboBand.setStyleSheet(style)
         self.labelStatusCat.setStyleSheet(style)
-        style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px}"
+        style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px"
         self.inputCall.setStyleSheet(style_form)
         self.inputRstR.setStyleSheet(style_form)
         self.inputRstS.setStyleSheet(style_form)
@@ -1863,19 +1873,19 @@ class telnetCluster(QWidget):
         self.labelIonosphereStat = QLabel()
         self.labelIonosphereStat.setStyleSheet("font: 12px;")
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px; font-weight: bold;"
+            'color-table'] + "; font: 12px;"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
         self.tableWidget.setFont(fnt)
         self.tableWidget.setRowCount(0)
-        self.tableWidget.horizontalHeader().setStyleSheet("font: 12px; width:100%;")
+        #self.tableWidget.horizontalHeader().setStyleSheet("font: 12px;")
         self.tableWidget.setColumnCount(5)
         self.tableWidget.setHorizontalHeaderLabels(["Time Loc", "Time GMT", "Call", "Freq", " Spot"])
         self.tableWidget.verticalHeader().hide()
-
+        #self.tableWidget.resizeColumnsToContents()
         self.tableWidget.cellClicked.connect(self.click_to_spot)
-        self.tableWidget.resizeColumnsToContents()
+        #self.tableWidget.resizeColumnsToContents()
         #self.tableWidget.move(0, 0)
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.labelIonosphereStat)
@@ -1883,7 +1893,7 @@ class telnetCluster(QWidget):
         self.setLayout(self.layout)
 
         # logForm.test('test')
-        self.show()
+
         self.start_cluster()
 
     def stop_cluster(self):
@@ -1993,11 +2003,11 @@ class telnetCluster(QWidget):
         self.update_color_schemes()
 
     def update_color_schemes(self):
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
-                settingsDict['color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                settingsDict['color'] + ";"
         self.labelIonosphereStat.setStyleSheet(style)
-        style_form = "QWidget{background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px}"
+        style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px"
         self.tableWidget.setStyleSheet(style_form)
 
         self.setStyleSheet(style)
@@ -2055,8 +2065,8 @@ class internetSearch(QWidget):
         self.update_color_schemes()
 
     def update_color_schemes(self):
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + \
-                settingsDict['color'] + ";}"
+        style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                settingsDict['color'] + ";"
         self.labelImage.setStyleSheet(style)
         self.setStyleSheet(style)
 
@@ -2145,7 +2155,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.21'
+    APP_VERSION = '1.2'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -2182,6 +2192,7 @@ if __name__ == '__main__':
         logSearch = logSearch()
         internetSearch = internetSearch()
         logForm = logForm()
+        telnetCluster = telnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         #### work with diplom filter and packing exempler of class into list
         #ext.test()
@@ -2214,7 +2225,7 @@ if __name__ == '__main__':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
 
         if settingsDict['telnet-cluster-window'] == 'true':
-            telnetCluster = telnetCluster()
+            telnetCluster.show()
 
         menu = settings.Menu(settingsDict,
                              telnetCluster,

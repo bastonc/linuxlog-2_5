@@ -26,7 +26,7 @@ class std:
             band = '10'
         if int(freq)>50000000 and int(freq)<54000000:
             band = '6'
-        if int(freq) > 144000000 and int(freq) < 144500000:
+        if int(freq) > 144000000 and int(freq) < 146500000:
             band = '2'
         #print("get_std_band: band", band)
         return band
