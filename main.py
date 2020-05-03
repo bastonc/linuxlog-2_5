@@ -758,21 +758,21 @@ class check_update ():
                     print("Create archive with linlog folder")
                     print("Delete Linlog folder")
                     # delete dir linlog
-                    os.system("rm -rf " + home + "/linlog && git clone " + git_path + " " + home + "/linlog/")
+                    #os.system("rm -rf " + home + "/linlog")
                     # clone from git repository to ~/linlog
                     print("Git clone to new linlog folder")
-                    #os.system("git clone " + git_path + " " + home + "/linlog/")
+                    os.system("git clone " + git_path + " " + home + "/linlog_"+version)
 
                     # copy adi and rules file from linuxlog-backup to ~/linlog
 
                     for i in range(len(adi_name_list)):
-                        os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
+                        os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog_"+version+"'")
                     for i in range(len(rules_name_list)):
-                        os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
+                        os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog_"+version+"'")
 
                     # read and replace string in new settings.cfg
 
-                    file = open(home+"/linlog/settings.cfg", "r")
+                    file = open(home+"/linlog_"+version+"/settings.cfg", "r")
                     settings_list = {}
                     for configstring in file:
                         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -791,7 +791,7 @@ class check_update ():
 
                    # print("settings list^_>", settings_list)
 
-                    filename = home+"/linlog/settings.cfg"
+                    filename = home+"/linlog_"+version+"/settings.cfg"
                     with open(filename, 'r') as f:
                         old_data = f.readlines()
                     for index, line in enumerate(old_data):
@@ -806,10 +806,15 @@ class check_update ():
                         f.writelines(old_data)
                     # done!
 
-                    os.system("chmod +x "+home+"/linlog/linlog")
+                    os.system("chmod +x "+home+"/linlog_"+version+"/linlog")
+                    with open(home+"/linlog/linlog", "w") as f:
+                       string_to_file = ['#! /bin/bash\n', 'cd '+home+'/linlog_'+version+'\n', 'python main.py\n']
+                       f.writelines(string_to_file)
 
                     #delete backup dir
                     os.system("rm -rf " + home + "/linuxlog-backup")
+
+                    os.system("rm -rf " + home + "/linlog_v"+self.version)
 
                     std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
                                                                          "Please restart LinuxLog", "UPDATER")
