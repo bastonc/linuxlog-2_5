@@ -46,12 +46,22 @@ def parseStringAdi(string):
 
 
 ## Poles which used in programm (they will found into dictionary from file)
-def getAllRecord(poles, filename):
+def getAllRecord(poles, filename, key=''):
     # poles=['QSO_DATE','TIME_ON','FREQ','CALL','MODE','RST_RCVD','RST_SENT','NAME','QTH']
 
     key = 0
     allrecord = []
-    file = open(filename, 'r', encoding="utf-8")
+    if key == "import":
+        with open(filename, 'r') as fin:
+            lines = fin.readlines()
+            with open('import_tmp.adi', 'w', encoding='iso-8859-2') as fout:
+                fout.writelines(lines)
+            filename = 'import_tmp.adi'
+    else:
+        pass
+
+    file = open(filename, 'r', encoding="utf-8", errors='ignore')
+
     iterator_string_file = 0
     iterator_records = 0
     for string in file:  # read string from file

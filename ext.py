@@ -102,12 +102,12 @@ class Diplom_form(QWidget):
         self.sps_text = QLabel("Special calls \n or prefix:")
         self.sps_table_widget = QTableWidget()
         self.sps_table_widget.setStyleSheet(styleform)
-        self.sps_table_widget.setFixedWidth(240)
+        self.sps_table_widget.setFixedWidth(260)
         self. sps_table_widget.setFixedHeight(200)
         self.sps_table_widget.setColumnCount(3)
         self.sps_table_widget.setColumnWidth(0, 80)
         self.sps_table_widget.setColumnWidth(1, 50)
-        self.sps_table_widget.setColumnWidth(2, 70)
+        self.sps_table_widget.setColumnWidth(2, 80)
         self.sps_table_widget.setRowCount(10)
         self.sps_table_widget.setHorizontalHeaderLabels(['call', 'score', 'mode'])
         self.sps_table_widget.horizontalHeaderItem(0).setToolTip("Enter special call")
@@ -125,6 +125,7 @@ class Diplom_form(QWidget):
             for row in range(row_count):
                 self.combo_mode_list.append({'combo'+str(row): QComboBox()})
                 self.combo_mode_list[row]['combo' + str(row)].addItems(['SSB', 'CW', 'DIGI'])
+                self.combo_mode_list[row]['combo' + str(row)].setFixedWidth(80)
                 self.sps_table_widget.setCellWidget(row, 2, self.combo_mode_list[row]['combo'+str(row)])
 
 

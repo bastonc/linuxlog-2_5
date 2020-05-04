@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
-from PyQt5.QtWidgets import QApplication, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
+from PyQt5.QtWidgets import QApplication, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
 from PyQt5.QtGui import QIcon, QFont, QBrush, QPixmap, QColor, QStandardItemModel
@@ -103,7 +103,8 @@ class Adi_file:
                           object['RST_SENT'] + "<NAME:" + str(len(object['NAME'])) + ">" + object['NAME'] + \
                           "<QTH:" + str(len(object['QTH'])) + ">" + object['QTH'] + "<COMMENTS:" + \
                           str(len(object['COMMENTS'])) + ">" + object['COMMENTS'] + "<TIME_OFF:" + \
-                          str(len(object['TIME_OFF'])) + ">" + object['TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
+                          str(len(object['TIME_OFF'])) + ">" + object['TIME_OFF'] + "<EQSL_QSL_SENT:"+ \
+                          str(len(object['EQSL_QSL_SENT']))+">"+object['EQSL_QSL_SENT']+"<EOR>\n"
         print("store_changed_qso: stringToAdiFile", stringToAdiFile)
 
         self.strings_in_file[int(object['string_in_file'])-1] = stringToAdiFile
@@ -113,6 +114,18 @@ class Adi_file:
 
 
         #print("this:", self.strings_in_file[int(object['string_in_file'])-1])
+
+    def delete_qso_from_file(self, row_in_file):
+        with open(self.filename, 'r') as file:
+            # file.seek(0, 2)
+            lines_in_file = file.readlines()
+
+        print ("Delete QSO from file \nAll lines", len(lines_in_file), "\nrow_in_files:_>", row_in_file)
+        lines_in_file[int(row_in_file)-1] = ''
+        with open(self.filename, 'w') as file:
+            # file.seek(0, 2)
+            file.writelines(lines_in_file)
+
 
     def get_header(self):
 
@@ -283,13 +296,7 @@ class Fill_table(QThread):
         #print(" self.allRecords:_> ",  self.allRecord)
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
-        #self.window.tableWidget.setHorizontalHeaderLabels(
-        #    ["No", "     Date     ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-         #    "RST s", "      Name      ", "      QTH      ", " Comments ", " Time off ", " eQSL Rcvd "])
-
         for row in range(self.allRows):
-            #self.window.tableWidget.insertRow(row)
-            #print("row -", row)
             for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
@@ -358,7 +365,7 @@ class log_Window(QWidget):
                     file.write(Adi_file().get_header())
 
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
-                               'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
+                               'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'EQSL_QSL_SENT']
             # self.allRecord = parse.getAllRecord(self.allCollumn, self.filename)
 
             self.initUI()
@@ -388,9 +395,12 @@ class log_Window(QWidget):
                 self.tableWidget.setStyleSheet(style_table)
                 fnt = self.tableWidget.font()
                 fnt.setPointSize(8)
+                self.tableWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.tableWidget.customContextMenuRequested.connect(self.context_menu)
                 self.tableWidget.setSortingEnabled(True)
                 self.tableWidget.setFont(fnt)
                 self.tableWidget.setColumnCount(13)
+                #self.tableWidget.resizeRowsToContents()
 
                 self.tableWidget.itemActivated.connect(self.store_change_record)
 
@@ -400,6 +410,263 @@ class log_Window(QWidget):
                 #self.show()
                 if self.isEnabled():
                     self.refresh_data()
+
+        def context_menu(self, point):
+            context_menu = QMenu()
+            if self.tableWidget.itemAt(point):
+                index_row = self.tableWidget.currentItem().row()
+                call  = self.tableWidget.item(index_row, 4).text()
+                delete_record = QAction("Delete QSO with " + call, context_menu)
+                delete_record.triggered.connect(lambda:
+                                                self.delete_qso(self.tableWidget.currentItem().row()))
+                edit_record = QAction ("Edit QSO with " + call, context_menu)
+                edit_record.triggered.connect(lambda:
+                                              self.edit_qso(self.tableWidget.currentItem().row()))
+                context_menu.addAction(edit_record)
+                context_menu.addAction(delete_record)
+            context_menu.exec(self.tableWidget.mapToGlobal(point))
+
+        def edit_qso(self, row):
+            row = self.tableWidget.currentItem().row()
+            record_number = self.tableWidget.item(row, 0).text()
+            date = self.tableWidget.item(row, 1).text()
+            time = self.tableWidget.item(row, 2).text()
+            call = self.tableWidget.item(row, 4).text()
+            freq = All_records[int(record_number) - 1]['FREQ']
+            rstR = self.tableWidget.item(row, 6).text()
+            rstS = self.tableWidget.item(row, 7).text()
+            name = self.tableWidget.item(row, 8).text()
+            qth = self.tableWidget.item(row, 9).text()
+            self.operator_edit = All_records[int(record_number) - 1]['OPERATOR']
+            band = self.tableWidget.item(row, 3).text()
+            comment = self.tableWidget.item(row, 10).text()
+            time_off = self.tableWidget.item(row, 11).text()
+            eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
+            mode = self.tableWidget.item(row, 5).text()
+            self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
+            self.records_number_edit = All_records[int(record_number) - 1]['records_number']
+
+
+            # GUI for edit window
+            self.edit_window = QWidget()
+            self.edit_window.setGeometry(int(settingsDict['log-window-left']),
+                             int(settingsDict['log-window-top']),
+                             300,
+                             500)
+            self.edit_window.setWindowTitle('Edit QSO with ' + call)
+
+            style = "background-color:" + settingsDict['background-color'] + "; color:" + \
+                    settingsDict['color'] + ";"
+            style_table = "background-color:" + settingsDict['form-background'] + \
+                          "; color:" + settingsDict['color-table'] + "; font: 12px; "
+            self.edit_window.setStyleSheet(style)
+            self.edit_window.setWindowOpacity(0.98)
+            # Call element 1
+            self.call_label = QLabel("Call")
+            self.call_input = QLineEdit()
+            self.call_input.setStyleSheet(style_table)
+            self.call_input.setFixedWidth(100)
+            self.call_input.setFixedHeight(30)
+            self.call_input.setText(call)
+            call_layer = QHBoxLayout()
+            call_layer.addWidget(self.call_label)
+            call_layer.addWidget(self.call_input)
+            # Date element 2
+            self.date_label = QLabel("Date")
+            self.date_input = QLineEdit()
+            self.date_input.setStyleSheet(style_table)
+            self.date_input.setFixedWidth(100)
+            self.date_input.setFixedHeight(30)
+            self.date_input.setText(date)
+            date_layer = QHBoxLayout()
+            date_layer.addWidget(self.date_label)
+            date_layer.addWidget(self.date_input)
+            # Time element 3
+            self.time_label = QLabel("Time")
+            self.time_input = QLineEdit()
+            self.time_input.setStyleSheet(style_table)
+            self.time_input.setFixedWidth(100)
+            self.time_input.setFixedHeight(30)
+            self.time_input.setText(time)
+            time_layer = QHBoxLayout()
+            time_layer.addWidget(self.time_label)
+            time_layer.addWidget(self.time_input)
+            # Freq element 4
+            self.freq_label = QLabel("Frequency")
+            self.freq_input = QLineEdit()
+            self.freq_input.setStyleSheet(style_table)
+            self.freq_input.setFixedWidth(100)
+            self.freq_input.setFixedHeight(30)
+            self.freq_input.setText(freq)
+            freq_layer = QHBoxLayout()
+            freq_layer.addWidget(self.freq_label)
+            freq_layer.addWidget(self.freq_input)
+            # RstR element 5
+            self.rstr_label = QLabel("RSt reciev")
+            self.rstr_input = QLineEdit()
+            self.rstr_input.setStyleSheet(style_table)
+            self.rstr_input.setFixedWidth(100)
+            self.rstr_input.setFixedHeight(30)
+            self.rstr_input.setText(rstR)
+            rstr_layer = QHBoxLayout()
+            rstr_layer.addWidget(self.rstr_label)
+            rstr_layer.addWidget(self.rstr_input)
+            # RstS element 6
+            self.rsts_label = QLabel("RSt sent")
+            self.rsts_input = QLineEdit()
+            self.rsts_input.setStyleSheet(style_table)
+            self.rsts_input.setFixedWidth(100)
+            self.rsts_input.setFixedHeight(30)
+            self.rsts_input.setText(rstS)
+            rsts_layer = QHBoxLayout()
+            rsts_layer.addWidget(self.rsts_label)
+            rsts_layer.addWidget(self.rsts_input)
+            # Name element 7
+            self.name_label = QLabel("Name")
+            self.name_input = QLineEdit()
+            self.name_input.setStyleSheet(style_table)
+            self.name_input.setFixedWidth(100)
+            self.name_input.setFixedHeight(30)
+            self.name_input.setText(name)
+            name_layer = QHBoxLayout()
+            name_layer.addWidget(self.name_label)
+            name_layer.addWidget(self.name_input)
+            # QTH element 8
+            self.qth_label = QLabel("QTH")
+            self.qth_input = QLineEdit()
+            self.qth_input.setStyleSheet(style_table)
+            self.qth_input.setFixedWidth(100)
+            self.qth_input.setFixedHeight(30)
+            self.qth_input.setText(qth)
+            qth_layer = QHBoxLayout()
+            qth_layer.addWidget(self.qth_label)
+            qth_layer.addWidget(self.qth_input)
+            # Mode element 9
+            self.mode_label = QLabel("Mode")
+            self.mode_input = QLineEdit()
+            self.mode_input.setStyleSheet(style_table)
+            self.mode_input.setFixedWidth(100)
+            self.mode_input.setFixedHeight(30)
+            self.mode_input.setText(mode)
+            mode_layer = QHBoxLayout()
+            mode_layer.addWidget(self.mode_label)
+            mode_layer.addWidget(self.mode_input)
+            # Band element 10
+            self.band_label = QLabel("Band")
+            self.band_input = QLineEdit()
+            self.band_input.setStyleSheet(style_table)
+            self.band_input.setFixedWidth(100)
+            self.band_input.setFixedHeight(30)
+            self.band_input.setText(band)
+            band_layer = QHBoxLayout()
+            band_layer.addWidget(self.band_label)
+            band_layer.addWidget(self.band_input)
+            # time_off element 11
+            self.timeoff_label = QLabel("Time OFF")
+            self.timeoff_input = QLineEdit()
+            self.timeoff_input.setStyleSheet(style_table)
+            self.timeoff_input.setFixedWidth(100)
+            self.timeoff_input.setFixedHeight(30)
+            self.timeoff_input.setText(time_off)
+            timeoff_layer = QHBoxLayout()
+            timeoff_layer.addWidget(self.timeoff_label)
+            timeoff_layer.addWidget(self.timeoff_input)
+            # Eqsl recvd element 12
+            self.eslrcvd_input = QCheckBox("eQSL Recieved")
+            self.eslrcvd_input.setStyleSheet(style)
+
+            if eQSL_QSL_RCVD == "Y":
+                self.eslrcvd_input.setChecked(True)
+            else:
+                self.eslrcvd_input.setChecked(False)
+            eslrcvd_layer = QHBoxLayout()
+            eslrcvd_layer.addWidget(self.eslrcvd_input)
+            # Comment element 13
+            self.comment_label = QLabel("Comment")
+            self.comment_input = QLineEdit()
+            self.comment_input.setStyleSheet(style_table)
+            self.comment_input.setFixedWidth(100)
+            self.comment_input.setFixedHeight(30)
+            self.comment_input.setText(comment)
+            comment_layer = QHBoxLayout()
+            comment_layer.addWidget(self.comment_label)
+            comment_layer.addWidget(self.comment_input)
+            # Set Button
+            self.save_button = QPushButton("Save QSO")
+            self.save_button.setFixedHeight(30)
+            self.save_button.setFixedWidth(100)
+            self.save_button.clicked.connect(self.apply_edit_window)
+
+            self.cancel_button = QPushButton("Cancel")
+            self.cancel_button.setFixedHeight(30)
+            self.cancel_button.setFixedWidth(100)
+            self.cancel_button.clicked.connect(self.edit_window_close)
+            button_layer = QHBoxLayout()
+            button_layer.addWidget(self.cancel_button)
+            button_layer.addWidget(self.save_button)
+            # Setup all elements
+            vertical_box = QVBoxLayout()
+            vertical_box.addLayout(call_layer)
+            vertical_box.addLayout(name_layer)
+            vertical_box.addLayout(qth_layer)
+            vertical_box.addLayout(rstr_layer)
+            vertical_box.addLayout(rsts_layer)
+            vertical_box.addLayout(mode_layer)
+            vertical_box.addLayout(band_layer)
+            vertical_box.addLayout(freq_layer)
+            vertical_box.addLayout(date_layer)
+            vertical_box.addLayout(time_layer)
+            vertical_box.addLayout(timeoff_layer)
+            vertical_box.addLayout(eslrcvd_layer)
+            vertical_box.addLayout(comment_layer)
+            vertical_box.addLayout(button_layer)
+            # Setup vertical to widget
+            self.edit_window.setLayout(vertical_box)
+            self.edit_window.show()
+
+        def edit_window_close(self):
+            self.edit_window.close()
+
+        def apply_edit_window(self):
+            if self.eslrcvd_input.isChecked():
+                eqsl = "Y"
+            else:
+                eqsl = "N"
+            print("eqsl:_>", eqsl)
+            time_format = self.time_input.text().strip().replace(":", '')
+            print("Time format:_>", time_format)
+            date_format = self.date_input.text().strip().replace("-", '')
+            new_object = {'BAND': self.band_input.text().strip(),
+                          'CALL': self.call_input.text().strip(),
+                          'FREQ': self.freq_input.text().strip(),
+                          'MODE': self.mode_input.text().strip(),
+                          'OPERATOR': self.operator_edit,
+                          'QSO_DATE': date_format,
+                          'TIME_ON': time_format,
+                          'RST_RCVD': self.rstr_input.text().strip(),
+                          'RST_SENT': self.rsts_input.text().strip(),
+                          'NAME': self.name_input.text().strip(),
+                          'QTH': self.qth_input.text().strip(),
+                          'COMMENTS': self.comment_input.text().strip(),
+                          'TIME_OFF': self.timeoff_input.text().strip(),
+                          'EQSL_QSL_SENT': eqsl,
+                          'EOR': 'R\n',
+                          'string_in_file': self.string_in_file_edit,
+                          'records_number': self.records_number_edit}
+            Adi_file().store_changed_qso(new_object)
+            All_records[int(self.records_number_edit) - 1] = new_object
+            print("Object for edit:_>", new_object)
+            self.refresh_data()
+            self.edit_window.close()
+
+        def delete_qso(self, row):
+            record_number = self.tableWidget.item(row, 0).text()
+            string_in_file = All_records[int(record_number) - 1]['string_in_file']
+            print("delete_qso number:_>", record_number)
+            Adi_file().delete_qso_from_file(string_in_file)
+            self.tableWidget.removeRow(row)
+            self.refresh_data()
+
 
         def changeEvent(self, event):
 
@@ -421,20 +688,17 @@ class log_Window(QWidget):
             self.tableWidget.setHorizontalHeaderLabels(
                 ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
                  "RST s", "      Name      ", "      QTH      ", " Comments ",
-                 " Time off ", " eQSL Rcvd "])
+                 " Time off ", " eQSL Sent "])
 
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
             self.allRecords.start()
-            #self.tableWidget.resizeColumnsToContents()
-            self.tableWidget.resizeRowsToContents()
-            #self.tableWidget.resizeRowsToContents()
-            #time.sleep(2)
-            self.allRows = len(All_records)
-            #print("class Fill_table(QThread) - self.all_record >:", return_data)
 
-        #def fill_data_table(self):
-        #    fill = Fill_table(window=logWindow)
-        #    fill.start()
+            #self.tableWidget.resizeColumnsToContents()
+
+            self.tableWidget.resizeRowsToContents()
+
+            self.allRows = len(All_records)
+
 
         def get_all_record(self):
             return All_records
@@ -463,7 +727,7 @@ class log_Window(QWidget):
             band = self.tableWidget.item(row, 3).text()
             comment = self.tableWidget.item(row, 10).text()
             time_off = self.tableWidget.item(row, 11).text()
-            eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
+            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
             mode = self.tableWidget.item(row, 5).text()
             string_in_file = All_records[int(record_number) - 1]['string_in_file']
             records_number = All_records[int(record_number) - 1]['records_number']
@@ -477,7 +741,7 @@ class log_Window(QWidget):
             new_object = {'BAND': band, 'CALL': call, 'FREQ': freq, 'MODE': mode, 'OPERATOR': operator,
                           'QSO_DATE': date_formated, 'TIME_ON': time_formated, 'RST_RCVD': rstR, 'RST_SENT': rstS,
                           'NAME': name, 'QTH': qth, 'COMMENTS': comment, 'TIME_OFF': time_off,
-                          'eQSL_QSL_RCVD': eQSL_QSL_RCVD,
+                          'EQSL_QSL_SENT': EQSL_QSL_SENT,
                           'EOR': 'R\n', 'string_in_file': string_in_file, 'records_number': records_number}
 
            # print("store_change_record: NEW Object", new_object)
@@ -523,7 +787,7 @@ class log_Window(QWidget):
                 len(recordObject['QTH'])) + ">" + recordObject['QTH'] + "<COMMENTS:" + str(
                 len(recordObject['COMMENTS'])) + ">" + recordObject[
                                   'COMMENTS'] + "<TIME_OFF:" + str(len(recordObject['TIME_OFF'])) + ">" + recordObject[
-                                  'TIME_OFF'] + "<eQSL_QSL_RCVD:1>Y<EOR>\n"
+                                  'TIME_OFF'] + "<EQSL_QSL_SENT:"+str(len(recordObject['EQSL_QSL_SENT']))+">"+str(recordObject['EQSL_QSL_SENT'])+"<EOR>\n"
             # print(stringToAdiFile)
             recordObject['string_in_file'] = Adi_file().get_last_string() + 1
 
@@ -1369,7 +1633,11 @@ class logForm(QMainWindow):
             comment = comment.replace("\r", " ")
             comment = comment.replace("\n", " ")
             freq = self.get_freq()
-            eQSL_QSL_RCVD = "N"
+            if settingsDict['eqsl'] == 'enable':
+                EQSL_QSL_SENT = 'Y'
+            else:
+                EQSL_QSL_SENT = 'N'
+            #eQSL_QSL_RCVD = "N"
             all_records = logWindow.get_all_record()            # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
             record_number = len(All_records) + 1
 
@@ -1382,7 +1650,7 @@ class logForm(QMainWindow):
             recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq, 'CALL': call, 'MODE': mode,
                             'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': operator,
                             'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
-                            'eQSL_QSL_RCVD': eQSL_QSL_RCVD}
+                            'EQSL_QSL_SENT': EQSL_QSL_SENT}
 
             logWindow.addRecord(recordObject)
             call_dict = {'call': call, 'mode': mode, 'band': band}
@@ -2175,7 +2443,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.21'
+    APP_VERSION = '1.2'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:

@@ -63,7 +63,7 @@ class internetWorker(QThread):
         img = soup.find(id="mypic")
 
         file_name = self.callsign.replace("/", "_")
-       # print("file_name, img:_>", file_name, img)
+        print("file_name, img:_>", file_name, img)
 
 
         try:

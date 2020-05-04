@@ -433,7 +433,7 @@ class Menu (QWidget):
     def import_adi(self):
         fileimport = QFileDialog()
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        #options |= QFileDialog.DontUseNativeDialog
         #fileimport.setNameFilter("Adi file(*.adi)")
         #fileimport.setFilter()
         fname = fileimport.getOpenFileName(self, 'Import adi file', '/home', "*.adi", options=options)[0]
@@ -442,14 +442,12 @@ class Menu (QWidget):
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
                                'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR']
             try:
-                allRecords = parse.getAllRecord(self.allCollumn, fname)
+                allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
                 main.Adi_file.record_dict_qso(self, allRecords)
-               # print(allRecords)
                 self.logWindow.refresh_data()
                 std.std.message(self, "Import complete!", "Ok")
             except Exception:
-                print ("Exception to import")
-                std.std.message(self, "Can't import\nCheck encoding file", "STOP!")
+                std.std.message(self, "Can't import\nUnknown problem", "STOP!")
 
     def export_adi(self):
        # print("export_adi")
