@@ -1072,7 +1072,7 @@ class check_update ():
 
                     os.system("chmod +x "+home+"/linlog_"+version+"/linlog")
                     with open(home+"/linlog/linlog", "w") as f:
-                       string_to_file = ['#! /bin/bash\n', 'cd '+home+'/linlog_'+version+'\n', 'python main.py\n']
+                       string_to_file = ['#! /bin/bash\n', 'cd '+home+'/linlog_'+version+'\n', 'python3 main.py\n']
                        f.writelines(string_to_file)
 
                     #delete backup dir
