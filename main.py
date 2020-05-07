@@ -297,11 +297,16 @@ class Fill_table(QThread):
         self.window.tableWidget.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         for row in range(self.allRows):
+            if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
+                color = QColor(0, 200, 200)
+            else:
+                color = QColor(200, 200, 200, 0)
             for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
                 # print(self.allRows, row, self.allRows - row )
                 # print("Number record:", self.allRecord[row][pole])
+
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
                     #self.window.tableWidget.setItem(row, col,
@@ -331,6 +336,9 @@ class Fill_table(QThread):
                     else:
                         self.window.tableWidget.setItem(row, col,
                                                  QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                    if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
+                        self.window.tableWidget.item(row, col).setBackground(QColor(0, 200, 200))
+
         self.window.tableWidget.resizeColumnsToContents()
         self.window.tableWidget.resizeRowsToContents()
 
@@ -422,9 +430,57 @@ class log_Window(QWidget):
                 edit_record = QAction ("Edit QSO with " + call, context_menu)
                 edit_record.triggered.connect(lambda:
                                               self.edit_qso(self.tableWidget.currentItem().row()))
+                send_eqsl = QAction("Send eQSL for " + call, context_menu)
+                send_eqsl.triggered.connect(lambda:
+                                            self.send_eqsl_for_call(self.tableWidget.currentItem().row()))
+                if self.tableWidget.item(index_row, 12).text() == "Y":
+                    send_eqsl.setEnabled(False)
+                else:
+                    send_eqsl.setEnabled(True)
                 context_menu.addAction(edit_record)
+                context_menu.addAction(send_eqsl)
                 context_menu.addAction(delete_record)
             context_menu.exec(self.tableWidget.mapToGlobal(point))
+
+        def send_eqsl_for_call(self, row):
+            #row = self.tableWidget.currentItem().row()
+            record_number = self.tableWidget.item(row, 0).text()
+            date = self.tableWidget.item(row, 1).text().replace("-","")
+            time = self.tableWidget.item(row, 2).text().replace(":","")
+            call = self.tableWidget.item(row, 4).text()
+            freq = All_records[int(record_number) - 1]['FREQ']
+            rstR = self.tableWidget.item(row, 6).text()
+            rstS = self.tableWidget.item(row, 7).text()
+            name = self.tableWidget.item(row, 8).text()
+            qth = self.tableWidget.item(row, 9).text()
+            self.operator = All_records[int(record_number) - 1]['OPERATOR']
+            band = self.tableWidget.item(row, 3).text()
+            comment = self.tableWidget.item(row, 10).text()
+            time_off = self.tableWidget.item(row, 11).text()
+            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
+            mode = self.tableWidget.item(row, 5).text()
+            self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
+            self.records_number_edit = All_records[int(record_number) - 1]['records_number']
+
+            recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq,
+                            'CALL': call, 'MODE': mode,
+                            'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': self.operator,
+                            'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
+                            'EQSL_QSL_SENT': EQSL_QSL_SENT}
+
+            self.eqsl_send = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject, std=std.std,
+                                                     parent_window=self)
+            self.eqsl_send.send_ok.connect(self.procesing_row)
+
+        @QtCore.pyqtSlot()
+        def procesing_row(self):
+            row = self.tableWidget.currentItem().row()
+            cols = self.tableWidget.columnCount()
+            self.tableWidget.setItem(row, 12, QTableWidgetItem("Y"))
+            for i in range(cols):
+                self.tableWidget.item(row, i).setBackground(QColor(0, 200, 200))
+            self.store_change_record()
+            print("It's slot processing_row")
 
         def edit_qso(self, row):
             row = self.tableWidget.currentItem().row()
@@ -441,7 +497,7 @@ class log_Window(QWidget):
             band = self.tableWidget.item(row, 3).text()
             comment = self.tableWidget.item(row, 10).text()
             time_off = self.tableWidget.item(row, 11).text()
-            eQSL_QSL_RCVD = self.tableWidget.item(row, 12).text()
+            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
             mode = self.tableWidget.item(row, 5).text()
             self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
             self.records_number_edit = All_records[int(record_number) - 1]['records_number']
@@ -575,7 +631,7 @@ class log_Window(QWidget):
             self.eslrcvd_input = QCheckBox("eQSL Recieved")
             self.eslrcvd_input.setStyleSheet(style)
 
-            if eQSL_QSL_RCVD == "Y":
+            if EQSL_QSL_SENT == "Y":
                 self.eslrcvd_input.setChecked(True)
             else:
                 self.eslrcvd_input.setChecked(False)
@@ -1663,7 +1719,7 @@ class logForm(QMainWindow):
 
             if settingsDict['eqsl'] == 'enable':
                 sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject,std=std.std, parent_window=self)
-                sync_eqsl.start()
+                #sync_eqsl.start()
             try:
                 tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).change_color_spot(call, freq)
             except:
@@ -1839,8 +1895,14 @@ class logForm(QMainWindow):
     def logSettings(self):
         print('logSettings')
         #menu_window.show()
-
-        menu.show()
+        self.menu = settings.Menu(settingsDict,
+                             telnetCluster,
+                             logForm,
+                             logSearch,
+                             logWindow,
+                             internetSearch,
+                             tci_recv)
+        self.menu.show()
         # logSearch.close()
 
     def stat_cluster(self):
@@ -2404,7 +2466,7 @@ class hello_window(QWidget):
     def ok_button_push(self):
         if self.call_input.text().strip() != "":
             settingsDict['my-call'] = self.call_input.text().strip().upper()
-            settings_file.save_all_settings(self)
+            settings_file.save_all_settings(self, settingsDict)
             hello_window.close()
             subprocess.call(["python3", "main.py"])
             #subprocess.call("./main")
@@ -2420,8 +2482,8 @@ class hello_window(QWidget):
 class settings_file:
 
 
-    def save_all_settings(self):
-        print ("save_all_settings")
+    def save_all_settings(self, settingsDict):
+        print ("save_all_settings", settingsDict)
         filename = 'settings.cfg'
         with open(filename, 'r') as f:
             old_data = f.readlines()
@@ -2433,6 +2495,7 @@ class settings_file:
                 if key_from_line == key:
                     # print("key",key , "line", line)
                     old_data[index] = key + "=" + settingsDict[key] + "\n"
+
         with open(filename, 'w') as f:
             f.writelines(old_data)
         print("Save_and_Exit_button: ", old_data)
@@ -2515,13 +2578,13 @@ if __name__ == '__main__':
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster.show()
 
-        menu = settings.Menu(settingsDict,
-                             telnetCluster,
-                             logForm,
-                             logSearch,
-                             logWindow,
-                             internetSearch,
-                             tci_recv)
+        #menu = settings.Menu(settingsDict,
+        #                     telnetCluster,
+        #                     logForm,
+         ##                    logSearch,
+        #                     logWindow,
+         #                    internetSearch,
+         #                    tci_recv)
 
 
 

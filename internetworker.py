@@ -8,15 +8,16 @@ import shutil
 import os
 from os.path import expanduser
 from bs4 import BeautifulSoup
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
+from PyQt5.QtGui import QPixmap, QColor
 # import urllib.request
 # import urllib.parse
 from urllib.request import urlretrieve
 from urllib.parse import quote
 from PyQt5.QtCore import QThread
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import  QWidget
+
+from PyQt5.QtWidgets import  QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QApplication
 import main
 
 
@@ -77,7 +78,45 @@ class internetWorker(QThread):
         return data_dictionary
 
 
-class Eqsl_services (QThread):
+
+
+class Eqsl_send(QtCore.QObject):
+    error_message = QtCore.pyqtSignal(str)
+    sent_ok = QtCore.pyqtSignal()
+
+    def __init__(self, settingsDict, recordObject, std, parent_window):
+            super().__init__()
+            self.recordObject = recordObject
+            self.settingsDict = settingsDict
+            self.std = std
+            self.parrent_window = parent_window
+
+    def run(self):
+
+        api_url_eqsl = 'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog upload'
+        data_qso_string = '<BAND:'+str(len(self.recordObject['BAND']))+'>'+str(self.recordObject['BAND'])+' <CALL:'+str(len(self.recordObject['CALL']))+'>'+str(self.recordObject['CALL'])+' <MODE:'+str(len(self.recordObject['MODE']))+'>'+str(self.recordObject['MODE'])+' <QSO_DATE:'+str(len(self.recordObject['QSO_DATE']))+'>'+str(self.recordObject['QSO_DATE'])+' <RST_RCVD:'+str(len(self.recordObject['RST_RCVD']))+'>'+str(self.recordObject['RST_RCVD'])+' <RST_SENT:'+str(len(self.recordObject['RST_SENT']))+'>'+str(self.recordObject['RST_SENT'])+' <TIME_ON:'+str(len(self.recordObject['TIME_ON']))+'>'+str(self.recordObject['TIME_ON'])+' <EOR>'
+        data_string_code_to_url = urllib.parse.quote(data_qso_string)
+        user_pasword_eqsl = '&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
+
+
+        request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
+
+        if request_eqsl.status_code != 200:
+
+            self.error_message.emit("Can't sent eQSL (server not 200)")
+
+        else:
+            soup = BeautifulSoup(request_eqsl.text, 'html.parser')
+            response = soup.body.contents[0]
+           # print ("SOUP", soup.body.contents[0].strip())
+            if (response.find('Warning') != -1) or (response.find('Error') != -1):
+                self.error_message.emit(soup.body.contents[0].strip())
+            else:
+                self.sent_ok.emit()
+
+class Eqsl_services (QtCore.QObject):
+
+    send_ok = QtCore.pyqtSignal()
 
     def __init__(self, settingsDict, recordObject, std, parent_window):
         super().__init__()
@@ -85,6 +124,8 @@ class Eqsl_services (QThread):
         self.settingsDict = settingsDict
         self.std = std
         self.parrent_window = parent_window
+        self.check_auth_data()
+
 
     def send_qso_to_qrz(self):
         server_url_post = 'https://logbook.qrz.com/api'
@@ -95,42 +136,102 @@ class Eqsl_services (QThread):
 
        # print ("send_to_qrz", response.text)
 
-    def run(self):
-
-        api_url_eqsl = 'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog upload'
-        data_qso_string = '<BAND:'+str(len(self.recordObject['BAND']))+'>'+str(self.recordObject['BAND'])+' <CALL:'+str(len(self.recordObject['CALL']))+'>'+str(self.recordObject['CALL'])+' <MODE:'+str(len(self.recordObject['MODE']))+'>'+str(self.recordObject['MODE'])+' <QSO_DATE:'+str(len(self.recordObject['QSO_DATE']))+'>'+str(self.recordObject['QSO_DATE'])+' <RST_RCVD:'+str(len(self.recordObject['RST_RCVD']))+'>'+str(self.recordObject['RST_RCVD'])+' <RST_SENT:'+str(len(self.recordObject['RST_SENT']))+'>'+str(self.recordObject['RST_SENT'])+' <TIME_ON:'+str(len(self.recordObject['TIME_ON']))+'>'+str(self.recordObject['TIME_ON'])+' <EOR>'
-        data_string_code_to_url = urllib.parse.quote(data_qso_string)
-        user_pasword_eqsl = '&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
-        #data_qso_string = 'ADIFData=LinLog%20upload%20%3CBAND%3A'+str(len(band))+'%3AC%3E'+str(band)+'%20%2D%20%3CCALL%3A'+str(len(call))+'%3AC%3'+str(call)+'%20%3CMODE%3A'+str(len(mode))+'%3AC%3E'+str(mode)+'%20%3CQSO%5FDATE%3A'+str(len(qso_date))+'%3AD%3E'+str(qso_date)+'%20%3CRST%5FRCVD%3A'+str(len(rst_rsvd))+'%3AC%3E'+str(rst_rsvd)+'%20%3CRST%5FSENT%3A'+str(len(rst_send))+'%3AC%3E'+str(rst_send)+'%20%2D%20%3CTIME%5FON%3A'+str(len(time_on))+'%3AC%3E'+str(time_on)+'%20%3CEOR%3E&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
-       # print ("end_qso_to_eqsl", api_url_eqsl+data_string_code_to_url)
-
-        request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
-
-        if request_eqsl.status_code != 200:
-
-            std.std().message("Can't send to eQSL", "")
-           # print("request_eqsl.status_code", request_eqsl.status_code)
+    def check_auth_data(self):
+        if self.settingsDict['eqsl_user'] == '' or self.settingsDict['eqsl_password'] == '':
+            self.enter_auth_data()
         else:
-            soup = BeautifulSoup(request_eqsl.text, 'html.parser')
-            response = soup.body.contents[0]
-           # print ("SOUP", soup.body.contents[0].strip())
-            if (response.find('Warning')!= -1) or (response.find('Error')!= -1):
-                message = QMessageBox(self.parrent_window)
-                #message.setFixedHeight(200)
-                #message.setGeometry(500, 300, 1000, 500)
-                message.setStyleSheet("font: 12px;")
-                message.setWindowTitle("Warning!")
-                message.setText("Can't send to eQSL.cc")
-                #message.setText(soup.body.contents[0].strip())
-                message.setInformativeText(soup.body.contents[0].strip())
-                message.setStandardButtons(QMessageBox.Ok)
-                message.exec_()
-            #print(request_eqsl.text)
-        
+            self.start_sending()
+
+    def enter_auth_data(self):
+        desktop = QApplication.desktop()
+        self.window_auth = QWidget()
+        self.window_auth.setGeometry(int(desktop.width() / 2) - 100, int(desktop.height() / 2) - 50, 200, 100)
+        self.window_auth.setWindowTitle("Enter eQSL auth data")
+        styleform = "background :" + self.settingsDict['form-background'] + "; font-weight: bold; color:" + \
+                    self.settingsDict['color-table'] + ";"
+
+        style = "QWidget{background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict[
+            'color'] + ";}"
+        self.window_auth.setStyleSheet(style)
+
+        # Login element
+        self.login_label = QLabel("login")
+        self.login_input = QLineEdit()
+        self.login_input.setFixedWidth(100)
+        self.login_input.setFixedHeight(30)
+        self.login_input.setStyleSheet(styleform)
+
+        login_layer = QHBoxLayout()
+        login_layer.addWidget(self.login_label)
+        login_layer.addWidget(self.login_input)
+        # Password element
+        self.password_label = QLabel("Password")
+        self.password_input = QLineEdit()
+        self.password_input.setFixedWidth(100)
+        self.password_input.setFixedHeight(30)
+        self.password_input.setStyleSheet(styleform)
+        password_layer = QHBoxLayout()
+        password_layer.addWidget(self.password_label)
+        password_layer.addWidget(self.password_input)
+
+        # Button elements
+        ok_button = QPushButton("Ok")
+        ok_button.setFixedWidth(70)
+        ok_button.setFixedHeight(30)
+        ok_button.setStyleSheet(style)
+        ok_button.clicked.connect(self.return_data)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setFixedWidth(70)
+        cancel_button.setFixedHeight(30)
+        cancel_button.setStyleSheet(style)
+        cancel_button.clicked.connect(self.window_auth.close)
+        buttons_layer = QHBoxLayout()
+        buttons_layer.addWidget(cancel_button)
+        buttons_layer.addWidget(ok_button)
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(login_layer)
+        main_layout.addLayout(password_layer)
+        main_layout.addLayout(buttons_layer)
+        self.window_auth.setLayout(main_layout)
+        self.window_auth.show()
+
+    def return_data(self):
+        self.settingsDict['eqsl_user'] = self.login_input.text().strip()
+        self.settingsDict['eqsl_password'] = self.password_input.text().strip()
+        #main.Settings_file().update_file_to_disk()
+        self.window_auth.close()
+        self.start_sending()
 
 
-        #request_eqsl = requests.get(
-         #   'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog%20upload%20%3CADIF%5FVER%3A4%3E1%2E00%20%3CEOH%3E%20%3CBAND%3A3%3AC%3E30M%20%2D%20%3CCALL%3A6%3AC%3EWB4WXX%20%3CMODE%3A3%3AC%3ESSB%20%3CQSO%5FDATE%3A8%3AD%3E20010503%20%3CRST%5FRCVD%3A2%3AC%3E52%20%3CRST%5FSENT%3A2%3AC%3E59%20%2D%20%3CTIME%5FON%3A6%3AC%3E122500%20%3CEOR%3E&EQSL_USER=ur4lga&EQSL_PSWD=a9minx3m')
+
+    def start_sending(self):
+        self.send_thread = QtCore.QThread()
+        self.send_eqsl = Eqsl_send(settingsDict=self.settingsDict,
+                                   recordObject=self.recordObject,
+                                   std=self.std,
+                                   parent_window=self.parrent_window)
+        self.send_eqsl.moveToThread(self.send_thread)
+        self.send_eqsl.error_message.connect(self.show_message)
+        self.send_eqsl.sent_ok.connect(self.send_complited)
+        self.send_thread.started.connect(self.send_eqsl.run)
+
+        self.send_thread.start()
+
+    @QtCore.pyqtSlot(str)
+    def show_message(self, string: str):
+        # pass
+        std.std.message(self.parrent_window, string, "Error")
+        self.settingsDict['eqsl_user'] = ''
+        self.settingsDict['eqsl_password'] = ''
+
+        self.send_thread.exec()
+    @QtCore.pyqtSlot()
+    def send_complited(self):
+        main.settings_file.save_all_settings(main.settings_file, self.settingsDict)
+        self.send_ok.emit()
+        self.send_thread.exec()
+
+
 
 class check_update (QThread):
 

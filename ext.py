@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, QPushButton,QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
+from PyQt5.QtWidgets import QWidget, QApplication, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, QPushButton,QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtCore import Qt
 import settings
@@ -28,6 +28,7 @@ class test:
         with open("rules.json", 'w') as f:
             f.write(json.dumps(list))
         #print("json.dumps", json.dumps(list))
+
 
 class Diplom_form(QWidget):
 
@@ -70,14 +71,6 @@ class Diplom_form(QWidget):
         self.name_layout.addStretch(300)
         #
 
-
-
-
-
-
-
-
-        #
         self.score_layout = QHBoxLayout()
         score_text = QLabel("How many points do you need")
         score_text.setStyleSheet(style)
