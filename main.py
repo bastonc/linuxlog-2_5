@@ -2506,7 +2506,7 @@ class settings_file:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '1.22'
+    APP_VERSION = '1.23'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
