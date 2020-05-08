@@ -1872,10 +1872,15 @@ class logForm(QMainWindow):
 
 
         #print(parameter)
-        if menu.isEnabled():
-            menu.close()
+        try:
+            if self.menu.isEnabled():
+                self.menu.close()
+        except Exception:
+            pass
+
         if about_window.isEnabled():
             about_window.close()
+
         self.remember_in_cfg(self.parameter)
 
     def remember_in_cfg (self, parameter):
