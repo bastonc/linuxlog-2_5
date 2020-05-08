@@ -1144,7 +1144,7 @@ class check_update ():
                     #delete backup dir
                     os.system("rm -rf " + home + "/linuxlog-backup")
 
-                    os.system("rm -rf " + home + "/linlog_v"+self.version)
+                    os.system("rm -rf " + home + "/linlog_"+self.version)
 
                     std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
                                                                          "Please restart LinuxLog", "UPDATER")
