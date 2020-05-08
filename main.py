@@ -774,10 +774,13 @@ class log_Window(QWidget):
             tableWidgetItem.setFlags(flags)
             return tableWidgetItem
 
-        def store_change_record(self):
+        def store_change_record(self, row_arg=''):
 
             #print("store_change_record")
-            row = self.tableWidget.currentItem().row()
+            if row_arg == '':
+                row = self.tableWidget.currentItem().row()
+            else:
+                row = int(row_arg)
             record_number = self.tableWidget.item(row, 0).text()
             date = str(self.tableWidget.item(row, 1).text())
             date_formated = date.replace("-", "")
@@ -834,6 +837,16 @@ class log_Window(QWidget):
             # <QSO_DATE:8:D>20131011 <TIME_ON:6>184700 <RST_RCVD:2>57 <RST_SENT:2>57 <TIME_OFF:6>184700
             # <eQSL_QSL_RCVD:1>Y <APP_LOGGER32_QSO_NUMBER:1>1  <EOR>
             # record to file
+            if settingsDict['eqsl'] == 'enable':
+                try:
+                    self.sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject,
+                                                                  std=std.std, parent_window=self)
+                    self.sync_eqsl.send_ok.connect(self.eqsl_ok)
+                    self.sync_eqsl.error_signal.connect(self.eqsl_error)
+                except Exception:
+                    print("Don't sent eQSL")
+
+
             stringToAdiFile = "<BAND:" + str(len(recordObject['BAND'])) + ">" + recordObject['BAND'] + "<CALL:" + str(
                 len(recordObject['CALL'])) + ">"
 
@@ -892,8 +905,22 @@ class log_Window(QWidget):
                     self.tableWidget.setItem(0, col, QTableWidgetItem(time_formated))
                 else:
                     self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
-                if recordObject['EQSL_QSL_SENT'] == 'Y':
-                    self.tableWidget.item(0,col).setBackground(QColor(0,200,200))
+
+
+
+        @QtCore.pyqtSlot(name='eqsl_ok')
+        def eqsl_ok(self):
+            self.tableWidget.setItem (0,12, QTableWidgetItem('Y'))
+            allCols = len(self.allCollumn)
+            for col in range(allCols):
+                self.tableWidget.item(0, col).setBackground(QColor(0, 200, 200))
+
+            self.store_change_record(row_arg=0)
+
+        @QtCore.pyqtSlot()
+        def eqsl_error(self):
+            # self.recordObject['EQSL_QSL_SENT'] = 'Y'
+            pass
 
         def search_in_table(self, call):
             list_dict = []
@@ -1716,19 +1743,11 @@ class logForm(QMainWindow):
             self.recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq, 'CALL': call, 'MODE': mode,
                             'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': operator,
                             'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
-                            'EQSL_QSL_SENT': self.EQSL_QSL_SENT}
+                            'EQSL_QSL_SENT': 'N'}
 
-            if settingsDict['eqsl'] == 'enable':
-                try:
-                    self.sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=self.recordObject,
-                                                                  std=std.std, parent_window=self)
-                    self.sync_eqsl.send_ok.connect(self.eqsl_ok)
-                    self.sync_eqsl.error_signal.connect(self.eqsl_error)
-                except Exception:
-                    logWindow.addRecord(self.recordObject)
+            logWindow.addRecord(self.recordObject)
 
-            else:
-                logWindow.addRecord(self.recordObject)
+
             call_dict = {'call': call, 'mode': mode, 'band': band}
             print ("call_dict:_>", call_dict)
             if settingsDict['diplom'] == 'enable':
@@ -1757,15 +1776,7 @@ class logForm(QMainWindow):
                 internetSearch.update_photo()
             except Exception:
                 pass
-    @QtCore.pyqtSlot(name='eqsl_ok')
-    def eqsl_ok(self):
-        self.recordObject['EQSL_QSL_SENT'] = 'Y'
-        logWindow.addRecord(self.recordObject)
 
-    @QtCore.pyqtSlot()
-    def eqsl_error(self):
-        #self.recordObject['EQSL_QSL_SENT'] = 'Y'
-        logWindow.addRecord(self.recordObject)
 
 
     def changeEvent(self, event):
