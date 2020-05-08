@@ -475,7 +475,7 @@ class log_Window(QWidget):
                                                      parent_window=self)
             self.eqsl_send.send_ok.connect(self.procesing_row)
 
-        @QtCore.pyqtSlot()
+        @QtCore.pyqtSlot(name='send_eqsl_ok')
         def procesing_row(self):
             row = self.tableWidget.currentItem().row()
             cols = self.tableWidget.columnCount()
@@ -892,6 +892,8 @@ class log_Window(QWidget):
                     self.tableWidget.setItem(0, col, QTableWidgetItem(time_formated))
                 else:
                     self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+                if recordObject['EQSL_QSL_SENT'] == 'Y':
+                    self.tableWidget.item(0,col).setBackground(QColor(0,200,200))
 
         def search_in_table(self, call):
             list_dict = []
@@ -1699,11 +1701,9 @@ class logForm(QMainWindow):
             comment = comment.replace("\r", " ")
             comment = comment.replace("\n", " ")
             freq = self.get_freq()
-            if settingsDict['eqsl'] == 'enable':
-                EQSL_QSL_SENT = 'Y'
-            else:
-                EQSL_QSL_SENT = 'N'
-            #eQSL_QSL_RCVD = "N"
+
+            self.EQSL_QSL_SENT = 'N'
+
             all_records = logWindow.get_all_record()            # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
             record_number = len(All_records) + 1
 
@@ -1713,22 +1713,31 @@ class logForm(QMainWindow):
             time = str(strftime("%H%M%S", gmtime()))
 
 
-            recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq, 'CALL': call, 'MODE': mode,
+            self.recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq, 'CALL': call, 'MODE': mode,
                             'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': operator,
                             'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
-                            'EQSL_QSL_SENT': EQSL_QSL_SENT}
+                            'EQSL_QSL_SENT': self.EQSL_QSL_SENT}
 
-            logWindow.addRecord(recordObject)
+            if settingsDict['eqsl'] == 'enable':
+                try:
+                    self.sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=self.recordObject,
+                                                                  std=std.std, parent_window=self)
+                    self.sync_eqsl.send_ok.connect(self.eqsl_ok)
+                    self.sync_eqsl.error_signal.connect(self.eqsl_error)
+                except Exception:
+                    logWindow.addRecord(self.recordObject)
+
+            else:
+                logWindow.addRecord(self.recordObject)
             call_dict = {'call': call, 'mode': mode, 'band': band}
             print ("call_dict:_>", call_dict)
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
                     if diploms.filter(call_dict):
                         #print("filter true for:", diploms, "string:", recordObject)
-                        diploms.add_qso(recordObject)
+                        diploms.add_qso(self.recordObject)
 
-            if settingsDict['eqsl'] == 'enable':
-                sync_eqsl = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject,std=std.std, parent_window=self)
+
                 #sync_eqsl.start()
             try:
                 tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).change_color_spot(call, freq)
@@ -1748,6 +1757,16 @@ class logForm(QMainWindow):
                 internetSearch.update_photo()
             except Exception:
                 pass
+    @QtCore.pyqtSlot(name='eqsl_ok')
+    def eqsl_ok(self):
+        self.recordObject['EQSL_QSL_SENT'] = 'Y'
+        logWindow.addRecord(self.recordObject)
+
+    @QtCore.pyqtSlot()
+    def eqsl_error(self):
+        #self.recordObject['EQSL_QSL_SENT'] = 'Y'
+        logWindow.addRecord(self.recordObject)
+
 
     def changeEvent(self, event):
 
@@ -2186,8 +2205,7 @@ class clusterThread(QThread):
                             if search_in_diplom_rules_flag == 1:
                                  self.telnetCluster.tableWidget.item(lastRow, 4).setBackground(color)
 
-                            self.telnetCluster.tableWidget.resizeColumnsToContents()
-                            self.telnetCluster.tableWidget.resizeRowsToContents()
+
                             self.telnetCluster.tableWidget.scrollToBottom()
 
                             if settingsDict['spot-to-pan'] == 'enable':
@@ -2196,6 +2214,8 @@ class clusterThread(QThread):
                                     tci.Tci_sender(settingsDict['tci-server']+":"+settingsDict['tci-port']).set_spot(cleanList[4], freq, color="19711680")
                                 except:
                                     print("clusterThread: Except in Tci_sender.set_spot")
+                            self.telnetCluster.tableWidget.resizeColumnsToContents()
+                            self.telnetCluster.tableWidget.resizeRowsToContents()
                         ####
                     # #print(output_data) # Check point - output input-string with data from cluster telnet-server
                     elif output_data[0:3].decode(settingsDict['encodeStandart']) == "WWV":
@@ -2204,6 +2224,7 @@ class clusterThread(QThread):
                         #print("Ionosphere status: ", output_data.decode(settingsDict['encodeStandart']))
                     del cleanList[0:len(cleanList)]
                     time.sleep(0.3)
+
           except:
               continue
 
@@ -2520,7 +2541,7 @@ class settings_file:
 
 
 if __name__ == '__main__':
-
+    #QT_QPA_PLATFORM = wayland-egl
     APP_VERSION = '1.23'
     settingsDict = {}
     file = open('settings.cfg', "r")

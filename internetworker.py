@@ -117,6 +117,7 @@ class Eqsl_send(QtCore.QObject):
 class Eqsl_services (QtCore.QObject):
 
     send_ok = QtCore.pyqtSignal()
+    error_signal  =QtCore.pyqtSignal()
 
     def __init__(self, settingsDict, recordObject, std, parent_window):
         super().__init__()
@@ -125,6 +126,7 @@ class Eqsl_services (QtCore.QObject):
         self.std = std
         self.parrent_window = parent_window
         self.check_auth_data()
+        self.input_form_key = 0
 
 
     def send_qso_to_qrz(self):
@@ -200,6 +202,7 @@ class Eqsl_services (QtCore.QObject):
         self.settingsDict['eqsl_password'] = self.password_input.text().strip()
         #main.Settings_file().update_file_to_disk()
         self.window_auth.close()
+        self.input_form_key = 1
         self.start_sending()
 
 
@@ -221,13 +224,15 @@ class Eqsl_services (QtCore.QObject):
     def show_message(self, string: str):
         # pass
         std.std.message(self.parrent_window, string, "Error")
-        self.settingsDict['eqsl_user'] = ''
-        self.settingsDict['eqsl_password'] = ''
-
+        if self.input_form_key == 1:
+            self.settingsDict['eqsl_user'] = ''
+            self.settingsDict['eqsl_password'] = ''
+        self.error_signal.emit()
         self.send_thread.exec()
     @QtCore.pyqtSlot()
     def send_complited(self):
-        main.settings_file.save_all_settings(main.settings_file, self.settingsDict)
+        if self.input_form_key == 1:
+            main.settings_file.save_all_settings(main.settings_file, self.settingsDict)
         self.send_ok.emit()
         self.send_thread.exec()
 
