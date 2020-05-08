@@ -276,6 +276,9 @@ class Communicate(QObject):
     signalComplited = pyqtSignal(list)
 
 class Fill_table(QThread):
+
+    fill_complite = QtCore.pyqtSignal()
+
     def __init__(self, all_column, window, all_record, communicate, parent=None):
         super().__init__()
         self.all_collumn = all_column
@@ -338,9 +341,9 @@ class Fill_table(QThread):
                                                  QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
                     if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
                         self.window.tableWidget.item(row, col).setBackground(QColor(0, 200, 200))
-
-        self.window.tableWidget.resizeColumnsToContents()
-        self.window.tableWidget.resizeRowsToContents()
+        self.fill_complite.emit()
+        #self.window.tableWidget.resizeColumnsToContents()
+        #self.window.tableWidget.resizeRowsToContents()
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -747,13 +750,20 @@ class log_Window(QWidget):
                  " Time off ", " eQSL Sent "])
 
             self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
+            self.allRecords.fill_complite.connect(self.fill_complited)
             self.allRecords.start()
 
             #self.tableWidget.resizeColumnsToContents()
 
-            self.tableWidget.resizeRowsToContents()
+            #self.tableWidget.resizeRowsToContents()
 
             self.allRows = len(All_records)
+
+        @QtCore.pyqtSlot(name='fill_complited')
+        def fill_complited(self):
+            self.tableWidget.resizeRowsToContents()
+            self.tableWidget.resizeColumnsToContents()
+
 
 
         def get_all_record(self):
