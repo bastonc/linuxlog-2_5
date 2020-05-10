@@ -3,6 +3,7 @@
 
 import websocket
 import time
+import std
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QApplication
 
@@ -19,7 +20,7 @@ class tci_connect:
     def start_tci(self, host, port):
 
         self.tci_reciever = Tci_reciever(host + ":" + port,
-                                         log_form=self.log_form)
+                                         log_form=self.log_form, settingsDict=self.settingsDict)
 
         self.tci_reciever.set_flag("run")
         self.tci_reciever.start()
@@ -36,11 +37,12 @@ class tci_connect:
 
 class Tci_reciever(QThread):
 
-    def __init__(self, uri, log_form, parent=None):
+    def __init__(self, uri, log_form, settingsDict, parent=None):
         super().__init__()
         self.uri = uri
         self.log_form = log_form
         self.ws = websocket.WebSocket()
+        self.settingsDict = settingsDict
 
     def set_flag(self, flag):
         #print("set_flag:", flag)
@@ -70,23 +72,37 @@ class Tci_reciever(QThread):
                 reciever = self.ws.recv()
                 #print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 tci_string=reciever.split(":")
+                # reciev vfo (freq)
                 if tci_string[0] == 'vfo':
                     values = tci_string[1].split(",")
                     if values[1] == '0' and values[0] == '0':
 
                         self.log_form.set_freq(values[2].replace(';', ''))
 
-
+                # reciev protocol
                         #print("Частота:", values[2])
                 if tci_string[0] == 'protocol':
                     values = tci_string[1].replace(',', ' ')
                     values = values.replace(";", "")
                     self.log_form.set_tci_stat('•TCI: '+ values)
-
+                # reciev mode
                 if tci_string[0] == 'modulation':
                      values = tci_string[1].split(",")
                      if values[0] == '0':
                          self.log_form.set_mode_tci(values[1].replace(';', ''))
+
+                # reciev spot call
+                if tci_string[0] == 'clicked_on_spot':
+                    print("clicked_on_spot:_>", tci_string)
+                    values = tci_string[1].split(",")
+                    print("clicked_on_spot:_>", values)
+                    self.log_form.set_call(call=values[0].strip())
+                    band = std.std().get_std_band(values[1].strip().replace(";",""))
+                    print("band>", band)
+                    mode = std.std().mode_band_plan(band, values[1].strip().replace(";",""))
+                    print("mode>", mode)
+                    #self.log_form.set_mode_tci(mode.lower())
+                    Tci_sender(self.settingsDict['tci-server']+":"+self.settingsDict['tci-port']).set_mode("0",mode)
 
 
 
@@ -131,12 +147,12 @@ class Tci_sender (QApplication):
         self.ws.send(string_command)
 
     def set_freq(self, freq):
-        print ("set_freq:", freq)
-        freq_string=str(freq)
-        if len(str(freq))<8 and len(str(freq))>=5:
-            freq_string=str(freq)+"00"
-        if len(str(freq))<5:
-            freq_string=str(freq)+"000"
+        print("set_freq:", freq)
+        freq_string = str(freq)
+        if len(str(freq)) < 8 and len(str(freq))>=5:
+            freq_string = str(freq)+"00"
+        if len(str(freq)) < 5:
+            freq_string = str(freq)+"000"
         string_command = "VFO:0,0,"+str(freq_string)+";"
         self.ws.send(string_command)
 

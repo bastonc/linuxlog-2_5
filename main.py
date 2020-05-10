@@ -424,6 +424,10 @@ class log_Window(QWidget):
 
         def context_menu(self, point):
             context_menu = QMenu()
+            style_table = "font: 12px"
+            context_menu.setStyleSheet(style_table)
+            #context_menu.setFixedWidth(0)
+            #context_menu.set
             if self.tableWidget.itemAt(point):
                 index_row = self.tableWidget.currentItem().row()
                 call  = self.tableWidget.item(index_row, 4).text()
@@ -1985,8 +1989,10 @@ class logForm(QMainWindow):
         self.labelFreq.setText("Freq: "+str(freq_to_label))
         band = std.std().get_std_band(freq)
         #print(band)
-        indexMode = self.comboBand.findText(band)
-        self.comboBand.setCurrentIndex(indexMode)
+        index_band = self.comboBand.findText(band)
+        self.comboBand.setCurrentIndex(index_band)
+
+
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
@@ -2308,7 +2314,10 @@ class telnetCluster(QWidget):
         self.isearch = internetworker.internetWorker(window=internetSearch, callsign=call, settings=settingsDict)
         self.isearch.start()
         freq = std.std().std_freq(freq)
-
+        band = std.std().get_std_band(freq)
+        mode = std.std().mode_band_plan(band, freq)
+        print("band:_>", band)
+        print("mode:_>", mode)
 
         '''len_freq = len(freq)
         if len_freq < 8 and len_freq <= 5:
@@ -2329,9 +2338,11 @@ class telnetCluster(QWidget):
         if settingsDict['tci'] == 'enable':
             try:
                 tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_freq(freq)
+                tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode('0',mode)
+
             except:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
-                      settingsDict['tci-port'])
+                      settingsDict['tci-port'], "freq:_>", freq)
 
         #print("click_to_spot: freq:",freq) # Chek point
 
@@ -2455,6 +2466,7 @@ class internetSearch(QWidget):
 
     def update_photo(self):
         pixmap = QPixmap("logo.png")
+
         #self.labelImage.setFixedWidth(self.settings['image-width'])
         self.labelImage.setPixmap(pixmap)
 
@@ -2594,7 +2606,7 @@ if __name__ == '__main__':
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         #### work with diplom filter and packing exempler of class into list
         #ext.test()
-
+        #std_functions = std.std(settingsDict)
         #diplom_1 = ext.diplom('1.adi', "rules.json")
         #diplom_2 = ext.diplom('2.adi', 'rules2.json')
         #diplom_list = logForm.get_diploms()

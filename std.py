@@ -1,6 +1,44 @@
 from PyQt5.QtWidgets import QMessageBox
 
 class std:
+    def __init__(self):
+        self.band_rules = {}
+        file = open("bandplan.cfg", "r")
+        for rules_in_band in file:
+            if rules_in_band != '' and rules_in_band != ' ' and rules_in_band[0] != '#':
+                rulesstring = rules_in_band.strip()
+                rulesstring = rules_in_band.replace("\r", "")
+                rulesstring = rules_in_band.replace("\n", "")
+                splitString = rulesstring.split('=')
+                self.band_rules.update({splitString[0]: splitString[1]})
+        file.close()
+
+    def mode_band_plan(self, band, freq):
+        try:
+            if int(freq) > int(self.band_rules["start-cw"+band]) and \
+                int(freq) <=  int(self.band_rules["end-cw"+band]):
+                mode = "CW"
+            elif int(freq) > int(self.band_rules["start-ssb"+band]) and \
+                int(freq) <= int(self.band_rules["end-ssb"+band]):
+                if int(band) < 40:
+                    mode = "USB"
+                else:
+                    mode = "LSB"
+
+            elif int(freq) > int(self.band_rules["start-digi"+band]) and \
+                int(freq) <= int(self.band_rules["end-digi"+band]):
+                if int(band) < 40:
+                    mode = "DIGU"
+                else:
+                    mode = "DIGL"
+            else:
+                mode = "ERROR"
+        except Exception:
+            mode = "ERROR"
+        return mode
+
+
+
     def get_std_band(self, freq):  # get Band in m
         #print(freq)
         band ="GEN"
