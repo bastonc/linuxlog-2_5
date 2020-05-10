@@ -2565,7 +2565,7 @@ class settings_file:
 
 if __name__ == '__main__':
     #QT_QPA_PLATFORM = wayland-egl
-    APP_VERSION = '1.23'
+    APP_VERSION = '1.24'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -2594,33 +2594,23 @@ if __name__ == '__main__':
 
     if settingsDict['my-call'] == "":
         hello_window = hello_window()
-        #print(hello_window)
+
     else:
-        #log_window1 = log_Window()
-        #logWindow = log_window1
+
         logWindow = log_Window()
         logSearch = logSearch()
         internetSearch = internetSearch()
         logForm = logForm()
         telnetCluster = telnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
-        #### work with diplom filter and packing exempler of class into list
-        #ext.test()
-        #std_functions = std.std(settingsDict)
-        #diplom_1 = ext.diplom('1.adi', "rules.json")
-        #diplom_2 = ext.diplom('2.adi', 'rules2.json')
-        #diplom_list = logForm.get_diploms()
-        ########
+
         adi_file = Adi_file()
         about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
-       # check = internetworker.check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=logForm)
 
-        #print(diplom_log.filter('ur4lga'))
         if settingsDict['log-window'] == 'true':
-           #pass
-            logWindow.show()
-            # Log_window() logWindow()
+           logWindow.show()
+
         if settingsDict['log-search-window'] == 'true':
             logSearch.show()
 
@@ -2629,7 +2619,7 @@ if __name__ == '__main__':
 
         if settingsDict['log-form-window'] == 'true':
             logForm.show()
-            #logForm.setFocus()
+
         if settingsDict['tci'] == 'enable':
 
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
@@ -2637,15 +2627,4 @@ if __name__ == '__main__':
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster.show()
 
-        #menu = settings.Menu(settingsDict,
-        #                     telnetCluster,
-        #                     logForm,
-         ##                    logSearch,
-        #                     logWindow,
-         #                    internetSearch,
-         #                    tci_recv)
-
-
-
-    #Adi_file().record_all_qso(list)
     sys.exit(app.exec_())
