@@ -26,14 +26,13 @@ from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QApplication, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
-from PyQt5.QtGui import QIcon, QFont, QBrush, QPixmap, QColor, QStandardItemModel
+from PyQt5.QtGui import QIcon, QFont, QPalette, QBrush, QPixmap, QColor, QStandardItemModel
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime
 
 
-# from tel import telnet_cluster
 class Settings_file:
 
     def update_file_to_disk(self):
@@ -279,31 +278,31 @@ class Fill_table(QThread):
 
     fill_complite = QtCore.pyqtSignal()
 
-    def __init__(self, all_column, window, all_record, communicate, parent=None):
+    def __init__(self, all_column, window, all_record, communicate, settingsDict, parent=None):
         super().__init__()
         self.all_collumn = all_column
         self.window = window
-        #self.all_record = all_record
+        self.all_record = all_record
         self.c = communicate
-
+        self.settingsDict = settingsDict
 
     def run(self):
 
         self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
-        #self.all_record = self.allRecord
+        self.all_record = self.allRecord
         self.c = Communicate()
         self.c.signalComplited.connect(Reciev_allRecords)
         self.c.signalComplited.emit(self.allRecord)
 
         self.allRows = len(self.allRecord)
-        #print(" self.allRecords:_> ",  self.allRecord)
-        self.window.tableWidget.setRowCount(self.allRows)
+        print(" self.allRecords:_> ",  len(self.allRecord))
+        self.window.tableWidget_qso.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         for row in range(self.allRows):
-            if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
-                color = QColor(0, 200, 200)
-            else:
-                color = QColor(200, 200, 200, 0)
+           # if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
+           #     color = QColor(settingsDict['eqsl-sent-color'])
+          #  else:
+          #      color = QColor(200, 200, 200, 0)
             for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
@@ -312,35 +311,41 @@ class Fill_table(QThread):
 
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
-                    #self.window.tableWidget.setItem(row, col,
-                     #                               self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
-                      #                                                  Qt.ItemIsSelectable | Qt.ItemIsEnabled))
                     if col == 0:
-                       self.window.tableWidget.setItem(row, col,
+                       self.window.tableWidget_qso.setItem(row, col,
                                                  self.protectionItem(self.allRecord[(self.allRows - 1) - row][pole],
                                                                      Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                       self.window.tableWidget_qso.item(row, col).setForeground(QColor(self.settingsDict["color-table"]))
+
 
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
                     elif col == 1:
                         date = str(self.allRecord[(self.allRows - 1) - row][pole])
                         date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                         #print(time_formated)
-                        self.window.tableWidget.setItem(row, col,
+                        self.window.tableWidget_qso.setItem(row, col,
                                                         QTableWidgetItem(date_formated))
+                        self.window.tableWidget_qso.item(row, col).setForeground(QColor(self.settingsDict["color-table"]))
 
                     elif col == 2:
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         #print(time_formated)
-                        self.window.tableWidget.setItem(row, col,
+                        self.window.tableWidget_qso.setItem(row, col,
                                                         QTableWidgetItem(time_formated))
+                        self.window.tableWidget_qso.item(row, col).setForeground(
+                            QColor(self.settingsDict["color-table"]))
+
 
 
                     else:
-                        self.window.tableWidget.setItem(row, col,
+                        self.window.tableWidget_qso.setItem(row, col,
                                                  QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                        self.window.tableWidget_qso.item(row, col).setForeground(
+                            QColor(self.settingsDict["color-table"]))
+
                     if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
-                        self.window.tableWidget.item(row, col).setBackground(QColor(0, 200, 200))
+                        self.window.tableWidget_qso.item(row, col).setBackground(QColor(self.settingsDict['eqsl-sent-color']))
         self.fill_complite.emit()
         #self.window.tableWidget.resizeColumnsToContents()
         #self.window.tableWidget.resizeRowsToContents()
@@ -358,6 +363,7 @@ class Fill_table(QThread):
 class Reciev_allRecords:
     def __init__(self, allRecords):
         self.allRecords = allRecords
+        All_records.clear()
         for i in range(len(self.allRecords)):
             All_records.append(self.allRecords[i])
 
@@ -383,6 +389,10 @@ class log_Window(QWidget):
 
 
         def initUI(self):
+                '''
+                    Design of log window
+
+                '''
 
                 self.setGeometry(int(settingsDict['log-window-left']),
                                  int(settingsDict['log-window-top']),
@@ -393,30 +403,34 @@ class log_Window(QWidget):
                 self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
                 style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
                     'color'] + ";"
+
                 self.setStyleSheet(style)
 
                 # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
                 #			'MODE', 'RST_RCVD', 'RST_SENT',	'NAME', 'QTH')
                 #		   )
-                self.tableWidget = QTableWidget()
-                self.tableWidget.move(0, 0)
-                self.tableWidget.verticalHeader().hide()
+
+                self.tableWidget_qso = QTableWidget()
+                self.tableWidget_qso.move(0, 0)
+                self.tableWidget_qso.verticalHeader().hide()
                 style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                    'color-table'] + "; font: 12px; "
-                self.tableWidget.setStyleSheet(style_table)
-                fnt = self.tableWidget.font()
-                fnt.setPointSize(8)
-                self.tableWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-                self.tableWidget.customContextMenuRequested.connect(self.context_menu)
-                self.tableWidget.setSortingEnabled(True)
-                self.tableWidget.setFont(fnt)
-                self.tableWidget.setColumnCount(13)
+                    'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
+                self.tableWidget_qso.setStyleSheet(style_table)
+                #self.tableWidget_qso.item().
+                fnt = self.tableWidget_qso.font()
+                fnt.setPointSize(9)
+                self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
+                self.tableWidget_qso.setSortingEnabled(True)
+                self.tableWidget_qso.setFont(fnt)
+                self.tableWidget_qso.setColumnCount(13)
                 #self.tableWidget.resizeRowsToContents()
 
-                self.tableWidget.itemActivated.connect(self.store_change_record)
+                self.tableWidget_qso.itemActivated.connect(self.store_change_record)
 
                 self.layout = QVBoxLayout()
-                self.layout.addWidget(self.tableWidget)
+                self.layout.addWidget(self.tableWidget_qso)
+                #self.layout.addWidget(self.label)
                 self.setLayout(self.layout)
                 #self.show()
                 if self.isEnabled():
@@ -425,47 +439,47 @@ class log_Window(QWidget):
         def context_menu(self, point):
             context_menu = QMenu()
             style_table = "font: 12px"
-            context_menu.setStyleSheet(style_table)
+            #context_menu.setStyleSheet(style_table)
             #context_menu.setFixedWidth(0)
             #context_menu.set
-            if self.tableWidget.itemAt(point):
-                index_row = self.tableWidget.currentItem().row()
-                call  = self.tableWidget.item(index_row, 4).text()
+            if self.tableWidget_qso.itemAt(point):
+                index_row = self.tableWidget_qso.currentItem().row()
+                call  = self.tableWidget_qso.item(index_row, 4).text()
                 delete_record = QAction("Delete QSO with " + call, context_menu)
                 delete_record.triggered.connect(lambda:
-                                                self.delete_qso(self.tableWidget.currentItem().row()))
+                                                self.delete_qso(self.tableWidget_qso.currentItem().row()))
                 edit_record = QAction ("Edit QSO with " + call, context_menu)
                 edit_record.triggered.connect(lambda:
-                                              self.edit_qso(self.tableWidget.currentItem().row()))
+                                              self.edit_qso(self.tableWidget_qso.currentItem().row()))
                 send_eqsl = QAction("Send eQSL for " + call, context_menu)
                 send_eqsl.triggered.connect(lambda:
-                                            self.send_eqsl_for_call(self.tableWidget.currentItem().row()))
-                if self.tableWidget.item(index_row, 12).text() == "Y":
+                                            self.send_eqsl_for_call(self.tableWidget_qso.currentItem().row()))
+                if self.tableWidget_qso.item(index_row, 12).text() == "Y":
                     send_eqsl.setEnabled(False)
                 else:
                     send_eqsl.setEnabled(True)
                 context_menu.addAction(edit_record)
                 context_menu.addAction(send_eqsl)
                 context_menu.addAction(delete_record)
-            context_menu.exec(self.tableWidget.mapToGlobal(point))
+            context_menu.exec(self.tableWidget_qso.mapToGlobal(point))
 
         def send_eqsl_for_call(self, row):
             #row = self.tableWidget.currentItem().row()
-            record_number = self.tableWidget.item(row, 0).text()
-            date = self.tableWidget.item(row, 1).text().replace("-","")
-            time = self.tableWidget.item(row, 2).text().replace(":","")
-            call = self.tableWidget.item(row, 4).text()
+            record_number = self.tableWidget_qso.item(row, 0).text()
+            date = self.tableWidget_qso.item(row, 1).text().replace("-","")
+            time = self.tableWidget_qso.item(row, 2).text().replace(":","")
+            call = self.tableWidget_qso.item(row, 4).text()
             freq = All_records[int(record_number) - 1]['FREQ']
-            rstR = self.tableWidget.item(row, 6).text()
-            rstS = self.tableWidget.item(row, 7).text()
-            name = self.tableWidget.item(row, 8).text()
-            qth = self.tableWidget.item(row, 9).text()
+            rstR = self.tableWidget_qso.item(row, 6).text()
+            rstS = self.tableWidget_qso.item(row, 7).text()
+            name = self.tableWidget_qso.item(row, 8).text()
+            qth = self.tableWidget_qso.item(row, 9).text()
             self.operator = All_records[int(record_number) - 1]['OPERATOR']
-            band = self.tableWidget.item(row, 3).text()
-            comment = self.tableWidget.item(row, 10).text()
-            time_off = self.tableWidget.item(row, 11).text()
-            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
-            mode = self.tableWidget.item(row, 5).text()
+            band = self.tableWidget_qso.item(row, 3).text()
+            comment = self.tableWidget_qso.item(row, 10).text()
+            time_off = self.tableWidget_qso.item(row, 11).text()
+            EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
+            mode = self.tableWidget_qso.item(row, 5).text()
             self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
             self.records_number_edit = All_records[int(record_number) - 1]['records_number']
 
@@ -481,33 +495,35 @@ class log_Window(QWidget):
 
         @QtCore.pyqtSlot(name='send_eqsl_ok')
         def procesing_row(self):
-            row = self.tableWidget.currentItem().row()
-            cols = self.tableWidget.columnCount()
-            self.tableWidget.setItem(row, 12, QTableWidgetItem("Y"))
+            row = self.tableWidget_qso.currentItem().row()
+            cols = self.tableWidget_qso.columnCount()
+            self.tableWidget_qso.setItem(row, 12, QTableWidgetItem("Y"))
             for i in range(cols):
-                self.tableWidget.item(row, i).setBackground(QColor(0, 200, 200))
+                self.tableWidget_qso.item(row, i).setBackground(QColor(settingsDict['eqsl-sent-color']))
             self.store_change_record()
             print("It's slot processing_row")
 
         def edit_qso(self, row):
-            row = self.tableWidget.currentItem().row()
-            record_number = self.tableWidget.item(row, 0).text()
-            date = self.tableWidget.item(row, 1).text()
-            time = self.tableWidget.item(row, 2).text()
-            call = self.tableWidget.item(row, 4).text()
+            row = self.tableWidget_qso.currentItem().row()
+            record_number = self.tableWidget_qso.item(row, 0).text()
+            print("record_number", record_number)
+            date = self.tableWidget_qso.item(row, 1).text()
+            time = self.tableWidget_qso.item(row, 2).text()
+            call = self.tableWidget_qso.item(row, 4).text()
             freq = All_records[int(record_number) - 1]['FREQ']
-            rstR = self.tableWidget.item(row, 6).text()
-            rstS = self.tableWidget.item(row, 7).text()
-            name = self.tableWidget.item(row, 8).text()
-            qth = self.tableWidget.item(row, 9).text()
+            rstR = self.tableWidget_qso.item(row, 6).text()
+            rstS = self.tableWidget_qso.item(row, 7).text()
+            name = self.tableWidget_qso.item(row, 8).text()
+            qth = self.tableWidget_qso.item(row, 9).text()
             self.operator_edit = All_records[int(record_number) - 1]['OPERATOR']
-            band = self.tableWidget.item(row, 3).text()
-            comment = self.tableWidget.item(row, 10).text()
-            time_off = self.tableWidget.item(row, 11).text()
-            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
-            mode = self.tableWidget.item(row, 5).text()
+            band = self.tableWidget_qso.item(row, 3).text()
+            comment = self.tableWidget_qso.item(row, 10).text()
+            time_off = self.tableWidget_qso.item(row, 11).text()
+            EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
+            mode = self.tableWidget_qso.item(row, 5).text()
             self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
             self.records_number_edit = All_records[int(record_number) - 1]['records_number']
+            print("self.string_in_file_edit", self.string_in_file_edit)
 
 
             # GUI for edit window
@@ -723,11 +739,11 @@ class log_Window(QWidget):
             self.edit_window.close()
 
         def delete_qso(self, row):
-            record_number = self.tableWidget.item(row, 0).text()
+            record_number = self.tableWidget_qso.item(row, 0).text()
             string_in_file = All_records[int(record_number) - 1]['string_in_file']
             print("delete_qso number:_>", record_number)
             Adi_file().delete_qso_from_file(string_in_file)
-            self.tableWidget.removeRow(row)
+            self.tableWidget_qso.removeRow(row)
             self.refresh_data()
 
 
@@ -745,28 +761,27 @@ class log_Window(QWidget):
 
         def refresh_data(self):
             #print("refresh_data:_>", All_records)
-            self.tableWidget.clear()
+            self.tableWidget_qso.clear()
             #self.tableWidget.insertRow()
 
-            self.tableWidget.setHorizontalHeaderLabels(
+            self.tableWidget_qso.setHorizontalHeaderLabels(
                 ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
                  "RST s", "      Name      ", "      QTH      ", " Comments ",
                  " Time off ", " eQSL Sent "])
-
-            self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited)
+            #self.tableWidget_qso.resizeRowsToContents()
+            #self.tableWidget_qso.resizeColumnsToContents()
+            self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited, settingsDict=settingsDict)
             self.allRecords.fill_complite.connect(self.fill_complited)
             self.allRecords.start()
 
-            #self.tableWidget.resizeColumnsToContents()
-
-            #self.tableWidget.resizeRowsToContents()
 
             self.allRows = len(All_records)
 
         @QtCore.pyqtSlot(name='fill_complited')
         def fill_complited(self):
-            self.tableWidget.resizeRowsToContents()
-            self.tableWidget.resizeColumnsToContents()
+            print("All_records", len(All_records))
+            self.tableWidget_qso.resizeRowsToContents()
+            self.tableWidget_qso.resizeColumnsToContents()
 
 
 
@@ -782,26 +797,26 @@ class log_Window(QWidget):
 
             #print("store_change_record")
             if row_arg == '':
-                row = self.tableWidget.currentItem().row()
+                row = self.tableWidget_qso.currentItem().row()
             else:
                 row = int(row_arg)
-            record_number = self.tableWidget.item(row, 0).text()
-            date = str(self.tableWidget.item(row, 1).text())
+            record_number = self.tableWidget_qso.item(row, 0).text()
+            date = str(self.tableWidget_qso.item(row, 1).text())
             date_formated = date.replace("-", "")
-            time = str(self.tableWidget.item(row, 2).text())
+            time = str(self.tableWidget_qso.item(row, 2).text())
             time_formated = time.replace(":", "")
-            call = self.tableWidget.item(row, 4).text()
+            call = self.tableWidget_qso.item(row, 4).text()
             freq = All_records[int(record_number) - 1]['FREQ']
-            rstR = self.tableWidget.item(row, 6).text()
-            rstS = self.tableWidget.item(row, 7).text()
-            name = self.tableWidget.item(row, 8).text()
-            qth = self.tableWidget.item(row, 9).text()
+            rstR = self.tableWidget_qso.item(row, 6).text()
+            rstS = self.tableWidget_qso.item(row, 7).text()
+            name = self.tableWidget_qso.item(row, 8).text()
+            qth = self.tableWidget_qso.item(row, 9).text()
             operator = All_records[int(record_number) - 1]['OPERATOR']
-            band = self.tableWidget.item(row, 3).text()
-            comment = self.tableWidget.item(row, 10).text()
-            time_off = self.tableWidget.item(row, 11).text()
-            EQSL_QSL_SENT = self.tableWidget.item(row, 12).text()
-            mode = self.tableWidget.item(row, 5).text()
+            band = self.tableWidget_qso.item(row, 3).text()
+            comment = self.tableWidget_qso.item(row, 10).text()
+            time_off = self.tableWidget_qso.item(row, 11).text()
+            EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
+            mode = self.tableWidget_qso.item(row, 5).text()
             string_in_file = All_records[int(record_number) - 1]['string_in_file']
             records_number = All_records[int(record_number) - 1]['records_number']
 
@@ -830,10 +845,17 @@ class log_Window(QWidget):
                     settingsDict['color'] + ";"
 
             style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-                'color-table'] + "; font: 12px;"
-            self.tableWidget.setStyleSheet(style_form)
+                'color-table'] + "; font: 12px; gridline-color:"+settingsDict['solid-color']+";"
+            self.tableWidget_qso.setStyleSheet(style_form)
+            all_rows = self.tableWidget_qso.rowCount()
+            all_cols = self.tableWidget_qso.columnCount()
+            print("All_rows", all_rows, "All_cols", all_cols)
+            for row in range(all_rows):
+                for col in range(all_cols):
+                    self.tableWidget_qso.item(row, col).setForeground(QColor(settingsDict["color-table"]))
 
             self.setStyleSheet(style)
+            self.refresh_data()
 
         def addRecord(self, recordObject):
             # <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
@@ -894,30 +916,32 @@ class log_Window(QWidget):
             # row = self.allRows + 1
             # print(recordObject)
             # print (row)
-            self.tableWidget.setRowCount(all_rows)
-            self.tableWidget.insertRow(0)
-            self.tableWidget.resizeRowsToContents()
+            #self.tableWidget_qso.setRowCount(all_rows)
+            self.tableWidget_qso.insertRow(0)
+            self.tableWidget_qso.resizeRowsToContents()
 
             for col in range(allCols):
                 if col == 1:
                     date = str(recordObject[self.allCollumn[col]])
                     date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
-                    self.tableWidget.setItem(0, col, QTableWidgetItem(date_formated))
+                    self.tableWidget_qso.setItem(0, col, QTableWidgetItem(date_formated))
+
                 elif col == 2:
                     time = str(recordObject[self.allCollumn[col]])
                     time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                    self.tableWidget.setItem(0, col, QTableWidgetItem(time_formated))
-                else:
-                    self.tableWidget.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+                    self.tableWidget_qso.setItem(0, col, QTableWidgetItem(time_formated))
 
+                else:
+                    self.tableWidget_qso.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+                self.tableWidget_qso.item(0, col).setForeground(QColor(settingsDict['color-table']))
 
 
         @QtCore.pyqtSlot(name='eqsl_ok')
         def eqsl_ok(self):
-            self.tableWidget.setItem (0,12, QTableWidgetItem('Y'))
+            self.tableWidget_qso.setItem (0,12, QTableWidgetItem('Y'))
             allCols = len(self.allCollumn)
             for col in range(allCols):
-                self.tableWidget.item(0, col).setBackground(QColor(0, 200, 200))
+                self.tableWidget_qso.item(0, col).setBackground(QColor(settingsDict['eqsl-sent-color']))
 
             self.store_change_record(row_arg=0)
 
@@ -928,24 +952,24 @@ class log_Window(QWidget):
 
         def search_in_table(self, call):
             list_dict = []
-            if self.tableWidget.rowCount() > 0:
-                for rows in range(self.tableWidget.rowCount()):
+            if self.tableWidget_qso.rowCount() > 0:
+                for rows in range(self.tableWidget_qso.rowCount()):
                     #print(self.tableWidget.item(rows, 4).text())
                     try:
-                        if self.tableWidget.item(rows, 4).text() == call:
-                            row_in_dict = {"No":self.tableWidget.item(rows,0).text(),
-                                            "Date":self.tableWidget.item(rows,1).text(),
-                                            "Time":self.tableWidget.item(rows,2).text(),
-                                            "Band":self.tableWidget.item(rows,3).text(),
-                                            "Call":self.tableWidget.item(rows,4).text(),
-                                            "Mode":self.tableWidget.item(rows,5).text(),
-                                            "Rstr":self.tableWidget.item(rows,6).text(),
-                                            "Rsts":self.tableWidget.item(rows,7).text(),
-                                            "Name":self.tableWidget.item(rows,8).text(),
-                                            "Qth":self.tableWidget.item(rows,9).text(),
-                                            "Comments":self.tableWidget.item(rows,10).text(),
-                                            "Time_off":self.tableWidget.item(rows,11).text(),
-                                            "Eqsl_sent":self.tableWidget.item(rows,12).text()}
+                        if self.tableWidget_qso.item(rows, 4).text() == call:
+                            row_in_dict = {"No":self.tableWidget_qso.item(rows,0).text(),
+                                            "Date":self.tableWidget_qso.item(rows,1).text(),
+                                            "Time":self.tableWidget_qso.item(rows,2).text(),
+                                            "Band":self.tableWidget_qso.item(rows,3).text(),
+                                            "Call":self.tableWidget_qso.item(rows,4).text(),
+                                            "Mode":self.tableWidget_qso.item(rows,5).text(),
+                                            "Rstr":self.tableWidget_qso.item(rows,6).text(),
+                                            "Rsts":self.tableWidget_qso.item(rows,7).text(),
+                                            "Name":self.tableWidget_qso.item(rows,8).text(),
+                                            "Qth":self.tableWidget_qso.item(rows,9).text(),
+                                            "Comments":self.tableWidget_qso.item(rows,10).text(),
+                                            "Time_off":self.tableWidget_qso.item(rows,11).text(),
+                                            "Eqsl_sent":self.tableWidget_qso.item(rows,12).text()}
                             list_dict.append(row_in_dict)
                     except Exception:
                         print("Search in table > Don't Load text from table")
@@ -974,7 +998,7 @@ class logSearch(QWidget):
         #		   )
         self.tableWidget = QTableWidget()
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px;"
+            'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
@@ -1008,14 +1032,13 @@ class logSearch(QWidget):
                 ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
                  "RST s", "      Name      ", "      QTH      "])
             self.tableWidget.resizeColumnsToContents()
-            allCols = len(logWindow.allCollumn)
+            allCols = self.tableWidget.columnCount()
             # print(foundList[0]["CALL"])
             for row in range(allRows):
                 for col in range(allCols):
                     pole = logWindow.allCollumn[col]
-                    #print("foundList[row][pole]", foundList[row][pole])
                     self.tableWidget.setItem(row, col, QTableWidgetItem(foundList[row][pole]))
-
+                    self.tableWidget.item(row, col).setForeground(QColor(settingsDict["color-table"]))
             self.tableWidget.resizeRowsToContents()
             self.tableWidget.resizeColumnsToContents()
             self.foundList = foundList
@@ -1034,6 +1057,11 @@ class logSearch(QWidget):
         style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px"
         self.tableWidget.setStyleSheet(style_form)
+        rows = self.tableWidget.rowCount()
+        cols = self.tableWidget.columnCount()
+        for row in range(rows):
+            for col in range(cols):
+                self.tableWidget.item(row, col).setForeground(QColor(settingsDict['color-table']))
 
         self.setStyleSheet(style)
 
@@ -1738,7 +1766,7 @@ class logForm(QMainWindow):
             all_records = logWindow.get_all_record()            # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
             record_number = len(All_records) + 1
 
-            #print("record_number:", record_number)
+            print("record_number in logFrom:", len(All_records))
             datenow = datetime.datetime.now()
             date = datenow.strftime("%Y%m%d")
             time = str(strftime("%H%M%S", gmtime()))
@@ -2193,31 +2221,40 @@ class clusterThread(QThread):
                                                                    QTableWidgetItem(
                                                                        strftime("%H:%M:%S", localtime())))
 
+                            self.telnetCluster.tableWidget.item(lastRow, 0).setForeground(QColor(self.telnetCluster.settings_dict["color-table"]))
+
                             #self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
                             if search_in_diplom_rules_flag == 1:
                                 self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
                             self.telnetCluster.tableWidget.setItem(lastRow, 1,
                                                                    QTableWidgetItem(
                                                                        strftime("%H:%M:%S", gmtime())))
-
+                            self.telnetCluster.tableWidget.item(lastRow, 1).setForeground(QColor(self.telnetCluster.settings_dict["color-table"]))
                             if search_in_diplom_rules_flag == 1:
                                 self.telnetCluster.tableWidget.item(lastRow, 1).setBackground(color)
 
                             if (len(cleanList) > 4):
                                 self.telnetCluster.tableWidget.setItem(lastRow, 2,
                                                                        QTableWidgetItem(cleanList[int(settingsDict['telnet-call-position'])]))
+                                self.telnetCluster.tableWidget.item(lastRow, 2).setForeground(QColor(self.telnetCluster.settings_dict["color-table"]))
+
                                 if search_in_diplom_rules_flag == 1:
                                     self.telnetCluster.tableWidget.item(lastRow, 2).setBackground(color)
 
                                 self.telnetCluster.tableWidget.setItem(lastRow, 3,
                                                                        QTableWidgetItem(cleanList[int(settingsDict['telnet-freq-position'])]))
+                                self.telnetCluster.tableWidget.item(lastRow, 3).setForeground(QColor(self.telnetCluster.settings_dict["color-table"]))
+
                                 if search_in_diplom_rules_flag == 1:
                                     self.telnetCluster.tableWidget.item(lastRow, 3).setBackground(color)
 
-    #self.telnetCluster.tableWidget.resizeColumnsToContents()
+
                             self.telnetCluster.tableWidget.setItem(lastRow, 4,
                                                                    QTableWidgetItem(
                                                                       output_data.decode(settingsDict['encodeStandart'])))
+
+                            self.telnetCluster.tableWidget.item(lastRow, 4).setForeground(
+                                QColor(self.telnetCluster.settings_dict["color-table"]))
 
                             if search_in_diplom_rules_flag == 1:
                                  self.telnetCluster.tableWidget.item(lastRow, 4).setBackground(color)
@@ -2256,6 +2293,7 @@ class telnetCluster(QWidget):
         self.call = settingsDict['my-call']
         self.tableWidget = QTableWidget()
         self.allRows = 0
+        self.settings_dict = settingsDict
 
         self.initUI()
 
@@ -2276,7 +2314,7 @@ class telnetCluster(QWidget):
         self.labelIonosphereStat = QLabel()
         self.labelIonosphereStat.setStyleSheet("font: 12px;")
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px;"
+            'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
         self.tableWidget.setStyleSheet(style_table)
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
@@ -2338,7 +2376,8 @@ class telnetCluster(QWidget):
         if settingsDict['tci'] == 'enable':
             try:
                 tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_freq(freq)
-                tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode('0',mode)
+                if mode != 'ERROR':
+                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode('0',mode)
 
             except:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
@@ -2415,8 +2454,13 @@ class telnetCluster(QWidget):
                 settingsDict['color'] + ";"
         self.labelIonosphereStat.setStyleSheet(style)
         style_form = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
-            'color-table'] + "; font: 12px"
+            'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
         self.tableWidget.setStyleSheet(style_form)
+        rows = self.tableWidget.rowCount()
+        cols = self.tableWidget.columnCount()
+        for row in range(rows):
+            for col in range(cols):
+                self.tableWidget.item(row, col).setForeground(QColor(settingsDict['color-table']))
 
         self.setStyleSheet(style)
 
@@ -2565,7 +2609,7 @@ class settings_file:
 
 if __name__ == '__main__':
     #QT_QPA_PLATFORM = wayland-egl
-    APP_VERSION = '1.24'
+    APP_VERSION = '1.23'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -2603,7 +2647,7 @@ if __name__ == '__main__':
         logForm = logForm()
         telnetCluster = telnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
-
+        
         adi_file = Adi_file()
         about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
@@ -2619,12 +2663,13 @@ if __name__ == '__main__':
 
         if settingsDict['log-form-window'] == 'true':
             logForm.show()
+        if settingsDict['telnet-cluster-window'] == 'true':
+            telnetCluster.show()
 
         if settingsDict['tci'] == 'enable':
 
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
 
-        if settingsDict['telnet-cluster-window'] == 'true':
-            telnetCluster.show()
+
 
     sys.exit(app.exec_())

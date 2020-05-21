@@ -333,8 +333,9 @@ class Menu (QWidget):
         self.eqsl_lay = QVBoxLayout()
         self.eqsl_lay.setAlignment(Qt.AlignCenter)
         self.eqsl_activate = QHBoxLayout()
-        self.eqsl_chekBox = QCheckBox("eQSL")
+        self.eqsl_chekBox = QCheckBox("Auto sent eQSL after QSO")
         self.eqsl_chekBox.setStyleSheet("{ color:" + self.settingsDict['color'] + "; font-size: 12px; border-color: white }")
+
         self.eqsl_activate.addWidget(self.eqsl_chekBox)
         #self.eqsl_activate.addWidget(QLabel("eQSL.cc"))
         self.eqsl_lay.addLayout(self.eqsl_activate)
@@ -360,6 +361,19 @@ class Menu (QWidget):
         self.eqsl_form.addLayout(self.login)
         self.eqsl_form.addLayout(self.password)
         self.eqsl_lay.addLayout(self.eqsl_form)
+        self.color_label_eqsl = QLabel("Color for eQSL complited: ")
+        self.color_label_eqsl.setStyleSheet(style)
+        self.color_button_eqsl = QPushButton()
+        self.color_button_eqsl.setStyleSheet("background:"+self.settingsDict['eqsl-sent-color']+"; color:"+self.settingsDict['eqsl-sent-color'])
+        self.color_button_eqsl.setText(self.settingsDict['eqsl-sent-color'])
+        self.color_button_eqsl.setFixedWidth(120)
+        self.color_button_eqsl.setFixedHeight(40)
+        self.color_button_eqsl.clicked.connect(self.select_eqsl_color)
+        self.color_button_layer=QHBoxLayout()
+        self.color_button_layer.setAlignment(Qt.AlignLeft)
+        self.color_button_layer.addWidget(self.color_label_eqsl)
+        self.color_button_layer.addWidget(self.color_button_eqsl)
+        self.eqsl_lay.addLayout(self.color_button_layer)
         self.service_tab.addLayout(self.eqsl_lay)
         self.service_widget.setLayout(self.service_tab)
 
@@ -394,6 +408,16 @@ class Menu (QWidget):
         #self.setLayout(self.mainLayout)
         #self.show()
         #print("Menu() initUi")
+    def select_eqsl_color(self):
+        color_eqsl = QColorDialog.getColor(initial=QColor(self.color_button_eqsl.text()), parent=None,
+                                      title="Select color for sent eQSL")
+
+        if color_eqsl.isValid():
+            # self.back_color_input.setText()
+            self.color_button_eqsl.setStyleSheet("background:" + color_eqsl.name() + ";")
+            self.color_button_eqsl.setText(color_eqsl.name())
+            self.color_button_eqsl.autoFillBackground()
+
 
     def initData (self):
         #init data in general tab
@@ -543,6 +567,7 @@ class Menu (QWidget):
         self.settingsDict['tci-port'] = self.tci_port_input.text().strip()
         self.settingsDict['eqsl_user'] = self.eqsl_login.text()
         self.settingsDict['eqsl_password'] = self.eqsl_password.text()
+        self.settingsDict['eqsl-sent-color'] = self.color_button_eqsl.text()
         if self.eqsl_chekBox.isChecked():
             self.settingsDict['eqsl'] = 'enable'
         else:
