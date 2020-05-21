@@ -2609,7 +2609,7 @@ class settings_file:
 
 if __name__ == '__main__':
     #QT_QPA_PLATFORM = wayland-egl
-    APP_VERSION = '1.23'
+    APP_VERSION = '1.25'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
