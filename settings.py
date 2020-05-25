@@ -64,7 +64,9 @@ class Menu (QWidget):
         self.call_input = QLineEdit()
         self.call_input.setFixedWidth(100)
         self.call_input.setStyleSheet(formstyle)
-
+        # Chekbox SWL
+        self.swl_chekbox = QCheckBox("Enable SWL mode")
+        self.swl_chekbox.setStyleSheet("QCheckBox{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
         self.dlg = QColorDialog(self)
         self.back_color_label = QLabel("Window color")
         self.back_color_label.setStyleSheet(self.label_style)
@@ -103,7 +105,7 @@ class Menu (QWidget):
         self.general_tab.layout.addWidget(self.call_label)
         self.general_tab.layout.addWidget(self.call_input)
         self.general_tab.layout.addSpacing(20)
-
+        self.general_tab.layout.addWidget(self.swl_chekbox)
         self.general_tab.layout.addWidget(self.back_color_label)
         self.general_tab.layout.addWidget(self.back_color_input)
         self.general_tab.layout.addSpacing(20)
@@ -418,7 +420,6 @@ class Menu (QWidget):
             self.color_button_eqsl.setText(color_eqsl.name())
             self.color_button_eqsl.autoFillBackground()
 
-
     def initData (self):
         #init data in general tab
         self.call_input.setText(self.settingsDict["my-call"])
@@ -448,6 +449,8 @@ class Menu (QWidget):
         self.eqsl_password.setText(self.settingsDict['eqsl_password'])
         if self.settingsDict['eqsl'] == 'enable':
             self.eqsl_chekBox.setChecked(True)
+        if self.settingsDict['mode-swl'] == 'enable':
+            self.swl_chekbox.setChecked(True)
 
 
     def closeEvent(self, e):
@@ -497,8 +500,6 @@ class Menu (QWidget):
                                           self.call_input.text().strip(),
                                           settingsDict=self.settingsDict, parent_window=self)
         self.cluster.start()
-
-       # print("self.start_calibrate_cluster: Hello")
 
     def refresh_interface(self):
 
@@ -572,6 +573,11 @@ class Menu (QWidget):
             self.settingsDict['eqsl'] = 'enable'
         else:
             self.settingsDict['eqsl'] = 'disable'
+            if self.swl_chekbox.isChecked():
+                self.settingsDict['mode-swl'] = 'enable'
+
+            else:
+                self.settingsDict['mode-swl'] = "disable"
         cluster_change_flag = 0
         if self.cluster_filter_band_combo.isChecked():
             if self.settingsDict['filter_by_band'] != "enable":

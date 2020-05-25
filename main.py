@@ -23,9 +23,9 @@ from bs4 import BeautifulSoup
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
-from PyQt5.QtWidgets import QApplication, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
-from PyQt5.QtCore import pyqtSignal, QObject, QEvent
+from PyQt5.QtCore import pyqtSignal, QObject, QEvent, QRect, QPoint, QSize
 from PyQt5.QtGui import QIcon, QFont, QPalette, QBrush, QPixmap, QColor, QStandardItemModel
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
@@ -36,6 +36,7 @@ from time import gmtime, strftime, localtime
 class Settings_file:
 
     def update_file_to_disk(self):
+        #self.settingsDict = self
         filename = 'settings.cfg'
         with open(filename, 'r') as f:
             old_data = f.readlines()
@@ -49,7 +50,7 @@ class Settings_file:
                     old_data[index] = key + "=" + self.settingsDict[key] + "\n"
         with open(filename, 'w') as f:
             f.writelines(old_data)
-        print("Update_to_disk: ", old_data)
+        #print("Update_to_disk: ", old_data)
         return True
 
 class Adi_file:
@@ -268,8 +269,6 @@ class Filter(QObject):
         return foundList
         # print (foundList)
         #
-
-#####################
 
 class Communicate(QObject):
     signalComplited = pyqtSignal(list)
@@ -975,7 +974,6 @@ class log_Window(QWidget):
                         print("Search in table > Don't Load text from table")
                 return list_dict
 
-
 class logSearch(QWidget):
     def __init__(self):
         super().__init__()
@@ -1223,7 +1221,54 @@ class check_update ():
         else:
             std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
 
+class update_after_run(QWidget):
 
+    def __init__(self, version, settings_dict):
+        super().__init__()
+        self.version = version
+        self.settingsDict = settings_dict
+
+    def update_check(self):
+
+        server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
+        path_directory_updater_app = "/upd/"
+
+        action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
+        flag = 0
+        data_flag = 0
+        try:
+            response = requests.get(action)
+            flag = 1
+        except Exception:
+            flag = 0
+
+        if flag == 1:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            try:
+                version = soup.find(id="version").get_text()
+                git_path = soup.find(id="git_path").get_text()
+                date = soup.find(id="date").get_text()
+                data_flag = 1
+            except Exception:
+                data_flag = 0;
+        print(data_flag)
+        if data_flag == 1:
+            self.show_message(str(version))
+
+
+    def show_message(self, str_version):
+        print("str version")
+        #std.std.message(self, "Found new version. \nYou can update LinuxLog\n (About -> Check update)", "Updater")
+        self.tray_icon = QSystemTrayIcon(app)
+        self.tray_icon.setIcon(QIcon("logo.png"))
+
+        self.tray_icon.show()
+        self.tray_icon.showMessage(
+            "LinuxLog",
+            "Found new version. You can update LinuxLog to " + str_version + " version",
+            QSystemTrayIcon.Information,
+            5000
+        )
 
 class About_window(QWidget):
     def __init__(self, capture, text):
@@ -1295,6 +1340,379 @@ class realTime(QThread):
                                                  "  |  GMT: "+strftime("%H:%M:%S", gmtime()))
             time.sleep(0.5)
 
+class ClikableLabel(QLabel):
+    click_signal = QtCore.pyqtSignal()
+    change_value_signal = QtCore.pyqtSignal()
+    def __init__(self, parrent=None):
+        QLabel.__init__(self, parrent)
+
+
+    def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
+        self.click_signal.emit()
+
+
+class FreqWindow(QWidget):
+    figure = QtCore.pyqtSignal(str)
+    def __init__(self, settings_dict):
+        super().__init__()
+        self.settings_dict = settings_dict
+        self.memory_list = []
+        self.active_memory_element = "0"
+        self.label_style  = "background:"+self.settings_dict['form-background']+ \
+                                      "; color:"+self.settings_dict['color-table']+"; font: 25px"
+        self.style_mem_label = "background:" + self.settings_dict['form-background'] + \
+                               "; color:" + self.settings_dict['color-table'] + "; font: 12px"
+        self.style = "background:" + self.settings_dict['background-color'] + "; color:" \
+                + self.settings_dict['color'] + "; font: 12px;"
+        self.style_window = "background:"+self.settings_dict['background-color']+"; color:"\
+                           +self.settings_dict['color']+";"
+
+        self.initUI()
+
+        if self.isEnabled():
+            self.init_data()
+
+    def initUI(self):
+        self.setGeometry(int(self.settings_dict['log-form-window-left'])+logForm.width(),
+                         int(self.settings_dict['log-form-window-top']),
+                         200, int(self.settings_dict['log-form-window-height']))
+        self.setFixedHeight(320)
+        self.setWindowOpacity(float(self.settings_dict['freq-input-window-opacity']))
+        self.setWindowTitle('Frequency | LinLog')
+        self.setStyleSheet(self.style_window)
+        ##### Create elements
+
+        # create button 1
+        self.button_1 = QPushButton("1")
+        self.button_1.setStyleSheet(self.style)
+        self.button_1.setFixedSize(40, 40)
+        self.button_1.clicked.connect(self.num_clicked)
+        self.button_1.setShortcut('1')
+        # create button 2
+        self.button_2 = QPushButton("2")
+        self.button_2.setStyleSheet(self.style)
+        self.button_2.setFixedSize(40, 40)
+        self.button_2.clicked.connect(self.num_clicked)
+        self.button_2.setShortcut('2')
+        # create button 3
+        self.button_3 = QPushButton("3")
+        self.button_3.setStyleSheet(self.style)
+        self.button_3.setFixedSize(40, 40)
+        self.button_3.clicked.connect(self.num_clicked)
+        self.button_3.setShortcut('3')
+        # create button 4
+        self.button_4 = QPushButton("4")
+        self.button_4.setStyleSheet(self.style)
+        self.button_4.setFixedSize(40, 40)
+        self.button_4.clicked.connect(self.num_clicked)
+        self.button_4.setShortcut('4')
+        # create button 5
+        self.button_5 = QPushButton("5")
+        self.button_5.setStyleSheet(self.style)
+        self.button_5.setFixedSize(40, 40)
+        self.button_5.clicked.connect(self.num_clicked)
+        self.button_5.setShortcut('5')
+        # create button 6
+        self.button_6 = QPushButton("6")
+        self.button_6.setStyleSheet(self.style)
+        self.button_6.setFixedSize(40, 40)
+        self.button_6.clicked.connect(self.num_clicked)
+        self.button_6.setShortcut('6')
+        # create button 7
+        self.button_7 = QPushButton("7")
+        self.button_7.setStyleSheet(self.style)
+        self.button_7.setFixedSize(40, 40)
+        self.button_7.clicked.connect(self.num_clicked)
+        self.button_7.setShortcut('7')
+        # create button 8
+        self.button_8 = QPushButton("8")
+        self.button_8.setStyleSheet(self.style)
+        self.button_8.setFixedSize(40, 40)
+        self.button_8.clicked.connect(self.num_clicked)
+        self.button_8.setShortcut('8')
+        # create button 9
+        self.button_9 = QPushButton("9")
+        self.button_9.setStyleSheet(self.style)
+        self.button_9.setFixedSize(40, 40)
+        self.button_9.clicked.connect(self.num_clicked)
+        self.button_9.setShortcut('9')
+        # create button 1
+        self.button_0 = QPushButton("0")
+        self.button_0.setStyleSheet(self.style)
+        self.button_0.setFixedSize(40, 40)
+        self.button_0.clicked.connect(self.num_clicked)
+        self.button_0.setShortcut('0')
+        # create button Point
+        self.button_p = QPushButton("<-")
+        self.button_p.setStyleSheet(self.style)
+        self.button_p.setFixedSize(40, 40)
+        self.button_p.clicked.connect(self.delete_symbol_freq)
+        self.button_p.setShortcut('Backspace')
+        # create button CLR
+        self.button_clear = QPushButton("CLR")
+        self.button_clear.setStyleSheet(self.style)
+        self.button_clear.setFixedSize(40, 40)
+        self.button_clear.clicked.connect(self.clear_freq_label)
+        self.button_clear.setShortcut('Esc')
+        # create button Ent
+        self.button_ent = QPushButton("Enter")
+        self.button_ent.setStyleSheet(self.style)
+        self.button_ent.setFixedSize(60, 40)
+        self.button_ent.clicked.connect(self.enter_freq)
+        self.button_ent.setShortcut('Enter')
+        # create button Save in memory
+        self.button_sm = QPushButton("+memory")
+        self.button_sm.setStyleSheet(self.style)
+        self.button_sm.setFixedSize(60, 25)
+        self.button_sm.clicked.connect(self.save_freq_to_memory)
+        # create button up in memory
+        self.button_up = QPushButton("▲")
+        self.button_up.setStyleSheet(self.style)
+        self.button_up.setFixedSize(60, 20)
+        self.button_up.clicked.connect(self.change_memory_element)
+        # create button down in memory
+        self.button_dn = QPushButton("▼")
+        self.button_dn.setStyleSheet(self.style)
+        self.button_dn.setFixedSize(60, 20)
+        self.button_dn.clicked.connect(self.change_memory_element)
+        # create recall from memory
+        self.button_all_rm = QPushButton("memory>")
+        self.button_all_rm.setStyleSheet(self.style)
+        self.button_all_rm.setFixedSize(60, 25)
+        self.button_all_rm.clicked.connect(self.recal_from_memory)
+        # delete from memory
+        self.button_dm = QPushButton("- memory")
+        self.button_dm.setStyleSheet(self.style)
+        self.button_dm.setFixedSize(60, 25)
+        self.button_dm.clicked.connect(self.delete_from_memory)
+        # create button up in memory
+        self.button_all_m = QPushButton("Show \n memory")
+        self.button_all_m.setStyleSheet(self.style)
+        self.button_all_m.setFixedSize(60, 40)
+        # create label with memory
+        self.memory_label = QLabel()
+        self.memory_label.setStyleSheet(self.style)
+        self.memory_label.setFixedHeight(10)
+        # Create freq Label
+        self.freq_label = QLabel()
+        freq = logForm.get_freq()
+        if freq.isnumeric():
+            freq_to_label = self.freq_to_sting(freq)
+            self.freq_label.setText(freq_to_label + " Hz")
+        self.freq_label.setAlignment(Qt.AlignRight)
+        self.freq_label.setStyleSheet(self.label_style)
+        self.freq_label.setFixedHeight(50)
+        self.freq_label.setFixedWidth(200)
+        # create memory label Show
+        self.memory_label_show = QLabel()
+        self.memory_label_show.setStyleSheet(self.style_mem_label)
+        self.memory_label_show.setFixedWidth(200)
+        self.memory_label_show.setFixedHeight(20)
+        #self.memory_label.setFixedSize(40, 10)
+        #####################
+        ### Setup to lay
+        # 1-3
+        self.buttons1_3_lay = QHBoxLayout()
+        self.buttons1_3_lay.addWidget(self.button_1)
+        self.buttons1_3_lay.addWidget(self.button_2)
+        self.buttons1_3_lay.addWidget(self.button_3)
+        # 4-6
+        self.buttons4_6_lay = QHBoxLayout()
+        self.buttons4_6_lay.addWidget(self.button_4)
+        self.buttons4_6_lay.addWidget(self.button_5)
+        self.buttons4_6_lay.addWidget(self.button_6)
+        # 7-9
+        self.buttons7_9_lay = QHBoxLayout()
+        self.buttons7_9_lay.addWidget(self.button_7)
+        self.buttons7_9_lay.addWidget(self.button_8)
+        self.buttons7_9_lay.addWidget(self.button_9)
+        # clr - 0 - point
+        self.buttons0_lay = QHBoxLayout()
+        self.buttons0_lay.addWidget(self.button_clear)
+        self.buttons0_lay.addWidget(self.button_0)
+        self.buttons0_lay.addWidget(self.button_p)
+        # memory lay & enter button
+        self.buttons_memory_lay = QVBoxLayout()
+        self.buttons_memory_lay.addSpacing(10)
+        self.buttons_memory_lay.setAlignment(Qt.AlignCenter)
+        self.buttons_memory_lay.addWidget(self.button_sm)
+        self.buttons_memory_lay.addWidget(self.button_up)
+        self.memory_bank_num = QHBoxLayout()
+        self.memory_bank_num.setAlignment(Qt.AlignCenter)
+        self.memory_bank_num.addWidget(self.memory_label)
+        self.buttons_memory_lay.addLayout(self.memory_bank_num)
+        self.buttons_memory_lay.addWidget(self.button_dn)
+        self.buttons_memory_lay.addWidget(self.button_dm)
+        self.buttons_memory_lay.addWidget(self.button_all_rm)
+        #self.buttons_memory_lay.addWidget(self.button_all_m)
+        self.buttons_memory_lay.addWidget(self.button_ent)
+        self.buttons_memory_lay.addSpacing(15)
+        # create NUM layer
+        self.num_buttons_lay = QVBoxLayout()
+        #self.num_buttons_lay.setAlignment(Qt.AlignCenter)
+        self.num_buttons_lay.addLayout(self.buttons1_3_lay)
+        self.num_buttons_lay.addLayout(self.buttons4_6_lay)
+        self.num_buttons_lay.addLayout(self.buttons7_9_lay)
+        self.num_buttons_lay.addLayout(self.buttons0_lay)
+        # create all button layer
+        self.button_layer = QHBoxLayout()
+        #self.button_layer.setGeometry(QRect(0, 0, 100, 100))
+        self.button_layer.addLayout(self.num_buttons_lay)
+        self.button_layer.addLayout(self.buttons_memory_lay)
+        #
+        self.general_lay = QVBoxLayout()
+        self.general_lay.setAlignment(Qt.AlignVCenter)
+        #self.general_lay.
+        self.general_lay.addWidget(self.memory_label_show)
+        self.general_lay.addWidget(self.freq_label)
+        self.general_lay.addLayout(self.button_layer)
+        self.general_lay.addStretch()
+        #setup general lay to form
+        self.setLayout(self.general_lay)
+        self.show()
+
+    def init_data(self):
+        self.memory_list = json.loads(self.settings_dict['memory-freq'])
+        len_memory_list = len(self.memory_list)
+        if len_memory_list > 0:
+            self.memory_label.setText(str(len_memory_list))
+
+            self.memory_label_show.setText("Mem: " + str(len_memory_list) + " Frq: "+ str(self.memory_list[len_memory_list-1]))
+        else:
+            self.memory_label.setText('')
+            self.memory_label_show.setText('')
+        #self.init_data()
+
+    def clear_freq_label(self):
+        self.freq_label.clear()
+
+    def num_clicked(self):
+        button = self.sender()
+        freq = self.freq_label.text()
+        digit_freq = self.freq_label.text().replace('.','')
+        digit_freq = digit_freq.replace(' Hz','')
+        future_freq = digit_freq + button.text()
+        if int(future_freq) < 146000000:
+            freq_string_to_label = self.freq_to_sting(future_freq)
+            self.freq_label.setText(freq_string_to_label+" Hz")
+        else:
+            self.freq_label.setText("146.000.000 Hz")
+        #if len(digit_freq) == 0:
+        #    digit_freq = '0'
+
+    def freq_to_sting(self, freq):
+        len_freq = len(freq)
+        if len_freq <= 3:
+            freq_to_label = freq
+        elif len_freq > 3 and len_freq <=6:
+            freq_to_label = freq[0:len_freq-3]+'.'+freq[len_freq-3:]
+        elif len_freq > 6 and len_freq <= 8:
+            freq_to_label = freq[0:len_freq-6]+'.'+freq[len_freq-6:len_freq-3]+'.'+freq[len_freq-3:]
+        elif len_freq > 8 and len_freq <= 9:
+            freq_to_label = freq[0:len_freq - 6] + '.' + freq[len_freq - 6:len_freq - 3] + '.' + freq[len_freq - 3:]
+
+        #freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:len_freq]
+        #print("freq_to_label", freq_to_label)
+
+        return freq_to_label
+
+    def enter_freq(self):
+        std_value = std.std()
+        frequency = self.freq_label.text().replace(" Hz", '')
+        frequency = frequency.replace('.','')
+        if len(frequency) > 3 and int(frequency) > 0:
+            logForm.set_freq(frequency)
+            if (self.settings_dict['tci'] == 'enable'):
+                #if len(frequency) <= 8:
+                frequency = frequency.zfill(8)
+                band = std_value.get_std_band(frequency)
+                mode = std_value.mode_band_plan(band, frequency)
+                try:
+                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_freq(frequency)
+                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode("0", mode)
+                except Exception:
+                   print("enter_freq:_> Can't setup tci_freq")
+
+    def delete_symbol_freq(self):
+        freq_str = self.freq_label.text().replace(".","")
+        freq_str = freq_str.replace(" Hz","")
+        freq_str_del = freq_str[:len(freq_str)-1]
+        freq_str_formated = self.freq_to_sting(freq_str_del)
+
+        self.freq_label.setText(freq_str_formated+" Hz")
+
+    def save_freq_to_memory(self):
+        self.memory_list.append(self.freq_label.text())
+        self.active_memory_element = str(len(self.memory_list))
+        self.memory_label.setText(self.active_memory_element)
+        self.memory_label_show.setText("Mem: "+self.active_memory_element+ \
+                                       " Frq: "+str(self.memory_list[int(self.active_memory_element) - 1]))
+
+    def set_freq(self, freq):
+        freq_formated = self.freq_to_sting(freq)
+        self.freq_label.setText(freq_formated+" Hz")
+
+
+    def change_memory_element(self):
+        button = self.sender()
+        if button.text() == "▲" and self.memory_label.text()!='':
+
+            if int(self.memory_label.text()) - 1 == 0:
+                self.index = len(self.memory_list)
+                #index_to_label = 1
+                self.memory_label.setText(str(self.index))
+            else:
+                self.index = int(self.memory_label.text()) - 1
+                self.memory_label.setText(str(self.index))
+
+
+        if button.text() == "▼" and self.memory_label.text()!='':
+            if int(self.memory_label.text()) + 1 > len(self.memory_list):
+                self.index = 1
+                self.memory_label.setText(str(self.index))
+            else:
+                self.index = int(self.memory_label.text()) + 1
+                self.memory_label.setText(str(self.index))
+        if self.memory_label.text()!='':
+            self.memory_label_show.setText("Mem: " + str(self.index) +
+                                       " Frq: " + self.memory_list[self.index-1])
+
+    def delete_from_memory(self):
+        if self.memory_label.text() != '':
+            index = int(self.memory_label.text()) - 1
+            del self.memory_list[index]
+            if len(self.memory_list) == 0:
+                self.memory_label.setText('')
+                self.memory_label_show.setText('No freq in memory')
+            elif index == 0:
+                self.memory_label.setText(str(index+1))
+            else:
+                self.memory_label.setText(str(index))
+
+    def recal_from_memory(self):
+        if self.memory_label.text() != '':
+            index = int(self.memory_label.text()) - 1
+            self.freq_label.setText(self.memory_list[index])
+            self.enter_freq()
+
+    def refresh_interface(self):
+        self.label_style = "background:"+self.settings_dict['form-background']+ \
+                                      "; color:"+self.settings_dict['color-table']+"; font: 25px"
+        self.style = "background:" + self.settings_dict['background-color'] + "; color:" \
+                + self.settings_dict['color'] + "; font: 12px;"
+        self.style_window = "background:"+self.settings_dict['background-color']+"; color:"\
+                           +self.settings_dict['color']+";"
+        self.style_mem_label = "background:"+self.settings_dict['form-background']+ \
+                                      "; color:"+self.settings_dict['color-table']+"; font: 12px"
+        self.updatesEnabled()
+
+    def closeEvent(self, event):
+        self.settings_dict['memory-freq'] = json.dumps(self.memory_list)
+        self.settingsDict = self.settings_dict
+        Settings_file.update_file_to_disk(self)
+        self.close()
+
+
 class logForm(QMainWindow):
 
     def __init__(self):
@@ -1305,7 +1723,6 @@ class logForm(QMainWindow):
 
 
         #print("self.Diploms in logForm init:_>", self.diploms)
-
 
     def menu(self):
 
@@ -1430,8 +1847,6 @@ class logForm(QMainWindow):
     def menu_rename_diplom(self):
         self.menuBarw.clear()
         #self.otherMenu.clear()
-
-
 
     def edit_diplom(self, name):
         all_data = ext.diplom.get_rules(self=ext.diplom, name=name+".rules")
@@ -1561,10 +1976,11 @@ class logForm(QMainWindow):
         self.labelTime.setFont(QtGui.QFont('SansSerif', 7))
 
 
-        self.labelFreq = QLabel()
+        self.labelFreq = ClikableLabel()
         self.labelFreq.setFont(QtGui.QFont('SansSerif', 7))
-        self.labelFreq.setText('')
-
+        self.labelFreq.setText("Freq control")
+        self.labelFreq.click_signal.connect(self.freq_window)
+        self.labelFreq.change_value_signal.connect(self.change_freq_event)
         self.labelMyCall = QLabel(settingsDict['my-call'])
         self.labelMyCall.setFont(QtGui.QFont('SansSerif', 10))
         self.comments = QTextEdit()
@@ -1660,6 +2076,14 @@ class logForm(QMainWindow):
         # run time in Thread
         self.run_time = realTime(logformwindow=self) #run time in Thread
         self.run_time.start()
+
+    def change_freq_event(self):
+        freq = self.labelFreq.text()
+        print("Change_freq_event:_>", freq)
+
+    def freq_window(self):
+        print ("Click by freq label")
+        self.freq_input_window = FreqWindow(settings_dict=settingsDict)
 
     def rememberBand(self, text):
         with open('settings.cfg', 'r') as file:
@@ -1781,7 +2205,7 @@ class logForm(QMainWindow):
 
 
             call_dict = {'call': call, 'mode': mode, 'band': band}
-            print ("call_dict:_>", call_dict)
+            #print ("call_dict:_>", call_dict)
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
                     if diploms.filter(call_dict):
@@ -1797,19 +2221,22 @@ class logForm(QMainWindow):
 
             logForm.inputCall.setFocus(True)
 
-            self.inputCall.clear()
-            self.inputRstS.setText('59')
-            self.inputRstR.setText('59')
-            self.inputName.clear()
-            self.inputQth.clear()
-            self.comments.clear()
+            if settingsDict['mode-swl'] == 'enable':
+                self.inputCall.clear()
+                self.inputName.clear()
+                self.inputQth.clear()
+            else:
+                self.inputCall.clear()
+                self.inputRstS.setText('59')
+                self.inputRstR.setText('59')
+                self.inputName.clear()
+                self.inputQth.clear()
+                self.comments.clear()
             try:
                 logSearch.tableWidget.clearContents()
                 internetSearch.update_photo()
             except Exception:
                 pass
-
-
 
     def changeEvent(self, event):
 
@@ -1939,6 +2366,11 @@ class logForm(QMainWindow):
                 self.menu.close()
         except Exception:
             pass
+        try:
+            if self.freq_input_window.isEnabled():
+                self.freq_input_window.close()
+        except:
+            pass
 
         if about_window.isEnabled():
             about_window.close()
@@ -2019,8 +2451,11 @@ class logForm(QMainWindow):
         #print(band)
         index_band = self.comboBand.findText(band)
         self.comboBand.setCurrentIndex(index_band)
-
-
+        try:
+            if self.freq_input_window.isEnabled():
+                self.freq_input_window.set_freq(freq)
+        except Exception:
+            pass
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
@@ -2062,7 +2497,11 @@ class logForm(QMainWindow):
 
     def get_freq(self):
         freq_string = self.labelFreq.text()
-        if freq_string == '':
+        freq_string = freq_string.replace('Freq: ', '')
+        freq_string = freq_string.replace('.', '')
+        #print(freq_string.isdigit())
+
+        if freq_string == '' or not freq_string.isdigit():
             band = self.get_band()
             if band == "160":
                 freq_string = '1800000'
@@ -2088,20 +2527,19 @@ class logForm(QMainWindow):
                 freq_string = '144500000'
             else:
                 freq_string = 'non'
-        freq_string = freq_string.replace('Freq: ', '')
-        freq_string = freq_string.replace('.', '')
-        #if len(str(freq_string)) < 8 and len(str(freq_string)) >= 5:
-        #    freq_string = freq_string + "00"
-        #if len(str(freq_string)) < 5:
-         #   freq_string = freq_string + "000"
+
+
 
         return freq_string
-
-    ## updates methods
 
     def refresh_interface(self):
         self.labelMyCall.setText(settingsDict['my-call'])
         self.update_color_schemes()
+        try:
+            if self.freq_input_window.isEnabled():
+                self.freq_input_window.refresh_interface()
+        except Exception:
+            pass
 
     def update_color_schemes(self):
         style = "background-color:" + settingsDict['background-color'] + "; color:" + \
@@ -2148,7 +2586,6 @@ class logForm(QMainWindow):
                 names_diploms.append(list_string[i]['name_programm'])
         #print("names_diploms:_>", names_diploms)
         return names_diploms
-
 
 class clusterThread(QThread):
     def __init__(self, cluster_window, form_window, parent=None):
@@ -2356,6 +2793,7 @@ class telnetCluster(QWidget):
         mode = std.std().mode_band_plan(band, freq)
         print("band:_>", band)
         print("mode:_>", mode)
+        print("freq:_>", freq)
 
         '''len_freq = len(freq)
         if len_freq < 8 and len_freq <= 5:
@@ -2535,7 +2973,7 @@ class hello_window(QWidget):
         height_coordinate = (desktop.height()/2) - 125
         print("hello_window: ", desktop.width(), width_coordinate)
 
-        self.setGeometry(width_coordinate, height_coordinate, 400, 250)
+        self.setGeometry(round(width_coordinate), round(height_coordinate), 400, 250)
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('Welcome to LinLog')
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
@@ -2663,6 +3101,7 @@ if __name__ == '__main__':
 
         if settingsDict['log-form-window'] == 'true':
             logForm.show()
+            #update_after_run(version=APP_VERSION, settings_dict= settingsDict).update_check()
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster.show()
 

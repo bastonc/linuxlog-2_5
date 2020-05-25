@@ -97,26 +97,28 @@ class Eqsl_send(QtCore.QObject):
         data_string_code_to_url = urllib.parse.quote(data_qso_string)
         user_pasword_eqsl = '&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
 
+        try:
+            request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
 
-        request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
+            if request_eqsl.status_code != 200:
 
-        if request_eqsl.status_code != 200:
+                self.error_message.emit("Can't sent eQSL (server not 200)")
 
-            self.error_message.emit("Can't sent eQSL (server not 200)")
-
-        else:
-            soup = BeautifulSoup(request_eqsl.text, 'html.parser')
-            response = soup.body.contents[0]
-           # print ("SOUP", soup.body.contents[0].strip())
-            if (response.find('Warning') != -1) or (response.find('Error') != -1):
-                self.error_message.emit(soup.body.contents[0].strip())
             else:
-                self.sent_ok.emit()
+                soup = BeautifulSoup(request_eqsl.text, 'html.parser')
+                response = soup.body.contents[0]
+               # print ("SOUP", soup.body.contents[0].strip())
+                if (response.find('Warning') != -1) or (response.find('Error') != -1):
+                    self.error_message.emit(soup.body.contents[0].strip())
+                else:
+                    self.sent_ok.emit()
+        except Exception:
+            pass
 
 class Eqsl_services (QtCore.QObject):
 
     send_ok = QtCore.pyqtSignal()
-    error_signal  =QtCore.pyqtSignal()
+    error_signal = QtCore.pyqtSignal()
 
     def __init__(self, settingsDict, recordObject, std, parent_window):
         super().__init__()
