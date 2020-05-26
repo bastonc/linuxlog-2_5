@@ -24,7 +24,7 @@ from bs4 import BeautifulSoup
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
-from dbus.mainloop.pyqt5 import DBusQtMainLoop
+
 from gi.repository import Notify, GdkPixbuf
 
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
