@@ -17,12 +17,16 @@ import subprocess
 import ext
 import json
 import requests
+
 from os.path import expanduser
 from bs4 import BeautifulSoup
 
 # import pyautogui
 
 # import xdo  # $ pip install  python-libxdo
+from dbus.mainloop.pyqt5 import DBusQtMainLoop
+from gi.repository import Notify, GdkPixbuf
+
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent, QRect, QPoint, QSize
@@ -243,9 +247,11 @@ class Filter(QObject):
         if event.type() == QEvent.FocusIn:
 
                 if logForm.inputCall.text() == '':
-                    logForm.inputRstS.setText('59')
-                    logForm.inputRstR.setText('59')
-
+                    if settingsDict['mode-swl'] != 'enable':
+                        logForm.inputRstS.setText('59')
+                        logForm.inputRstR.setText('59')
+                    else:
+                        logForm.inputRstR.setText('SWL')
                     # return False so that the widget will also handle the event
                     # otherwise it won't focus out
                 return False
@@ -1221,21 +1227,68 @@ class check_update ():
         else:
             std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
 
-class update_after_run(QWidget):
+class Check_update_thread(QtCore.QObject):
+
+    update_response = QtCore.pyqtSignal(object)
+   # error_request = QtCore.pyqtSignal()
+
+    def __init__(self, url_query):
+        super().__init__()
+        self.url_query = url_query
+
+    def run(self):
+            print("Test")
+            self.response_upd_server = requests.get(self.url_query)
+            self.update_response.emit(self.response_upd_server)
+            #
+           # if response_upd_server.status_code == 200:
+            #    self.update_response.emit(response_upd_server)
+           # else:
+            #    self.error_request.emit()
+
+
+
+class update_after_run(QObject):
 
     def __init__(self, version, settings_dict):
         super().__init__()
         self.version = version
         self.settingsDict = settings_dict
+        self.update_check()
 
     def update_check(self):
 
         server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
         path_directory_updater_app = "/upd/"
 
-        action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
+        self.action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
         flag = 0
         data_flag = 0
+        self.thread_update = QThread()
+        self.check_in_thread = Check_update_thread(self.action)
+        self.check_in_thread.moveToThread(self.thread_update)
+        self.check_in_thread.update_response.connect(self.answer_from_upd_server)
+        #self.check_in_thread.start()
+        #
+        #
+        self.thread_update.started.connect(self.check_in_thread.run)
+
+        self.thread_update.start()
+        ###############
+
+    @QtCore.pyqtSlot(object)
+    def answer_from_upd_server(self, object_reciev):
+        soup = BeautifulSoup(object_reciev.text, 'html.parser')
+        try:
+            version = soup.find(id="version").get_text()
+            #git_path = soup.find(id="git_path").get_text()
+            date = soup.find(id="date").get_text()
+            self.show_message(str(version), str(date))
+        except Exception:
+            pass
+
+        ###############
+    '''
         try:
             response = requests.get(action)
             flag = 1
@@ -1243,32 +1296,44 @@ class update_after_run(QWidget):
             flag = 0
 
         if flag == 1:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            try:
-                version = soup.find(id="version").get_text()
-                git_path = soup.find(id="git_path").get_text()
-                date = soup.find(id="date").get_text()
+            
+            
                 data_flag = 1
             except Exception:
                 data_flag = 0;
         print(data_flag)
         if data_flag == 1:
             self.show_message(str(version))
+            '''
 
 
-    def show_message(self, str_version):
-        print("str version")
-        #std.std.message(self, "Found new version. \nYou can update LinuxLog\n (About -> Check update)", "Updater")
-        self.tray_icon = QSystemTrayIcon(app)
-        self.tray_icon.setIcon(QIcon("logo.png"))
+    def show_message(self, str_version, str_date):
+        de = os.environ['XDG_CURRENT_DESKTOP']
 
-        self.tray_icon.show()
-        self.tray_icon.showMessage(
-            "LinuxLog",
-            "Found new version. You can update LinuxLog to " + str_version + " version",
-            QSystemTrayIcon.Information,
-            5000
-        )
+        if de == "GNOME":
+            Notify.init("LinuxLog")
+            summary = "Found update"
+            body = "Found new version. You can update LinuxLog to " + str_version + " version \nDate update:" + str_date
+            notification = Notify.Notification.new(
+                summary,
+                body,  # Optional
+            )
+            image = GdkPixbuf.Pixbuf.new_from_file("logo.png")
+            # notification.set_icon_from_pixbuf(image)
+            notification.set_image_from_pixbuf(image)
+            notification.show()
+        else:
+            self.tray_icon = QSystemTrayIcon(app)
+            self.tray_icon.setIcon(QIcon("logo.png"))
+
+            self.tray_icon.show()
+            self.tray_icon.showMessage(
+                "LinuxLog",
+                "Found new version. You can update LinuxLog to " + str_version + " version \nDate update:"+ str_date,
+                QSystemTrayIcon.Information,
+                10000
+            )
+
 
 class About_window(QWidget):
     def __init__(self, capture, text):
@@ -1366,11 +1431,18 @@ class FreqWindow(QWidget):
                 + self.settings_dict['color'] + "; font: 12px;"
         self.style_window = "background:"+self.settings_dict['background-color']+"; color:"\
                            +self.settings_dict['color']+";"
-
+        self.freq_status = 0
         self.initUI()
 
         if self.isEnabled():
             self.init_data()
+
+    def keyPressEvent(self, e):
+
+        if e.key() in [QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return]:
+            self.enter_freq()
+        if e.key() == QtCore.Qt.Key_F12:
+            self.close()
 
     def initUI(self):
         self.setGeometry(int(self.settings_dict['log-form-window-left'])+logForm.width(),
@@ -1459,7 +1531,8 @@ class FreqWindow(QWidget):
         self.button_ent.setStyleSheet(self.style)
         self.button_ent.setFixedSize(60, 40)
         self.button_ent.clicked.connect(self.enter_freq)
-        self.button_ent.setShortcut('Enter')
+        #self.button_ent.setShortcut('Enter')
+        #self.button_ent.setShortcut('Return')
         # create button Save in memory
         self.button_sm = QPushButton("+memory")
         self.button_sm.setStyleSheet(self.style)
@@ -1591,6 +1664,9 @@ class FreqWindow(QWidget):
         freq = self.freq_label.text()
         digit_freq = self.freq_label.text().replace('.','')
         digit_freq = digit_freq.replace(' Hz','')
+        if self.freq_status == 0:
+            digit_freq=''
+            self.freq_status = 1
         future_freq = digit_freq + button.text()
         if int(future_freq) < 146000000:
             freq_string_to_label = self.freq_to_sting(future_freq)
@@ -1633,13 +1709,17 @@ class FreqWindow(QWidget):
                 except Exception:
                    print("enter_freq:_> Can't setup tci_freq")
 
+        self.close()
+
     def delete_symbol_freq(self):
-        freq_str = self.freq_label.text().replace(".","")
+        self.freq_status = 1
+        freq_str = self.freq_label.text()
+            #.replace(".","")
         freq_str = freq_str.replace(" Hz","")
         freq_str_del = freq_str[:len(freq_str)-1]
-        freq_str_formated = self.freq_to_sting(freq_str_del)
+        #freq_str_formated = self.freq_to_sting(freq_str_del)
 
-        self.freq_label.setText(freq_str_formated+" Hz")
+        self.freq_label.setText(freq_str_del+" Hz")
 
     def save_freq_to_memory(self):
         self.memory_list.append(self.freq_label.text())
@@ -1719,10 +1799,21 @@ class logForm(QMainWindow):
         super().__init__()
         self.diploms_init()
         #self.diploms = self.get_diploms()
+        #self.freq_window_status = 0
+        self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
+
         self.initUI()
 
-
         #print("self.Diploms in logForm init:_>", self.diploms)
+
+    def keyPressEvent(self, e):
+        if e.key() == QtCore.Qt.Key_F5:
+            self.full_clear_form()
+        if e.key() == QtCore.Qt.Key_F12:
+            self.freq_window()
+
+
+
 
     def menu(self):
 
@@ -1883,7 +1974,7 @@ class logForm(QMainWindow):
         font = QFont("Cantarell Light", 10, QFont.Normal)
         QApplication.setFont(font)
         styleform = "background :" + settingsDict['form-background']+\
-                    "; color: " + settingsDict['color-table'] + ";"
+                    "; color: " + settingsDict['color-table'] + "; padding: 0em"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
@@ -1912,22 +2003,37 @@ class logForm(QMainWindow):
             self.logFormInput)  # событие нажатия Enter, привязываем в слот функцию logSettings
         #self.inputCall.tabPressed.connect(self.internetWorker.get_internet_info)
         # inputCall.move(40,40)
+
         self.labelRstR = QLabel('RSTr')
+
         self.labelRstR.setFont(QtGui.QFont('SansSerif', 7))
 
-        self.inputRstR = QLineEdit(self)
-        self.inputRstR.setFixedWidth(30)
-        self.inputRstR.setFixedHeight(30)
+        self.inputRstR = QLineEdit()
+
+        self.inputRstR.setFixedWidth(35)
+        self.inputRstR.setFixedHeight(35)
         self.inputRstR.setStyleSheet(styleform)
+
+        if settingsDict['mode-swl'] == 'enable':
+            self.inputRstR.setText('SWL')
+           # fnt = self.inputRstR.font()
+            #fnt.setPointSize(7)
+            #self.inputRstR.setFont(fnt)
+            self.inputRstR.setText('SWL')
+            self.inputRstR.setEnabled(False)
+        else:
+            self.inputRstR.setText('59')
+            self.inputRstR.setEnabled(True)
+
         self.inputRstR.returnPressed.connect(self.logFormInput)
 
         self.inputRstR.installEventFilter(self._filter)
 
         self.labelRstS = QLabel('RSTs')
         self.labelRstS.setFont(QtGui.QFont('SansSerif', 7))
-        self.inputRstS = QLineEdit(self)
-        self.inputRstS.setFixedWidth(30)
-        self.inputRstS.setFixedHeight(30)
+        self.inputRstS = QLineEdit("59")
+        self.inputRstS.setFixedWidth(35)
+        self.inputRstS.setFixedHeight(35)
         self.inputRstS.setStyleSheet(styleform)
         self.inputRstS.returnPressed.connect(self.logFormInput)
 
@@ -1962,7 +2068,8 @@ class logForm(QMainWindow):
         self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200"])
         indexBand = self.comboBand.findText(settingsDict['band'])
         self.comboBand.setCurrentIndex(indexBand)
-        self.comboBand.activated[str].connect(self.rememberBand)
+        #self.comboBand.activated[str].connect(self.rememberBand)
+        self.comboBand.currentTextChanged.connect(self.rememberBand)
 
         self.labelStatusCat = QLabel('    ')
         self.labelStatusCat.setAlignment(Qt.AlignLeft)
@@ -1978,7 +2085,7 @@ class logForm(QMainWindow):
 
         self.labelFreq = ClikableLabel()
         self.labelFreq.setFont(QtGui.QFont('SansSerif', 7))
-        self.labelFreq.setText("Freq control")
+        self.labelFreq.setText("Freq control (F12)")
         self.labelFreq.click_signal.connect(self.freq_window)
         self.labelFreq.change_value_signal.connect(self.change_freq_event)
         self.labelMyCall = QLabel(settingsDict['my-call'])
@@ -2077,6 +2184,21 @@ class logForm(QMainWindow):
         self.run_time = realTime(logformwindow=self) #run time in Thread
         self.run_time.start()
 
+    def full_clear_form(self):
+        self.inputCall.clear()
+        if settingsDict['mode-swl'] == 'enable':
+            #fnt = self.inputRstR.font()
+            #fnt.setPointSize(7)
+            #self.inputRstR.setFont(fnt)
+            self.inputRstR.setText('SWL')
+            self.inputRstR.setEnabled(False)
+        else:
+            self.inputRstR.setText('59')
+        self.inputRstS.setText('59')
+        self.inputName.clear()
+        self.inputQth.clear()
+        self.comments.clear()
+
     def change_freq_event(self):
         freq = self.labelFreq.text()
         print("Change_freq_event:_>", freq)
@@ -2086,6 +2208,7 @@ class logForm(QMainWindow):
         self.freq_input_window = FreqWindow(settings_dict=settingsDict)
 
     def rememberBand(self, text):
+        #settingsDict['band'] = self.comboBand.currentText().strip()
         with open('settings.cfg', 'r') as file:
             # read a list of lines into data
             data = file.readlines()
@@ -2151,19 +2274,10 @@ class logForm(QMainWindow):
         self.inputCall.setText(text.upper())
 
         if re.search('[А-Я]', text):
-            #self.inputCall.setStyleSheet("color: rgb(255,2,2);")
+
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
-        #elif re.search('[A-Z]', text):
-            #style = "border: 1px solid " + settingsDict[
-            #    'solid-color'] + "; border-radius: 50px; background: " + settingsDict[
-             #           'form-background'] + "; font-weight: bold;"
-           # self.inputCall.setStyleSheet(style)
-            # pyautogui.hotkey('ctrl', 'shift')
-            # print(text)
-
-        # print (locale)
 
     def logFormInput(self):
 
@@ -2225,6 +2339,12 @@ class logForm(QMainWindow):
                 self.inputCall.clear()
                 self.inputName.clear()
                 self.inputQth.clear()
+                #fnt = self.inputRstR.font()
+                #fnt.setPointSize(7)
+                #self.inputRstR.setFont(fnt)
+                self.inputRstR.setText('SWL')
+                self.inputRstR.setEnabled(False)
+                #self.inputRstS.setText('59')
             else:
                 self.inputCall.clear()
                 self.inputRstS.setText('59')
@@ -2318,6 +2438,7 @@ class logForm(QMainWindow):
                               'telnet-cluster-window-width': str(telnetCluster_geometry.width()),
                               'telnet-cluster-window-height': str(telnetCluster_geometry.height())
                               })
+        #self.parameter.update({"band": settingsDict['band']})
         '''
         internetSearch_geometry = internetSearch.geometry()
         settingsDict['search-internet-left'] = str(internetSearch_geometry.left())
@@ -2445,6 +2566,7 @@ class logForm(QMainWindow):
         freq_string = str(freq)
         freq_string = freq_string.replace('.', '')
         len_freq=len(freq)
+        print ("set_freq:_>", freq_string)
         freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:len_freq]
         self.labelFreq.setText("Freq: "+str(freq_to_label))
         band = std.std().get_std_band(freq)
@@ -2534,6 +2656,12 @@ class logForm(QMainWindow):
 
     def refresh_interface(self):
         self.labelMyCall.setText(settingsDict['my-call'])
+        if settingsDict['mode-swl'] == 'enable':
+            self.inputRstR.setText("SWL")
+            self.inputRstR.setEnabled(False)
+        else:
+            self.inputRstR.setText("59")
+            self.inputRstR.setEnabled(True)
         self.update_color_schemes()
         try:
             if self.freq_input_window.isEnabled():
@@ -3047,7 +3175,7 @@ class settings_file:
 
 if __name__ == '__main__':
     #QT_QPA_PLATFORM = wayland-egl
-    APP_VERSION = '1.26'
+    APP_VERSION = '1.2'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -3101,7 +3229,7 @@ if __name__ == '__main__':
 
         if settingsDict['log-form-window'] == 'true':
             logForm.show()
-            #update_after_run(version=APP_VERSION, settings_dict= settingsDict).update_check()
+
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster.show()
 
