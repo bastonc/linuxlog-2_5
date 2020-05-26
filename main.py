@@ -2021,6 +2021,7 @@ class logForm(QMainWindow):
             #self.inputRstR.setFont(fnt)
             self.inputRstR.setText('SWL')
             self.inputRstR.setEnabled(False)
+
         else:
             self.inputRstR.setText('59')
             self.inputRstR.setEnabled(True)
@@ -2344,7 +2345,7 @@ class logForm(QMainWindow):
                 #self.inputRstR.setFont(fnt)
                 self.inputRstR.setText('SWL')
                 self.inputRstR.setEnabled(False)
-                #self.inputRstS.setText('59')
+                self.inputRstS.setText('59')
             else:
                 self.inputCall.clear()
                 self.inputRstS.setText('59')
