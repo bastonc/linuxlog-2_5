@@ -17,16 +17,9 @@ import subprocess
 import ext
 import json
 import requests
-
 from os.path import expanduser
 from bs4 import BeautifulSoup
-
-# import pyautogui
-
-# import xdo  # $ pip install  python-libxdo
-
 from gi.repository import Notify, GdkPixbuf
-
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent, QRect, QPoint, QSize
@@ -1309,11 +1302,12 @@ class update_after_run(QObject):
 
     def show_message(self, str_version, str_date):
         de = os.environ['XDG_CURRENT_DESKTOP']
+        button_upd = QPushButton("Update now")
 
         if de == "GNOME":
             Notify.init("LinuxLog")
-            summary = "Found update"
-            body = "Found new version. You can update LinuxLog to " + str_version + " version \nDate update:" + str_date
+            summary = "LinuxLog update"
+            body = "New version released:  v " + str_version + ".  Please update LinuxLog"
             notification = Notify.Notification.new(
                 summary,
                 body,  # Optional
@@ -1329,7 +1323,7 @@ class update_after_run(QObject):
             self.tray_icon.show()
             self.tray_icon.showMessage(
                 "LinuxLog",
-                "Found new version. You can update LinuxLog to " + str_version + " version \nDate update:"+ str_date,
+                "New version released:  v " + str_version + ".  Please update LinuxLog",
                 QSystemTrayIcon.Information,
                 10000
             )
@@ -3175,8 +3169,8 @@ class settings_file:
 
 
 if __name__ == '__main__':
-    #QT_QPA_PLATFORM = wayland-egl
-    APP_VERSION = '1.2'
+
+    APP_VERSION = '1.261'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
