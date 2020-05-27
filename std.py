@@ -42,29 +42,29 @@ class std:
     def get_std_band(self, freq):  # get Band in m
         #print(freq)
         band ="GEN"
-        if int(freq)>1800000 and int(freq)<2000000:
+        if int(freq) >= 1800000 and int(freq) <= 2000000:
             band = '160'
-        if int(freq)>3500000 and int(freq)<3800000:
+        if int(freq) >= 3500000 and int(freq) <= 3800000:
             band = '80'
-        if int(freq)>7000000 and int(freq)<7200000:
+        if int(freq) >= 7000000 and int(freq) <= 7200000:
             band = '40'
-        if int(freq)>10100000 and int(freq)<10150000:
+        if int(freq) >= 10100000 and int(freq) <= 10150000:
             band = '30'
-        if int(freq)>14000000 and int(freq)<14500000:
+        if int(freq) >= 14000000 and int(freq) <= 14500000:
             band = '20'
-        if int(freq)>18068000 and int(freq)<18168000:
+        if int(freq) >= 18068000 and int(freq) <= 18168000:
             band = '17'
-        if int(freq)>21000000 and int(freq)<21450000:
+        if int(freq) >= 21000000 and int(freq) <= 21450000:
             band = '15'
-        if int(freq)>24890000 and int(freq)<24990000:
+        if int(freq) >= 24890000 and int(freq) <= 24990000:
             band = '12'
-        if int(freq)>28000000 and int(freq)<29700000:
+        if int(freq) >= 28000000 and int(freq) <= 29700000:
             band = '10'
-        if int(freq)>28000000 and int(freq)<29700000:
+        if int(freq) >= 28000000 and int(freq) <= 29700000:
             band = '10'
-        if int(freq)>50000000 and int(freq)<54000000:
+        if int(freq) >= 50000000 and int(freq) <= 54000000:
             band = '6'
-        if int(freq) > 144000000 and int(freq) < 146500000:
+        if int(freq) >= 144000000 and int(freq) <= 146500000:
             band = '2'
         #print("get_std_band: band", band)
         return band

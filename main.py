@@ -1281,23 +1281,6 @@ class update_after_run(QObject):
             pass
 
         ###############
-    '''
-        try:
-            response = requests.get(action)
-            flag = 1
-        except Exception:
-            flag = 0
-
-        if flag == 1:
-            
-            
-                data_flag = 1
-            except Exception:
-                data_flag = 0;
-        print(data_flag)
-        if data_flag == 1:
-            self.show_message(str(version))
-            '''
 
 
     def show_message(self, str_version, str_date):
@@ -1575,7 +1558,14 @@ class FreqWindow(QWidget):
         self.memory_label_show.setStyleSheet(self.style_mem_label)
         self.memory_label_show.setFixedWidth(200)
         self.memory_label_show.setFixedHeight(20)
-        #self.memory_label.setFixedSize(40, 10)
+        # create Close chekbox element
+        self.close_checkbox = QCheckBox("Close after enter freq")
+        self.close_checkbox.setStyleSheet(self.style)
+        if self.settings_dict['freq-wnd'] == "enable":
+            self.close_checkbox.setChecked(True)
+
+
+
         #####################
         ### Setup to lay
         # 1-3
@@ -1621,6 +1611,7 @@ class FreqWindow(QWidget):
         self.num_buttons_lay.addLayout(self.buttons4_6_lay)
         self.num_buttons_lay.addLayout(self.buttons7_9_lay)
         self.num_buttons_lay.addLayout(self.buttons0_lay)
+        self.num_buttons_lay.addWidget(self.close_checkbox)
         # create all button layer
         self.button_layer = QHBoxLayout()
         #self.button_layer.setGeometry(QRect(0, 0, 100, 100))
@@ -1633,6 +1624,7 @@ class FreqWindow(QWidget):
         self.general_lay.addWidget(self.memory_label_show)
         self.general_lay.addWidget(self.freq_label)
         self.general_lay.addLayout(self.button_layer)
+        #self.general_lay.
         self.general_lay.addStretch()
         #setup general lay to form
         self.setLayout(self.general_lay)
@@ -1702,8 +1694,8 @@ class FreqWindow(QWidget):
                     tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode("0", mode)
                 except Exception:
                    print("enter_freq:_> Can't setup tci_freq")
-
-        self.close()
+        if self.close_checkbox.isChecked():
+            self.close()
 
     def delete_symbol_freq(self):
         self.freq_status = 1
@@ -1782,6 +1774,12 @@ class FreqWindow(QWidget):
 
     def closeEvent(self, event):
         self.settings_dict['memory-freq'] = json.dumps(self.memory_list)
+        self.settings_dict['band'] = logForm.get_band()
+        if self.close_checkbox.isChecked():
+            self.settings_dict['freq-wnd'] = 'enable'
+        else:
+            self.settings_dict['freq-wnd'] = 'disable'
+
         self.settingsDict = self.settings_dict
         Settings_file.update_file_to_disk(self)
         self.close()
@@ -2203,6 +2201,7 @@ class logForm(QMainWindow):
         self.freq_input_window = FreqWindow(settings_dict=settingsDict)
 
     def rememberBand(self, text):
+        print("Band change value", self.comboBand.currentText())
         #settingsDict['band'] = self.comboBand.currentText().strip()
         with open('settings.cfg', 'r') as file:
             # read a list of lines into data
@@ -2562,7 +2561,7 @@ class logForm(QMainWindow):
         freq_string = freq_string.replace('.', '')
         len_freq=len(freq)
         print ("set_freq:_>", freq_string)
-        freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:len_freq]
+        freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:]
         self.labelFreq.setText("Freq: "+str(freq_to_label))
         band = std.std().get_std_band(freq)
         #print(band)
