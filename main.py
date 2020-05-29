@@ -17,6 +17,7 @@ import subprocess
 import ext
 import json
 import requests
+import cat
 from os.path import expanduser
 from bs4 import BeautifulSoup
 from gi.repository import Notify, GdkPixbuf
@@ -1795,17 +1796,21 @@ class logForm(QMainWindow):
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
 
         self.initUI()
+        if settingsDict['cat'] == 'enable':
+            self.start_cat()
 
         #print("self.Diploms in logForm init:_>", self.diploms)
+
+    def start_cat(self):
+        self.cat_system = cat.Cat_start(settingsDict, self)
+        self.labelStatusCat_cat.setStyleSheet("font-weight: bold; color: #57BD79;")
+        self.labelStatusCat_cat.setText('CAT')
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_F5:
             self.full_clear_form()
         if e.key() == QtCore.Qt.Key_F12:
             self.freq_window()
-
-
-
 
     def menu(self):
 
@@ -2068,6 +2073,10 @@ class logForm(QMainWindow):
         self.labelStatusCat.setAlignment(Qt.AlignLeft)
         self.labelStatusCat.setFont(QtGui.QFont('SansSerif', 7))
 
+        self.labelStatusCat_cat = QLabel('    ')
+        self.labelStatusCat_cat.setAlignment(Qt.AlignLeft)
+        self.labelStatusCat_cat.setFont(QtGui.QFont('SansSerif', 7))
+
         self.labelStatusTelnet = QLabel('')
         self.labelStatusTelnet.setAlignment(Qt.AlignLeft)
         self.labelStatusTelnet.setFont(QtGui.QFont('SansSerif', 7))
@@ -2159,6 +2168,7 @@ class logForm(QMainWindow):
         hBoxStatus.setAlignment(Qt.AlignRight)
         hBoxStatus.addWidget(self.labelStatusTelnet)
         hBoxStatus.addWidget(self.labelStatusCat)
+        hBoxStatus.addWidget(self.labelStatusCat_cat)
 
         vBoxMain.addWidget(self.comments)
         vBoxMain.addLayout(hBoxStatus)
@@ -2572,6 +2582,8 @@ class logForm(QMainWindow):
                 self.freq_input_window.set_freq(freq)
         except Exception:
             pass
+        if settingsDict['cat'] == 'enable':
+            self.cat_system.sender_cat(freq=freq)
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
@@ -2942,6 +2954,7 @@ class telnetCluster(QWidget):
             except:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
                       settingsDict['tci-port'], "freq:_>", freq)
+        #if settingsDict['cat'] == "enable":
 
         #print("click_to_spot: freq:",freq) # Chek point
 
