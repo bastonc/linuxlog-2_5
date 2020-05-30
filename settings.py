@@ -573,11 +573,16 @@ class Menu (QWidget):
             self.settingsDict['eqsl'] = 'enable'
         else:
             self.settingsDict['eqsl'] = 'disable'
-            if self.swl_chekbox.isChecked():
-                self.settingsDict['mode-swl'] = 'enable'
+        if self.swl_chekbox.isChecked():
+            self.settingsDict['mode-swl'] = 'enable'
 
-            else:
-                self.settingsDict['mode-swl'] = "disable"
+        else:
+            self.settingsDict['mode-swl'] = "disable"
+        if self.tci_enable_combo.isChecked():
+            self.settingsDict['tci'] = 'enable'
+        else:
+            self.settingsDict['tci'] = 'disable'
+
         cluster_change_flag = 0
         if self.cluster_filter_band_combo.isChecked():
             if self.settingsDict['filter_by_band'] != "enable":
@@ -613,10 +618,13 @@ class Menu (QWidget):
 
         cluster_change_flag = self.store_new_settingsDict()   # save all lines from menu window \
                                                                 # to dictionary settingsDict
+        if self.settingsDict['tci'] == 'enable':
+            self.tci_class.stop_tci()
+            self.tci_class.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
+            #self.logForm.update_settings(self.settingsDict)
+        else:
+            self.tci_class.stop_tci()
 
-        self.tci_class.stop_tci()
-        self.tci_class.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
-        #self.logForm.update_settings(self.settingsDict)
         self.logForm.refresh_interface()
         #self.logSearch.update_settings(self.settingsDict)
         self.logSearch.refresh_interface()

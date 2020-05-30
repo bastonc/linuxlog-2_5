@@ -29,7 +29,6 @@ class test:
             f.write(json.dumps(list))
         #print("json.dumps", json.dumps(list))
 
-
 class Diplom_form(QWidget):
 
     def __init__(self, settingsDict, log_form, adi_file, diplomname='', list_data=[]):
@@ -330,7 +329,6 @@ class Diplom_form(QWidget):
         filename = str(name_output_file).strip()+'.rules'
         with open(filename, 'w') as f:
             f.write(json.dumps(data_to_json))
-
 
 class diplom:
     '''

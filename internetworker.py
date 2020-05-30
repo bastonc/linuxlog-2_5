@@ -57,13 +57,13 @@ class internetWorker(QThread):
             response = urllib.request.urlopen(url_found, parameter_to_byte)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'html.parser')
+            img = soup.find(id="mypic")
+            file_name = self.callsign.replace("/", "_")
         except Exception:
             print("get_image_from_server: Don't connection")
+            img = None
 
-        img = soup.find(id="mypic")
 
-        file_name = self.callsign.replace("/", "_")
-        print("file_name, img:_>", file_name, img)
 
 
         try:
@@ -113,7 +113,8 @@ class Eqsl_send(QtCore.QObject):
                 else:
                     self.sent_ok.emit()
         except Exception:
-            pass
+            print("Can't send eQSL")
+            self.error_message.emit("Can't sent eQSL\nCheck internet connection")
 
 class Eqsl_services (QtCore.QObject):
 

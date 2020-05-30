@@ -1231,10 +1231,12 @@ class Check_update_thread(QtCore.QObject):
         self.url_query = url_query
 
     def run(self):
-            print("Test")
-            self.response_upd_server = requests.get(self.url_query)
-            self.update_response.emit(self.response_upd_server)
-            #
+            #print("Test")
+            try:
+                self.response_upd_server = requests.get(self.url_query)
+                self.update_response.emit(self.response_upd_server)
+            except Exception:
+                print ("Can't check update")
            # if response_upd_server.status_code == 200:
             #    self.update_response.emit(response_upd_server)
            # else:
@@ -1796,15 +1798,22 @@ class logForm(QMainWindow):
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
 
         self.initUI()
-        if settingsDict['cat'] == 'enable':
-            self.start_cat()
+
+
 
         #print("self.Diploms in logForm init:_>", self.diploms)
 
     def start_cat(self):
         self.cat_system = cat.Cat_start(settingsDict, self)
-        self.labelStatusCat_cat.setStyleSheet("font-weight: bold; color: #57BD79;")
-        self.labelStatusCat_cat.setText('CAT')
+
+    def set_cat_label(self, flag: bool):
+        if flag:
+            self.labelStatusCat_cat.setStyleSheet("font-weight: bold; color: #57BD79;")
+            self.labelStatusCat_cat.setText('CAT')
+        else:
+            self.labelStatusCat_cat.setStyleSheet("font-weight: bold; color: #FF6C49;")
+            self.labelStatusCat_cat.setText('--')
+
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_F5:
@@ -2570,7 +2579,7 @@ class logForm(QMainWindow):
         freq_string = str(freq)
         freq_string = freq_string.replace('.', '')
         len_freq=len(freq)
-        print ("set_freq:_>", freq_string)
+        #print ("set_freq:_>", freq_string)
         freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:]
         self.labelFreq.setText("Freq: "+str(freq_to_label))
         band = std.std().get_std_band(freq)
@@ -2579,11 +2588,13 @@ class logForm(QMainWindow):
         self.comboBand.setCurrentIndex(index_band)
         try:
             if self.freq_input_window.isEnabled():
-                self.freq_input_window.set_freq(freq)
+                if settingsDict['cat'] != "enable":
+                    self.freq_input_window.set_freq(freq)
+                else:
+                    pass
         except Exception:
             pass
-        if settingsDict['cat'] == 'enable':
-            self.cat_system.sender_cat(freq=freq)
+
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
@@ -2925,22 +2936,10 @@ class telnetCluster(QWidget):
         freq = std.std().std_freq(freq)
         band = std.std().get_std_band(freq)
         mode = std.std().mode_band_plan(band, freq)
-        print("band:_>", band)
-        print("mode:_>", mode)
-        print("freq:_>", freq)
+        #print("band:_>", band)
+        #print("mode:_>", mode)
+        #print("freq:_>", freq)
 
-        '''len_freq = len(freq)
-        if len_freq < 8 and len_freq <= 5:
-            while len_freq < 7:
-                freq +="0"
-                len_freq=len(freq)
-            freq = "0"+freq
-        if len(freq) < 8 and len(freq) > 5 and len(freq) != 7:
-            while len_freq<8:
-                freq +="0"
-                len_freq=len(freq)
-
-        '''
         logForm.set_freq(freq)
         logForm.set_call(call=call)
         logForm.activateWindow()
@@ -2954,9 +2953,9 @@ class telnetCluster(QWidget):
             except:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
                       settingsDict['tci-port'], "freq:_>", freq)
-        #if settingsDict['cat'] == "enable":
 
-        #print("click_to_spot: freq:",freq) # Chek point
+        if settingsDict['cat'] == 'enable':
+            logForm.cat_system.sender_cat(freq=freq, mode=freq)
 
     def cluster_filter(self, cleanList):
         flag = False
@@ -3239,6 +3238,9 @@ if __name__ == '__main__':
 
         if settingsDict['telnet-cluster-window'] == 'true':
             telnetCluster.show()
+
+        if settingsDict['cat'] == 'enable':
+            logForm.start_cat()
 
         if settingsDict['tci'] == 'enable':
 

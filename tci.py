@@ -29,11 +29,14 @@ class tci_connect:
         print("Tci start:", self.tci_reciever.currentThreadId())
 
     def stop_tci(self):
-        print ("Tci stop 1", self.tci_reciever.currentThreadId())
-        self.tci_reciever.set_flag("stop")
-        if self.tci_reciever.isFinished():
-            print("Tci stop 2", self.tci_reciever.currentThreadId())
-        #self.log_form.set_tci_stat(' ')
+        try:
+            print ("Tci stop 1", self.tci_reciever.currentThreadId())
+            self.tci_reciever.set_flag("stop")
+            if self.tci_reciever.isFinished():
+                print("Tci stop 2", self.tci_reciever.currentThreadId())
+            #self.log_form.set_tci_stat(' ')
+        except Exception:
+            print("TCI don't started")
 
 class Tci_reciever(QThread):
 
