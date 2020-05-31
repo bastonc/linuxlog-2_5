@@ -1225,7 +1225,7 @@ class check_update ():
                     self.version = version
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
-                    self.parrent.text.setText("Version:"+version+"\n\nBaston Sergey\nbastonsv@gmail.com")
+                    self.parrent.text.setText("Version:"+version+"\n<a href='http://linixlog.su'>http://linixlog.su</a>\nBaston Sergey\nbastonsv@gmail.com")
 
 
                 else:
@@ -1340,7 +1340,7 @@ class About_window(QWidget):
         width_coordinate = (desktop.width() / 2) - 100
         height_coordinate = (desktop.height() / 2) - 100
         #self.setWindowModified(False)
-        self.setFixedHeight(200)
+        self.setFixedHeight(270)
         self.setFixedWidth(320)
 
         self.setGeometry(int(width_coordinate), int(height_coordinate), 200, 300)
@@ -3232,7 +3232,7 @@ if __name__ == '__main__':
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         
         adi_file = Adi_file()
-        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><a href='http://linixlog.su'>http://linixlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
 
         if settingsDict['log-window'] == 'true':
