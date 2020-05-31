@@ -17,7 +17,7 @@ import subprocess
 import ext
 import json
 import requests
-import cat
+# import cat # for version 1.262
 from os.path import expanduser
 from bs4 import BeautifulSoup
 from gi.repository import Notify, GdkPixbuf
@@ -1093,7 +1093,9 @@ class check_update ():
             soup = BeautifulSoup(response.text, 'html.parser')
             try:
                 version = soup.find(id="version").get_text()
-                git_path = soup.find(id="git_path").get_text()
+                git_path_param = soup.find(id="git_path").get_text()
+                parameters = git_path_param.split('|')
+                git_path = parameters[0]
                 date = soup.find(id="date").get_text()
                 data_flag = 1
             except Exception:
@@ -1204,9 +1206,22 @@ class check_update ():
                     os.system("rm -rf " + home + "/linuxlog-backup")
 
                     os.system("rm -rf " + home + "/linlog_"+self.version)
+                if len(parameters) > 1:
+                    pip_install_string = 'pip3 install '
+                    for i in range(1, len(parameters), 1):
+                        if parameters[i] != "" and parameters[i] != " ":
+                            pip_install_string += parameters[i] + ' '
+                    if pip_install_string != "pip3 install ":
+                        result = os.system(pip_install_string)
+                    else:
+                        result = 0
+                    if result != 0:
+                        std.std.message(self.parrent, "Can't install module(s)\nPlease install modules in Terminal.\n \
+                                                      Command: " + pip_install_string + " maybe use 'sudo'\n","ERROR install modules\n")
 
                     std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
                                                                          "Please restart LinuxLog", "UPDATER")
+
                     self.version = version
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
@@ -1241,8 +1256,6 @@ class Check_update_thread(QtCore.QObject):
             #    self.update_response.emit(response_upd_server)
            # else:
             #    self.error_request.emit()
-
-
 
 class update_after_run(QObject):
 
@@ -1313,7 +1326,6 @@ class update_after_run(QObject):
                 QSystemTrayIcon.Information,
                 10000
             )
-
 
 class About_window(QWidget):
     def __init__(self, capture, text):
@@ -1394,7 +1406,6 @@ class ClikableLabel(QLabel):
 
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
         self.click_signal.emit()
-
 
 class FreqWindow(QWidget):
     figure = QtCore.pyqtSignal(str)
@@ -1786,7 +1797,6 @@ class FreqWindow(QWidget):
         self.settingsDict = self.settings_dict
         Settings_file.update_file_to_disk(self)
         self.close()
-
 
 class logForm(QMainWindow):
 
@@ -3175,13 +3185,20 @@ class settings_file:
             f.writelines(old_data)
         print("Save_and_Exit_button: ", old_data)
 
+class Test(QObject):
 
+    def __init__(self):
+        super().__init__()
 
+    def test(self):
+        pass
 
 
 if __name__ == '__main__':
+    #test = Test()
+    #test.test()
 
-    APP_VERSION = '1.261'
+    APP_VERSION = '1.262'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
@@ -3193,16 +3210,10 @@ if __name__ == '__main__':
             settingsDict.update({splitString[0]: splitString[1]})
 
     file.close()
-
-
-
-
-
     global All_records
     All_records = []
 
-
-    print(settingsDict)
+    #print(settingsDict)
     flag = 1
 
     app = QApplication(sys.argv)
@@ -3240,7 +3251,8 @@ if __name__ == '__main__':
             telnetCluster.show()
 
         if settingsDict['cat'] == 'enable':
-            logForm.start_cat()
+            #logForm.start_cat()
+            pass
 
         if settingsDict['tci'] == 'enable':
 
