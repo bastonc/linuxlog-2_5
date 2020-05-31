@@ -3232,7 +3232,7 @@ if __name__ == '__main__':
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         
         adi_file = Adi_file()
-        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><a href='http://linixlog.su'>http://linixlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+        about_window = About_window("LinuxLog", "Version: "+APP_VERSION+"<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
 
         if settingsDict['log-window'] == 'true':
