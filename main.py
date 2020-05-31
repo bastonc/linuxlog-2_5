@@ -1225,7 +1225,7 @@ class check_update ():
                     self.version = version
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
-                    self.parrent.text.setText("Version:"+version+"\n<a href='http://linixlog.su'>http://linixlog.su</a>\nBaston Sergey\nbastonsv@gmail.com")
+                    self.parrent.text.setText("Version:"+version+"\n<a href='http://linuxlog.su'>http://linuxlog.su</a>\nBaston Sergey\nbastonsv@gmail.com")
 
 
                 else:
