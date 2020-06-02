@@ -17,7 +17,7 @@ import subprocess
 import ext
 import json
 import requests
-# import cat # for version 1.262
+import cat
 from os.path import expanduser
 from bs4 import BeautifulSoup
 from gi.repository import Notify, GdkPixbuf
@@ -1409,10 +1409,11 @@ class ClikableLabel(QLabel):
 
 class FreqWindow(QWidget):
     figure = QtCore.pyqtSignal(str)
-    def __init__(self, settings_dict):
+    def __init__(self, settings_dict, parent_window):
         super().__init__()
         self.settings_dict = settings_dict
         self.memory_list = []
+        self.parent_window = parent_window
         self.active_memory_element = "0"
         self.label_style  = "background:"+self.settings_dict['form-background']+ \
                                       "; color:"+self.settings_dict['color-table']+"; font: 25px"
@@ -1708,6 +1709,9 @@ class FreqWindow(QWidget):
                     tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode("0", mode)
                 except Exception:
                    print("enter_freq:_> Can't setup tci_freq")
+            if self.settings_dict['cat'] == 'enable':
+                #print("freq in window freq", frequency)
+                self.parent_window.set_freq_for_cat(frequency)
         if self.close_checkbox.isChecked():
             self.close()
 
@@ -1803,6 +1807,7 @@ class logForm(QMainWindow):
     def __init__(self):
         super().__init__()
         self.diploms_init()
+
         #self.diploms = self.get_diploms()
         #self.freq_window_status = 0
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
@@ -1815,6 +1820,17 @@ class logForm(QMainWindow):
 
     def start_cat(self):
         self.cat_system = cat.Cat_start(settingsDict, self)
+        #self.cat_system.start_reciever_cat()
+
+    def stop_cat(self):
+        print("stoped CAT")
+        self.set_cat_label(0)
+        #try:
+        self.cat_system.stop_cat()
+
+       # except Exception:
+        #    pass
+
 
     def set_cat_label(self, flag: bool):
         if flag:
@@ -2227,7 +2243,7 @@ class logForm(QMainWindow):
 
     def freq_window(self):
         print ("Click by freq label")
-        self.freq_input_window = FreqWindow(settings_dict=settingsDict)
+        self.freq_input_window = FreqWindow(settings_dict=settingsDict, parent_window=self)
 
     def rememberBand(self, text):
         print("Band change value", self.comboBand.currentText())
@@ -2605,6 +2621,12 @@ class logForm(QMainWindow):
         except Exception:
             pass
 
+    def set_freq_for_cat(self, freq):
+        print("Frequency", freq)
+        try:
+            self.cat_system.sender_cat(freq=freq)
+        except Exception:
+            print("Can't set frequency by CAT")
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
@@ -2695,6 +2717,13 @@ class logForm(QMainWindow):
                 self.freq_input_window.refresh_interface()
         except Exception:
             pass
+        print ("setingsDict['cat']:_>",settingsDict['cat'])
+        if settingsDict['cat'] == "enable":
+            self.start_cat()
+        else:
+
+            self.stop_cat()
+
 
     def update_color_schemes(self):
         style = "background-color:" + settingsDict['background-color'] + "; color:" + \
@@ -3251,8 +3280,8 @@ if __name__ == '__main__':
             telnetCluster.show()
 
         if settingsDict['cat'] == 'enable':
-            #logForm.start_cat()
-            pass
+            logForm.start_cat()
+            #pass
 
         if settingsDict['tci'] == 'enable':
 

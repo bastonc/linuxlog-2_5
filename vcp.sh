@@ -24,6 +24,7 @@ else
   sudo chmod 777 /dev/ttyS20
   echo 'READY'
 fi
-exit 0
+
+
 
 

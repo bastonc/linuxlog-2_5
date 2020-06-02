@@ -39,18 +39,31 @@ class Cat_reciever(QThread):
             #print("string from cat port:_>", line_ser)
             time.sleep(2)
         self.ser.close()
+    def stop_cat_reciever(self):
+        self.status_flag_reciever = 0
+
 
 class Cat_start(QObject):
     def __init__(self, settingsDict, parent_window):
         super().__init__()
         self.settingsDict = settingsDict
         self.parent_window = parent_window
+        if self.settingsDict['cat-parity'] == 'None':
+            parity = serial.PARITY_NONE
+        elif self.settingsDict['cat-parity'] == 'Odd':
+            parity = serial.PARITY_ODD
+        elif self.settingsDict['cat-parity'] == 'Even':
+            parity = serial.PARITY_EVEN
+        elif self.settingsDict['cat-parity'] == 'Mark':
+            parity = serial.PARITY_MARK
+        elif self.settingsDict['cat-parity'] == 'Space':
+            parity = serial.PARITY_SPACE
 
         try:
             self.ser = serial.Serial('/dev/' + self.settingsDict['cat-port'],
                                  int(self.settingsDict['speed-cat']),
                                  timeout=int(self.settingsDict['timeout-cat']),
-                                 parity=serial.PARITY_NONE, rtscts=1)
+                                 parity=parity, rtscts=1)
             self.protocol_command_list = self.protocol_cat() # list of commands for models TRX
             self.start_reciever_cat()
             self.parent_window.set_cat_label(True)
@@ -76,12 +89,13 @@ class Cat_start(QObject):
         self.reciever_cat.data_cat_signal.connect(self.set_freq_cat)
         self.reciever_cat.start()
 
+    def stop_cat(self):
+        self.reciever_cat.stop_cat_reciever()
+        #self.parent_window.set_cat_label(False)
+
     @pyqtSlot(bytes)
     def set_freq_cat(self, data_byte):
         self.protocol_decoder.decoder_data(data_byte)
-
-
-
 
     def sender_cat(self, freq=None, mode=None):
         if freq != None: # if we have freq

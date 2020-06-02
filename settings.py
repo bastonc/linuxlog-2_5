@@ -48,12 +48,14 @@ class Menu (QWidget):
         self.general_tab = QWidget()
         self.cluster_tab = QWidget()
         self.tci_tab = QWidget()
+        self.cat_tab = QWidget()
         self.io_tab = QWidget()
         self.service_widget = QWidget()
     #
         self.tab.addTab(self.general_tab, "General")
         self.tab.addTab(self.cluster_tab, "Cluster")
         self.tab.addTab(self.tci_tab, "TCI")
+        self.tab.addTab(self.cat_tab, "CAT")
         self.tab.addTab(self.io_tab, "Log file")
         self.tab.addTab(self.service_widget, "Services")
     # create General Tab
@@ -311,6 +313,99 @@ class Menu (QWidget):
         self.tci_tab.layout.addLayout(self.host_port_lay)
         self.tci_tab.layout.addSpacing(250)
         self.tci_tab.setLayout(self.tci_tab.layout)
+    # Create CAT tab
+        # Cat Enable
+        self.cat_enable = QCheckBox('CAT Enable')
+        self.cat_enable.setStyleSheet(style)
+        # Cat port
+        self.port_cat_label = QLabel("CAT port (ex. ttyS20)")
+        self.port_cat_label.setStyleSheet(style)
+        self.port_cat_label.setFixedWidth(150)
+        self.port_cat_input = QLineEdit()                                     # CAT port
+        self.port_cat_input.setStyleSheet(formstyle)
+        self.port_cat_input.setFixedWidth(100)
+        self.port_cat_lay = QHBoxLayout()                                     # PORT lay
+        #self.port_cat_lay.setAlignment(Qt.AlignCenter)
+        self.port_cat_lay.addWidget(self.port_cat_label)
+        self.port_cat_lay.addWidget(self.port_cat_input)
+        # Cat baud
+        self.baud_cat_label = QLabel("Baud rate")
+        self.baud_cat_label.setStyleSheet(style)
+        self.baud_cat_label.setFixedWidth(100)
+        self.baud_cat_combo = QComboBox()
+        self.baud_cat_combo.setFixedWidth(100)
+        self.baud_cat_combo.setFixedHeight(30)
+        self.baud_cat_combo.setStyleSheet(style)
+        self.baud_cat_combo.addItems(['1200', '2400','4800', '9600', '19200', '38400', '57600', '115200'])
+        self.baud_cat_lay = QHBoxLayout()                                       # BAUD lay
+        self.baud_cat_lay.setAlignment(Qt.AlignCenter)
+        self.baud_cat_lay.addWidget(self.baud_cat_label)
+        self.baud_cat_lay.addWidget(self.baud_cat_combo)
+        # Cat parity
+        self.parity_cat_label = QLabel('Parity')
+        self.parity_cat_label.setStyleSheet(style)
+        self.parity_cat_label.setFixedWidth(100)
+        self.parity_cat_combo = QComboBox()
+        self.parity_cat_combo.setFixedWidth(100)
+        self.parity_cat_combo.setFixedHeight(30)
+        self.parity_cat_combo.setStyleSheet(style)
+        self.parity_cat_combo.addItems(['None', 'Odd', 'Even', 'Mark', 'Space'])
+        self.parity_cat_lay = QHBoxLayout()                                     # PARITY lay
+        self.parity_cat_lay.setAlignment(Qt.AlignCenter)
+        self.parity_cat_lay.addWidget(self.parity_cat_label)
+        self.parity_cat_lay.addWidget(self.parity_cat_combo)
+        # Cat Data
+        self.data_cat_label = QLabel('Data')
+        self.data_cat_label.setStyleSheet(style)
+        self.data_cat_label.setFixedWidth(100)
+        self.data_cat_combo = QComboBox()
+        self.data_cat_combo.setFixedWidth(100)
+        self.data_cat_combo.setFixedHeight(30)
+        self.data_cat_combo.setStyleSheet(style)
+        self.data_cat_combo.addItems(['5', '6', '7', '8'])
+        self.data_cat_lay = QHBoxLayout()                                       # DATA lay
+        self.data_cat_lay.setAlignment(Qt.AlignCenter)
+        self.data_cat_lay.addWidget(self.data_cat_label)
+        self.data_cat_lay.addWidget(self.data_cat_combo)
+        # Cat Stop Bit
+        self.stop_cat_label = QLabel('Stop bit')
+        self.stop_cat_label.setStyleSheet(style)
+        self.stop_cat_label.setFixedWidth(100)
+        self.stop_cat_combo = QComboBox()
+        self.stop_cat_combo.setFixedWidth(100)
+        self.stop_cat_combo.setFixedHeight(30)
+        self.stop_cat_combo.setStyleSheet(style)
+        self.stop_cat_combo.addItems(['1', '1.5', '2'])
+        self.stop_cat_lay = QHBoxLayout()                                       # Stop lay
+        self.stop_cat_lay.setAlignment(Qt.AlignCenter)
+        self.stop_cat_lay.addWidget(self.stop_cat_label)
+        self.stop_cat_lay.addWidget(self.stop_cat_combo)
+        # Cat protocol
+        self.protocol_cat_label = QLabel('Protocol')
+        self.protocol_cat_label.setStyleSheet(style)
+        self.protocol_cat_label.setFixedWidth(100)
+        self.protocol_cat_combo = QComboBox()
+        self.protocol_cat_combo.setFixedWidth(120)
+        self.protocol_cat_combo.setFixedHeight(30)
+        self.protocol_cat_combo.setStyleSheet(style)
+        self.protocol_cat_combo.addItems(['ExpertSDR', 'Kenwood', 'Icom'])
+        self.protocol_cat_lay = QHBoxLayout()                                   # Protocol lay
+        self.protocol_cat_lay.setAlignment(Qt.AlignCenter)
+        self.protocol_cat_lay.addWidget(self.protocol_cat_label)
+        self.protocol_cat_lay.addWidget(self.protocol_cat_combo)
+
+        self.cat_layer = QVBoxLayout()
+        self.cat_layer.setAlignment(Qt.AlignCenter)
+        self.cat_layer.addWidget(self.cat_enable)
+        self.cat_layer.addLayout(self.port_cat_lay)
+        self.cat_layer.addLayout(self.baud_cat_lay)
+        self.cat_layer.addLayout(self.parity_cat_lay)
+        self.cat_layer.addLayout(self.data_cat_lay)
+        self.cat_layer.addLayout(self.stop_cat_lay)
+        self.cat_layer.addLayout(self.protocol_cat_lay)
+        self.cat_tab.setLayout(self.cat_layer)
+        #
+
 
     # Create io_tab
         self.io_tab_lay = QVBoxLayout()
@@ -452,6 +547,22 @@ class Menu (QWidget):
         if self.settingsDict['mode-swl'] == 'enable':
             self.swl_chekbox.setChecked(True)
 
+        # Init CAT tab
+        if self.settingsDict['cat'] == 'enable':
+            self.cat_enable.setChecked(True)
+        else:
+            self.cat_enable.setChecked(False)
+        self.port_cat_input.setText(self.settingsDict['cat-port'])
+        cat_baud_index = self.baud_cat_combo.findText(self.settingsDict['speed-cat'])
+        self.baud_cat_combo.setCurrentIndex(cat_baud_index)
+        cat_parity_index = self.parity_cat_combo.findText(self.settingsDict['cat-parity'])
+        self.parity_cat_combo.setCurrentIndex(cat_parity_index)
+        cat_data_index = self.data_cat_combo.findText(self.settingsDict['cat-data'])
+        self.data_cat_combo.setCurrentIndex(cat_data_index)
+        cat_stop_index = self.stop_cat_combo.findText(self.settingsDict['cat-stop-bit'])
+        self.stop_cat_combo.setCurrentIndex(cat_stop_index)
+        cat_protocol_index = self.protocol_cat_combo.findText(self.settingsDict['cat-protocol'])
+        self.protocol_cat_combo.setCurrentIndex(cat_protocol_index)
 
     def closeEvent(self, e):
         #print("Close menu", e)
@@ -564,8 +675,6 @@ class Menu (QWidget):
             self.settingsDict['telnet-call-position'] = self.cluster_combo_call.currentText().split(":")[0]
         if self.cluster_combo_freq.currentText() != '':
             self.settingsDict['telnet-freq-position'] = self.cluster_combo_freq.currentText().split(":")[0]
-        self.settingsDict['tci-server'] = "ws://"+self.tci_host_input.text().strip()
-        self.settingsDict['tci-port'] = self.tci_port_input.text().strip()
         self.settingsDict['eqsl_user'] = self.eqsl_login.text()
         self.settingsDict['eqsl_password'] = self.eqsl_password.text()
         self.settingsDict['eqsl-sent-color'] = self.color_button_eqsl.text()
@@ -578,11 +687,28 @@ class Menu (QWidget):
 
         else:
             self.settingsDict['mode-swl'] = "disable"
+
+        # Save TCI
         if self.tci_enable_combo.isChecked():
             self.settingsDict['tci'] = 'enable'
         else:
             self.settingsDict['tci'] = 'disable'
+        self.settingsDict['tci-server'] = "ws://" + self.tci_host_input.text().strip()
+        self.settingsDict['tci-port'] = self.tci_port_input.text().strip()
 
+        # Save CAT
+        self.settingsDict['cat-port'] = self.port_cat_input.text().strip()
+        self.settingsDict['speed-cat'] = self.baud_cat_combo.currentText()
+        self.settingsDict['cat-parity'] = self.parity_cat_combo.currentText()
+        self.settingsDict['cat-data'] = self.data_cat_combo.currentText()
+        self.settingsDict['cat-stop-bit'] = self.stop_cat_combo.currentText()
+        self.settingsDict['cat-protocol'] = self.protocol_cat_combo.currentText()
+        if self.cat_enable.isChecked():
+            self.settingsDict['cat'] = 'enable'
+        else:
+            self.settingsDict['cat'] = 'disable'
+
+        # Save cluster
         cluster_change_flag = 0
         if self.cluster_filter_band_combo.isChecked():
             if self.settingsDict['filter_by_band'] != "enable":
