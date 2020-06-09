@@ -70,8 +70,9 @@ class Icom(QObject):
         self.ser = serial_port
 
     def get_freq_mod_list(self):
-        list = [b"FEFE6CE003FD", b"FEFE6CE004FD"] # 1-st bytecode for request frequency, 2-nd bytcode fo request mode
+        list = [b"FEFE6C0003FD", b"FEFE6C0004FD"]  # 1-st bytecode for request frequency, 2-nd bytecode for request mode
         return list
+
     def freq_to_bcd(self, i):
         i = i.zfill(9)
         out = r'\x' + i[8] + '2' + r'\x' + i[6] + i[7] + r'\x' + i[4] + i[5] + r'\x' + i[2] + i[3] + r'\x' + i[0] + i[1]
@@ -83,7 +84,7 @@ class Icom(QObject):
             if freq_str[9:10] == '03':
                 freq_in_hex = freq_str[10:20]
                 freq = int(freq_in_hex, 16)
-            self.parent_window.set_freq(freq.lstrip('0'))
+            self.parent_window.set_freq(freq)
             #print("Frequency:_>", freq_str)
             if freq_str[9:10] == "06":
                 if freq_str[10:11] == '00':
@@ -103,7 +104,7 @@ class Icom(QObject):
 
     def set_freq_rig(self, freq):
         freq_in_hex = self.freq_to_bcd(freq)
-        self.ser.write(b'FEFE6CE000' + freq_in_hex.encode("utf-8") + b"FD")
+        self.ser.write(b'FEFE6C0000' + freq_in_hex.encode("utf-8") + b"FD")
 
     def set_mode_rig(self, mode):
 
@@ -127,4 +128,4 @@ class Icom(QObject):
             mode_bytes = b"00"
 
         if mode_bytes != None:
-            self.ser.write(mode_bytes)
+            self.ser.write(b"FEFE6C0004" + mode_bytes + b"FD")

@@ -1711,6 +1711,7 @@ class FreqWindow(QWidget):
                    print("enter_freq:_> Can't setup tci_freq")
             if self.settings_dict['cat'] == 'enable':
                 #print("freq in window freq", frequency)
+                frequency = frequency.zfill(8)
                 self.parent_window.set_freq_for_cat(frequency)
         if self.close_checkbox.isChecked():
             self.close()
@@ -2719,10 +2720,17 @@ class logForm(QMainWindow):
             pass
         print ("setingsDict['cat']:_>",settingsDict['cat'])
         if settingsDict['cat'] == "enable":
-            self.start_cat()
-        else:
+            try:
+                self.start_cat()
+            except Exception:
+                print("Can't start CAT interface (maybe incorrect port)")
 
-            self.stop_cat()
+
+        else:
+            try:
+                self.stop_cat()
+            except Exception:
+                print("Can't stop CAT interface (maybe it not start)")
 
 
     def update_color_schemes(self):
@@ -2772,6 +2780,7 @@ class logForm(QMainWindow):
         return names_diploms
 
 class clusterThread(QThread):
+    reciev_spot_signal = pyqtSignal()
     def __init__(self, cluster_window, form_window, parent=None):
         super().__init__()
         self.telnetCluster = cluster_window
@@ -2792,6 +2801,7 @@ class clusterThread(QThread):
 
         lastRow = 0
         message = (call + "\n").encode('ascii')
+        telnetObj.read_until(b": ")
         telnetObj.write(message)
         message2 = (call + "\n").encode('ascii')
         telnetObj.write(message2)
@@ -2801,13 +2811,13 @@ class clusterThread(QThread):
         print('Starting Telnet cluster:', HOST, ':', PORT, '\nCall:', call, '\n\n')
         while 1:
           try:
-            output_data = telnetObj.read_some()
+            output_data = telnetObj.read_until(b"\r\n")
 
 
             if output_data != '':
                     lastRow = self.telnetCluster.tableWidget.rowCount()
                     self.form_window.set_telnet_stat()
-                    #print (output_data)
+                    print (output_data)
                     if output_data[0:2].decode(settingsDict['encodeStandart']) == "DX":
                         splitString = output_data.decode(settingsDict['encodeStandart']).split(' ')
                         count_chars = len(splitString)
@@ -2872,7 +2882,7 @@ class clusterThread(QThread):
 
                             self.telnetCluster.tableWidget.setItem(lastRow, 4,
                                                                    QTableWidgetItem(
-                                                                      output_data.decode(settingsDict['encodeStandart'])))
+                                                                      output_data.decode(settingsDict['encodeStandart']).replace('\r\n','')))
 
                             self.telnetCluster.tableWidget.item(lastRow, 4).setForeground(
                                 QColor(self.telnetCluster.settings_dict["color-table"]))
@@ -2889,8 +2899,7 @@ class clusterThread(QThread):
                                     tci.Tci_sender(settingsDict['tci-server']+":"+settingsDict['tci-port']).set_spot(cleanList[4], freq, color="19711680")
                                 except:
                                     print("clusterThread: Except in Tci_sender.set_spot")
-                            self.telnetCluster.tableWidget.resizeColumnsToContents()
-                            self.telnetCluster.tableWidget.resizeRowsToContents()
+                            self.reciev_spot_signal.emit()
                         ####
                     # #print(output_data) # Check point - output input-string with data from cluster telnet-server
                     elif output_data[0:3].decode(settingsDict['encodeStandart']) == "WWV":
@@ -2898,7 +2907,7 @@ class clusterThread(QThread):
                             "Ionosphere status: " + output_data.decode(settingsDict['encodeStandart']))
                         #print("Ionosphere status: ", output_data.decode(settingsDict['encodeStandart']))
                     del cleanList[0:len(cleanList)]
-                    time.sleep(0.3)
+                    time.sleep(0.1)
 
           except:
               continue
@@ -2958,12 +2967,18 @@ class telnetCluster(QWidget):
 
         self.start_cluster()
 
+    @QtCore.pyqtSlot()
+    def input_spot(self):
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+
     def stop_cluster(self):
 
         print("stop_cluster:", self.run_cluster.terminate())
 
     def start_cluster(self):
         self.run_cluster = clusterThread(cluster_window=self, form_window=logForm)
+        self.run_cluster.reciev_spot_signal.connect(self.input_spot)
         self.run_cluster.start()
 
     def click_to_spot(self):
@@ -2994,7 +3009,11 @@ class telnetCluster(QWidget):
                       settingsDict['tci-port'], "freq:_>", freq)
 
         if settingsDict['cat'] == 'enable':
-            logForm.cat_system.sender_cat(freq=freq, mode=freq)
+            #print(freq)
+            try:
+                logForm.cat_system.sender_cat(freq=freq, mode=freq)
+            except Exception:
+                print ("Can't read/write to CAT port")
 
     def cluster_filter(self, cleanList):
         flag = False

@@ -71,16 +71,24 @@ class std:
 
     def std_freq(self, freq):   # get format freq in Hz (Ex.14000000)
         freq = freq.replace('.', '')
+        print("freq in std", freq)
         len_freq = len(freq)
         if len_freq < 8 and len_freq <= 5:
             while len_freq < 7:
                 freq += "0"
                 len_freq = len(freq)
             freq = "0" + freq
+            print("len_freq < 8 and len_freq <= 5")
         if len(freq) < 8 and len(freq) > 5 and len(freq) != 7:
             while len_freq < 8:
+                print("len(freq) < 8 and len(freq) > 5 and len(freq) != 7:")
                 freq += "0"
                 len_freq = len(freq)
+        if len(freq) == 7 and int(freq) > 1000000:
+            print("len(freq) == 7 and int(freq) > 1000000")
+            freq += "00"
+        #if len(freq) > 8:
+
         return freq
 
     def message(self, detail_text, text_short):

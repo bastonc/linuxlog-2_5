@@ -100,12 +100,15 @@ class Cat_start(QObject):
     def sender_cat(self, freq=None, mode=None):
         if freq != None: # if we have freq
 
-            self.protocol_decoder.set_freq_rig(freq)
+            freq_string = freq
+            print("freq_string", freq_string)
+            self.protocol_decoder.set_freq_rig(freq_string)
             std_value = std.std()
             band = std_value.get_std_band(freq)
             mode = std_value.mode_band_plan(band, freq)
             print(mode)
             time.sleep(0.2)
+
             self.protocol_decoder.set_mode_rig(mode)
 
 
