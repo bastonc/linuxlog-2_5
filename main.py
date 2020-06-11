@@ -3246,7 +3246,7 @@ if __name__ == '__main__':
     #test = Test()
     #test.test()
 
-    APP_VERSION = '1.262'
+    APP_VERSION = '1.27'
     settingsDict = {}
     file = open('settings.cfg', "r")
     for configstring in file:
