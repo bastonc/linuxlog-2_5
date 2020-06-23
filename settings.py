@@ -1,10 +1,11 @@
 import telnetlib
 import time
 import main
+import internetworker
 import parse
 import shutil
 import std
-from PyQt5.QtWidgets import QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
+from PyQt5.QtWidgets import QSpacerItem, QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
     QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QSizePolicy
 from PyQt5 import QtCore
@@ -61,6 +62,8 @@ class Menu (QWidget):
     # create General Tab
         formstyle = "background: "+self.settingsDict['form-background']+"; color: "+\
                     self.settingsDict['color-table']+"; "
+        self.style_headers = "font-weight: bold; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
+        self.style_small = "font-style: italic; font-size: 12px; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
         self.general_tab.layout = QVBoxLayout(self) # create vertical lay
         self.call_label = QLabel("You Callsign")
         self.call_input = QLineEdit()
@@ -410,15 +413,21 @@ class Menu (QWidget):
     # Create io_tab
         self.io_tab_lay = QVBoxLayout()
         self.io_tab_lay.setAlignment(Qt.AlignCenter)
-        self.import_button = QPushButton("Import")
-        self.import_button.setFixedSize(100, 30)
+        self.import_button = QPushButton("Import ADI")
+        self.import_button.setFixedSize(150, 30)
         self.import_button.clicked.connect(self.import_adi)
         self.import_button.setStyleSheet("width: 100px;")
-        self.export_button = QPushButton("Export")
+        self.export_button = QPushButton("Export ALL log to ADI")
         self.export_button.clicked.connect(self.export_adi)
-        self.export_button.setFixedSize(100, 30)
+        self.export_button.setFixedSize(150, 30)
+        self.export_clublog_button = QPushButton("Export ALL to ClubLog")
+        self.export_clublog_button.clicked.connect(self.export_adi_clublog)
+        self.export_clublog_button.setFixedSize(150, 30)
+        self.export_clublog_button.setToolTip("ATTENTION: This export will MERGE the QSO from the log with the Club Log base")
+
         self.io_tab_lay.addWidget(self.import_button)
         self.io_tab_lay.addWidget(self.export_button)
+        self.io_tab_lay.addWidget(self.export_clublog_button)
         self.io_tab.setLayout(self.io_tab_lay)
 
     # Create Services tab
@@ -428,6 +437,12 @@ class Menu (QWidget):
 
         # create elements form
         self.eqsl_lay = QVBoxLayout()
+        self.eqsl_lay.setAlignment(Qt.AlignLeft)
+        self.eqsl_label = QLabel("eQSL")
+        self.eqsl_label.setStyleSheet(self.style_headers)
+
+        self.eqsl_lay.addWidget(self.eqsl_label)
+        self.eqsl_lay.addSpacing(10)
         self.eqsl_lay.setAlignment(Qt.AlignCenter)
         self.eqsl_activate = QHBoxLayout()
         self.eqsl_chekBox = QCheckBox("Auto sent eQSL after QSO")
@@ -435,21 +450,27 @@ class Menu (QWidget):
 
         self.eqsl_activate.addWidget(self.eqsl_chekBox)
         #self.eqsl_activate.addWidget(QLabel("eQSL.cc"))
-        self.eqsl_lay.addLayout(self.eqsl_activate)
-        self.text_eqsl_small = QLabel("Automatic send eQSL after enter QSO")
-        self.text_eqsl_small.setStyleSheet("font: 10px; font-style: italic;")
-        self.eqsl_lay.addWidget(self.text_eqsl_small)
-        self.eqsl_form = QVBoxLayout()
-        self.login = QHBoxLayout()
 
-        self.login.addWidget(QLabel("Login:"))
+        self.eqsl_form = QVBoxLayout()
+
+
+        self.login = QHBoxLayout()
+        self.login.setAlignment(Qt.AlignLeft)
+        self.eqsl_login = QLabel("Login:")
+        self.eqsl_login.setStyleSheet(style)
+        self.eqsl_login.setMaximumWidth(75)
+        self.login.addWidget(self.eqsl_login)
         self.eqsl_login = QLineEdit()
         self.eqsl_login.setFixedWidth(200)
         self.eqsl_login.setStyleSheet(formstyle)
         self.login.addWidget(self.eqsl_login)
-        self.login.addSpacing(50)
+        #self.login.addSpacing(50)
         self.password = QHBoxLayout()
-        self.password.addWidget(QLabel("Password:"))
+        self.password.setAlignment(Qt.AlignLeft)
+        self.eqsl_pass_label = QLabel("Password:")
+        self.eqsl_pass_label.setStyleSheet(style)
+        self.eqsl_pass_label.setMaximumWidth(75)
+        self.password.addWidget(self.eqsl_pass_label)
         self.eqsl_password = QLineEdit()
         self.eqsl_password.setFixedWidth(200)
         self.eqsl_password.setStyleSheet(formstyle)
@@ -471,8 +492,68 @@ class Menu (QWidget):
         self.color_button_layer.addWidget(self.color_label_eqsl)
         self.color_button_layer.addWidget(self.color_button_eqsl)
         self.eqsl_lay.addLayout(self.color_button_layer)
+        self.eqsl_lay.addLayout(self.eqsl_activate)
+
+        # Create CLub log layer
+        self.clublog_lay = QVBoxLayout()
+        self.clublog_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_login_lay = QHBoxLayout()
+        self.clublog_login_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_login_label = QLabel("Login:")
+        self.clublog_login_label.setFixedWidth(75)
+        self.clublog_login_label.setStyleSheet(style)
+        self.clublog_login_input = QLineEdit()
+        self.clublog_login_input.setFixedWidth(200)
+        self.clublog_login_input.setStyleSheet(formstyle)
+        # set in login lay
+        self.clublog_login_lay.addWidget(self.clublog_login_label)
+        self.clublog_login_lay.addWidget(self.clublog_login_input)
+
+        # set in pass lay
+        self.clublog_pass_lay = QHBoxLayout()
+        self.clublog_pass_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_pass_label = QLabel("Password:")
+        self.clublog_pass_label.setFixedWidth(75)
+        self.clublog_pass_label.setStyleSheet(style)
+        self.clublog_pass_input = QLineEdit()
+        self.clublog_pass_input.setFixedWidth(250)
+        #self.clublog_pass_input.setFixedHeight(35)
+        self.clublog_pass_input.setStyleSheet(formstyle)
+        self.clublog_pass_lay.addWidget(self.clublog_pass_label)
+        self.clublog_pass_lay.addWidget(self.clublog_pass_input)
+
+        # set in chekbox Sync
+        self.clublog_sync_chekbox = QHBoxLayout()
+        self.clublog_sync = QCheckBox("Auto sent to Club log after QSO")
+        self.clublog_sync.setStyleSheet(style)
+        self.clublog_sync_chekbox.addWidget(self.clublog_sync)
+
+        self.clublog_label = QLabel("Club Log service")
+        self.clublog_label.setStyleSheet(self.style_headers)
+        spacer = QFrame()
+        spacer.setFrameShape(QFrame.HLine)
+        spacer.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer.setContentsMargins(1,5,1,10)
+        spacer.setLineWidth(1)
+        self.clublog_lay.addWidget(spacer)
+        self.clublog_lay.addWidget(self.clublog_label)
+        self.clublog_lay.addSpacing(10)
+        self.clublog_lay.addLayout(self.clublog_login_lay)
+        self.clublog_lay.addLayout(self.clublog_pass_lay)
+        self.clublog_text_label = QLabel("NOTICE: You need use <b>password for "
+                                         "application.</b> Detail to<br>&nbsp;&nbsp;&nbsp;"
+                                         "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                                         "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Clublog site ->"
+                                         "Settings ->App.pasword")
+        self.clublog_text_label.setStyleSheet(self.style_small)
+        self.clublog_lay.addWidget(self.clublog_text_label)
+        self.clublog_lay.addLayout(self.clublog_sync_chekbox)
+
         self.service_tab.addLayout(self.eqsl_lay)
+        self.service_tab.addLayout(self.clublog_lay)
+
         self.service_widget.setLayout(self.service_tab)
+
 
 
     # button panel
@@ -534,18 +615,29 @@ class Menu (QWidget):
             self.cluster_filter_spotter_combo.setChecked(True)
         self.cluster_filter_spotter_input.setText(self.settingsDict['filter-prefix-spotter'])
         self.cluster_start_calibrate_button.clicked.connect(self.start_calibrate_cluster)
+
         #init data in tci tab
         if self.settingsDict['tci'] == 'enable':
             self.tci_enable_combo.setChecked(True)
         host = self.settingsDict['tci-server'].replace("ws://", '')
         self.tci_host_input.setText(host)
         self.tci_port_input.setText(self.settingsDict['tci-port'])
+
+        # init data eQSL
         self.eqsl_login.setText(self.settingsDict['eqsl_user'])
         self.eqsl_password.setText(self.settingsDict['eqsl_password'])
         if self.settingsDict['eqsl'] == 'enable':
             self.eqsl_chekBox.setChecked(True)
         if self.settingsDict['mode-swl'] == 'enable':
             self.swl_chekbox.setChecked(True)
+
+        # intt data clublog
+        self.clublog_login_input.setText(self.settingsDict['email-clublog'])
+        self.clublog_pass_input.setText(self.settingsDict['pass-clublog'])
+        if self.settingsDict['clublog'] == 'enable':
+            self.clublog_sync.setChecked(True)
+        else: self.clublog_sync.setChecked(False)
+
 
         # Init CAT tab
         if self.settingsDict['cat'] == 'enable':
@@ -602,6 +694,21 @@ class Menu (QWidget):
                 std.std.message(self, "Export to\n"+copy_file+"\n completed", "Export complited")
             else:
                 std.std.message(self, "Can't export to file", "Sorry")
+
+    def export_adi_clublog(self):
+
+        try:
+            clublog = internetworker.Clublog(settingsDict=self.settingsDict)
+            response = clublog.export_file("log.adi")
+            if response.status_code == 200:
+                print("response for Club log:_>", response, response.headers)
+                std.std.message(self, "Club log: "+response.content.decode(self.settingsDict['encodeStandart']), "Ok")
+            elif response.status_code == 403:
+                print("response for Club log:_>", response,  response.content)
+                std.std.message(self, "Club log: "+response.content.decode(self.settingsDict['encodeStandart'])+"\n", "ERROR")
+        except Exception:
+            std.std.message(self, "Check internet connection\n",
+                            "ERROR Club log")
 
     def start_calibrate_cluster(self):
        # print("start_calibrate_cluster:_>", self.settingsDict)
@@ -675,6 +782,8 @@ class Menu (QWidget):
             self.settingsDict['telnet-call-position'] = self.cluster_combo_call.currentText().split(":")[0]
         if self.cluster_combo_freq.currentText() != '':
             self.settingsDict['telnet-freq-position'] = self.cluster_combo_freq.currentText().split(":")[0]
+
+        # Save eQSL data
         self.settingsDict['eqsl_user'] = self.eqsl_login.text()
         self.settingsDict['eqsl_password'] = self.eqsl_password.text()
         self.settingsDict['eqsl-sent-color'] = self.color_button_eqsl.text()
@@ -687,6 +796,15 @@ class Menu (QWidget):
 
         else:
             self.settingsDict['mode-swl'] = "disable"
+
+        # Save Clublog data
+        self.settingsDict['email-clublog'] = self.clublog_login_input.text().strip()
+        self.settingsDict['pass-clublog'] = self.clublog_pass_input.text().strip()
+        if self.clublog_sync.isChecked():
+            self.settingsDict['clublog'] = 'enable'
+        else:
+            self.settingsDict['clublog'] = 'disable'
+
 
         # Save TCI
         if self.tci_enable_combo.isChecked():

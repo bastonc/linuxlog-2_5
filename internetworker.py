@@ -4,6 +4,8 @@
 import urllib
 import std
 import requests
+import datetime
+
 import shutil
 import os
 from os.path import expanduser
@@ -17,7 +19,7 @@ from urllib.parse import quote
 from PyQt5.QtCore import QThread
 from PyQt5 import QtCore
 
-from PyQt5.QtWidgets import  QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QApplication
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QApplication
 import main
 
 
@@ -32,13 +34,12 @@ class internetWorker(QThread):
     def run(self):
         # print (self.callsign)
         info_from_internet_array = internetWorker.get_image_from_server(self)
-      #  print (info_from_internet_array)
+        #  print (info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
             pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 20,
-                                          int(self.settings['search-internet-height']) - 20,
+                                           int(self.settings['search-internet-height']) - 20,
                                            QtCore.Qt.KeepAspectRatio)
-
 
             self.internet_search_window.labelImage.setPixmap(pixmap_resized)
             # return info_from_internet_array
@@ -49,7 +50,7 @@ class internetWorker(QThread):
         принимает callsign - позывной
         '''
         url_found = "https://www.qrz.com/lookup"
-       # print(self.callsign)
+        # print(self.callsign)
         parameter_request = "tquery=" + self.callsign + "&mode: callsign"
         parameter_to_byte = bytearray(parameter_request, "utf-8")
         data_dictionary = {}
@@ -63,20 +64,15 @@ class internetWorker(QThread):
             print("get_image_from_server: Don't connection")
             img = None
 
-
-
-
         try:
             if img != None:
                 urllib.request.urlretrieve(img['src'], "image/" + file_name + ".jpg")
                 data_dictionary.update({'img': "image/" + file_name + ".jpg"})
-           # print(data_dictionary)
+        # print(data_dictionary)
         except Exception:
             print("Exception:", Exception)
 
         return data_dictionary
-
-
 
 
 class Eqsl_send(QtCore.QObject):
@@ -84,21 +80,29 @@ class Eqsl_send(QtCore.QObject):
     sent_ok = QtCore.pyqtSignal()
 
     def __init__(self, settingsDict, recordObject, std, parent_window):
-            super().__init__()
-            self.recordObject = recordObject
-            self.settingsDict = settingsDict
-            self.std = std
-            self.parrent_window = parent_window
+        super().__init__()
+        self.recordObject = recordObject
+        self.settingsDict = settingsDict
+        self.std = std
+        self.parrent_window = parent_window
 
     def run(self):
 
         api_url_eqsl = 'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog upload'
-        data_qso_string = '<BAND:'+str(len(self.recordObject['BAND']))+'>'+str(self.recordObject['BAND'])+' <CALL:'+str(len(self.recordObject['CALL']))+'>'+str(self.recordObject['CALL'])+' <MODE:'+str(len(self.recordObject['MODE']))+'>'+str(self.recordObject['MODE'])+' <QSO_DATE:'+str(len(self.recordObject['QSO_DATE']))+'>'+str(self.recordObject['QSO_DATE'])+' <RST_RCVD:'+str(len(self.recordObject['RST_RCVD']))+'>'+str(self.recordObject['RST_RCVD'])+' <RST_SENT:'+str(len(self.recordObject['RST_SENT']))+'>'+str(self.recordObject['RST_SENT'])+' <TIME_ON:'+str(len(self.recordObject['TIME_ON']))+'>'+str(self.recordObject['TIME_ON'])+' <EOR>'
+        data_qso_string = '<BAND:' + str(len(self.recordObject['BAND'])) + '>' + str(
+            self.recordObject['BAND']) + ' <CALL:' + str(len(self.recordObject['CALL'])) + '>' + str(
+            self.recordObject['CALL']) + ' <MODE:' + str(len(self.recordObject['MODE'])) + '>' + str(
+            self.recordObject['MODE']) + ' <QSO_DATE:' + str(len(self.recordObject['QSO_DATE'])) + '>' + str(
+            self.recordObject['QSO_DATE']) + ' <RST_RCVD:' + str(len(self.recordObject['RST_RCVD'])) + '>' + str(
+            self.recordObject['RST_RCVD']) + ' <RST_SENT:' + str(len(self.recordObject['RST_SENT'])) + '>' + str(
+            self.recordObject['RST_SENT']) + ' <TIME_ON:' + str(len(self.recordObject['TIME_ON'])) + '>' + str(
+            self.recordObject['TIME_ON']) + ' <EOR>'
         data_string_code_to_url = urllib.parse.quote(data_qso_string)
-        user_pasword_eqsl = '&EQSL_USER='+self.settingsDict['eqsl_user']+'&EQSL_PSWD='+self.settingsDict['eqsl_password']
+        user_pasword_eqsl = '&EQSL_USER=' + self.settingsDict['eqsl_user'] + '&EQSL_PSWD=' + self.settingsDict[
+            'eqsl_password']
 
         try:
-            request_eqsl = requests.get(api_url_eqsl+data_string_code_to_url+user_pasword_eqsl)
+            request_eqsl = requests.get(api_url_eqsl + data_string_code_to_url + user_pasword_eqsl)
 
             if request_eqsl.status_code != 200:
 
@@ -107,7 +111,7 @@ class Eqsl_send(QtCore.QObject):
             else:
                 soup = BeautifulSoup(request_eqsl.text, 'html.parser')
                 response = soup.body.contents[0]
-               # print ("SOUP", soup.body.contents[0].strip())
+                # print ("SOUP", soup.body.contents[0].strip())
                 if (response.find('Warning') != -1) or (response.find('Error') != -1):
                     self.error_message.emit(soup.body.contents[0].strip())
                 else:
@@ -116,8 +120,8 @@ class Eqsl_send(QtCore.QObject):
             print("Can't send eQSL")
             self.error_message.emit("Can't sent eQSL\nCheck internet connection")
 
-class Eqsl_services (QtCore.QObject):
 
+class Eqsl_services(QtCore.QObject):
     send_ok = QtCore.pyqtSignal()
     error_signal = QtCore.pyqtSignal()
 
@@ -130,15 +134,14 @@ class Eqsl_services (QtCore.QObject):
         self.check_auth_data()
         self.input_form_key = 0
 
-
     def send_qso_to_qrz(self):
         server_url_post = 'https://logbook.qrz.com/api'
         key_account = "KEY=81FE-08CA-D97D-8709&"
         action = "ACTION=INSERT&ADIF=<band:3>80m<mode:3>SSB<call:5>RN6XC<qso_date:8>20140121<station_callsign:6>UR4LGA<time_on:4>0346<eor>"
-       # print ("key+action", key_account + action)
+        # print ("key+action", key_account + action)
         response = requests.post(server_url_post, data=key_account + action)
 
-       # print ("send_to_qrz", response.text)
+    # print ("send_to_qrz", response.text)
 
     def check_auth_data(self):
         if self.settingsDict['eqsl_user'] == '' or self.settingsDict['eqsl_password'] == '':
@@ -202,12 +205,10 @@ class Eqsl_services (QtCore.QObject):
     def return_data(self):
         self.settingsDict['eqsl_user'] = self.login_input.text().strip()
         self.settingsDict['eqsl_password'] = self.password_input.text().strip()
-        #main.Settings_file().update_file_to_disk()
+        # main.Settings_file().update_file_to_disk()
         self.window_auth.close()
         self.input_form_key = 1
         self.start_sending()
-
-
 
     def start_sending(self):
         self.send_thread = QtCore.QThread()
@@ -225,12 +226,13 @@ class Eqsl_services (QtCore.QObject):
     @QtCore.pyqtSlot(str)
     def show_message(self, string: str):
         # pass
-        std.std.message(self.parrent_window, string, "Error")
+        std.std.message(self.parrent_window, string, "<p style='color: red;'>ERROR</p>")
         if self.input_form_key == 1:
             self.settingsDict['eqsl_user'] = ''
             self.settingsDict['eqsl_password'] = ''
         self.error_signal.emit()
         self.send_thread.exec()
+
     @QtCore.pyqtSlot()
     def send_complited(self):
         if self.input_form_key == 1:
@@ -239,8 +241,7 @@ class Eqsl_services (QtCore.QObject):
         self.send_thread.exec()
 
 
-
-class check_update (QThread):
+class check_update(QThread):
 
     def __init__(self, APP_VERSION, settingsDict, parrentWindow):
         super().__init__()
@@ -248,13 +249,12 @@ class check_update (QThread):
         self.settingsDict = settingsDict
         self.parrent = parrentWindow
 
-
     def run(self):
 
         server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
         path_directory_updater_app = "/upd/"
 
-        action = server_url_get+path_directory_updater_app+self.version+"/"+self.settingsDict['my-call']
+        action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
         flag = 0
         data_flag = 0
         try:
@@ -276,12 +276,12 @@ class check_update (QThread):
                 self.parrent.check_update.setEnabled(True)
             if data_flag == 1:
                 update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
-                                     "Found new version "+version+" install it?",
-                                     buttons=QMessageBox.Yes | QMessageBox.No,
-                                     defaultButton=QMessageBox.Yes)
+                                                     "Found new version " + version + " install it?",
+                                                     buttons=QMessageBox.Yes | QMessageBox.No,
+                                                     defaultButton=QMessageBox.Yes)
                 if update_result == QMessageBox.Yes:
-                   # print("Yes")
-                    #try:
+                    # print("Yes")
+                    # try:
                     self.parrent.check_update.setText("Updating")
                     adi_name_list = []
                     for file in os.listdir():
@@ -291,22 +291,22 @@ class check_update (QThread):
                     for file in os.listdir():
                         if file.endswith(".rules"):
                             rules_name_list.append(file)
-                   # print("Rules name List:_>", rules_name_list)
-                   # print("Adi name List:_>", adi_name_list)
+                    # print("Rules name List:_>", rules_name_list)
+                    # print("Adi name List:_>", adi_name_list)
                     home = expanduser("~")
-                   # print("Home path:_>", home)
-                    os.mkdir(home+"/linuxlog-backup")
+                    # print("Home path:_>", home)
+                    os.mkdir(home + "/linuxlog-backup")
                     for i in range(len(adi_name_list)):
-                        os.system("cp '"+adi_name_list[i]+"' "+home+"/linuxlog-backup")
+                        os.system("cp '" + adi_name_list[i] + "' " + home + "/linuxlog-backup")
                     for i in range(len(rules_name_list)):
                         os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
-                    os.system("cp settings.cfg " + home+"/linuxlog-backup")
+                    os.system("cp settings.cfg " + home + "/linuxlog-backup")
                     # archive dir
-                    if os.path.isdir(home+'/linlog-old'):
-                     pass
+                    if os.path.isdir(home + '/linlog-old'):
+                        pass
                     else:
-                        os.system("mkdir "+home+"/linlog-old")
-                    os.system("tar -cf "+home+"/linlog-old/linlog"+version+".tar.gz " + home + "/linlog/")
+                        os.system("mkdir " + home + "/linlog-old")
+                    os.system("tar -cf " + home + "/linlog-old/linlog" + version + ".tar.gz " + home + "/linlog/")
 
                     # delete dir linlog
                     os.system("rm -rf " + home + "/linlog/")
@@ -315,13 +315,13 @@ class check_update (QThread):
 
                     # copy adi and rules file from linuxlog-backup to ~/linlog
                     for i in range(len(adi_name_list)):
-                        os.system("cp '"+home+"/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
+                        os.system("cp '" + home + "/linuxlog-backup/" + adi_name_list[i] + "' '" + home + "/linlog'")
                     for i in range(len(rules_name_list)):
                         os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[i] + "' '" + home + "/linlog'")
 
                     # read and replace string in new settings.cfg
 
-                    file = open(home+"/linlog/settings.cfg", "r")
+                    file = open(home + "/linlog/settings.cfg", "r")
                     settings_list = {}
                     for configstring in file:
                         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -334,13 +334,11 @@ class check_update (QThread):
                     for key_new in settings_list:
                         for key_old in self.settingsDict:
                             if key_new == key_old:
-                                 settings_list[key_new] = self.settingsDict[key_old]
+                                settings_list[key_new] = self.settingsDict[key_old]
 
+                    # print("settings list^_>", settings_list)
 
-
-                   # print("settings list^_>", settings_list)
-
-                    filename = home+"/linlog/settings.cfg"
+                    filename = home + "/linlog/settings.cfg"
                     with open(filename, 'r') as f:
                         old_data = f.readlines()
                     for index, line in enumerate(old_data):
@@ -355,22 +353,133 @@ class check_update (QThread):
                         f.writelines(old_data)
                     # done!
 
-                    #delete backup dir
+                    # delete backup dir
                     os.system("rm -rf " + home + "/linuxlog-backup")
 
-                    std.std.message(self.parrent, "Update to v."+version+" \nCOMPLITED \n "
-                                                                         "Please restart LinuxLog", "UPDATER")
+                    std.std.message(self.parrent, "Update to v." + version + " \nCOMPLITED \n "
+                                                                             "Please restart LinuxLog", "UPDATER")
                     self.version = version
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
-                    self.parrent.text.setText("Version:"+version+"\n\nBaston Sergey\nbastonsv@gmail.com")
+                    self.parrent.text.setText("Version:" + version + "\n\nBaston Sergey\nbastonsv@gmail.com")
 
 
                 else:
-                  #  print("No")
+                    #  print("No")
                     self.parrent.check_update.setText("> Check update <")
                     self.parrent.check_update.setEnabled(True)
 
         else:
             std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
 
+
+class Clublog(QtCore.QObject):
+
+    sent_qso_ok = QtCore.pyqtSignal(object)
+    sent_qso_no = QtCore.pyqtSignal(object)
+    del_qso_ok = QtCore.pyqtSignal(object)
+    del_qso_no = QtCore.pyqtSignal(object)
+    network_error = QtCore.pyqtSignal()
+
+    def __init__(self, settingsDict, adi_string=None):
+        super().__init__()
+        self.key = "1262ee63ad3b25917b695cb78b3d3bdcfd8e2ff8"
+        self.adi_string = adi_string
+        #self.data = data_for_tx
+        self.settingsDict = settingsDict
+        self.upload_file_url = "https://clublog.org/putlogs.php"
+        self.add_record_url = "https://clublog.org/realtime.php"
+        self.delete_record_url = "https://clublog.org/delete.php"
+
+    def export_file(self, file, clear=None):
+        '''
+         Export ADI file to Club log
+         url -  https://clublog.org/putlogs.php
+         method POST
+         data in request:
+            email: A registered email address in Club Log
+            password: The password to authenticate the email login
+            callsign: Optionally, the callsign into which the logs should be uploaded.
+                        If not set, the primary callsign of the account is used.
+            clear: If a value of 1 is given, the log will be flushed before the new upload is processed. In all other cases, including if this field is absent, the log will be merged.
+            file: A multipart/form-data upload which is used to POST the ADIF file with the form. The filename should be an ADIF, LGS or a ZIP file containing one of those.
+            api: An API key to access this interface (protecting it from abuse), which you can obtain by emailing the helpdesk.
+
+        :return: result 0 - Ok, 1 - error
+        '''
+        if clear != None:
+            clear = "1"
+
+            multipart_data = {
+                "email": self.settingsDict['email-clublog'],
+                "password": self.settingsDict['pass-clublog'],
+                "callsign": self.settingsDict['my-call'],
+                "clear": clear,
+                "api": self.key
+            }
+        else:
+            multipart_data = {
+                "email": self.settingsDict['email-clublog'],
+                "password": self.settingsDict['pass-clublog'],
+                "callsign": self.settingsDict['my-call'],
+                "api": self.key
+            }
+            file_data = {"file": ('log.ADI', open(file, 'rb'),'text/plain')}
+
+            #print(multipart_data)
+        response = requests.post(self.upload_file_url, files=file_data, data=multipart_data, headers={'enctype': 'multipart/form-data' })
+        return response
+
+    def add_record(self):
+        #print("data_record", self.adi_string)
+        multipart_data = {
+            "email": self.settingsDict['email-clublog'],
+            "password": self.settingsDict['pass-clublog'],
+            "callsign": self.settingsDict['my-call'],
+            "adif": self.adi_string,
+            "api": self.key
+        }
+        try:
+            response = requests.post(self.add_record_url, data=multipart_data)
+            print("Type response:_>",type(response))
+            if response.status_code == 200:
+                self.sent_qso_ok.emit(response)
+            if response.status_code != 200:
+                self.sent_qso_no.emit(response)
+            return response
+        except Exception:
+            self.network_error.emit()
+
+    def del_record(self, record_object):
+        '''
+        Delete record from club log
+        :param record_object: dict - object with data about QSO
+        All data in dict: records_number, QSO_DATE, TIME_ON, FREQ, CALL, MODE, RST_RCVD, RST_SENT
+        NAME, QTH, OPERATOR, BAND, COMMENTS, TIME_OFF, EQSL_QSL_SENT
+        :return: response from server
+        '''
+        date = record_object['date']
+        date_formated = date[0:4] + '-' + date[4:6] + '-' + date[6:8]
+        time = record_object['time']
+        time_formated = time[0:2] +':' + time[2:4] + ':' + time[4:]
+        date_time = date_formated + " " + time_formated
+        #print ("Band:_>", record_object['band'].replace("M",'').strip(), "\nDate time:", date_time)
+        multipart_data = {
+            "email": self.settingsDict['email-clublog'],
+            "password": self.settingsDict['pass-clublog'],
+            "callsign": self.settingsDict['my-call'],
+            "dxcall": record_object['call'],
+            "datetime": date_time,
+            "bandid" : record_object['band'].replace("M",''),
+            "api": self.key
+        }
+        try:
+            response = requests.post(self.delete_record_url, data=multipart_data)
+
+            if response.status_code == 200:
+                self.del_qso_ok.emit(response)
+            if response.status_code != 200:
+                self.del_qso_no.emit(response)
+            return response
+        except Exception:
+            self.network_error.emit()
