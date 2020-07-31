@@ -704,11 +704,233 @@ class static_diplom(QWidget):
 
         self.score_total_label.setText("Total score: " + str(total_score))
 
+class Filter_log(QWidget):
+    def __init__(self, settingsDict, All_records):
+        super().__init__()
+        self.settingsDict = settingsDict
+        self.all_records = All_records
+        self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
+                           'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
+
+        self.initUI()
+
+    def initUI(self):
+
+        self.setGeometry(int(self.settingsDict['log-window-left']),
+                         int(self.settingsDict['log-window-top']) + 50,
+                         int(self.settingsDict['filter-width']),
+                         int(self.settingsDict['filter-height']))
+        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowTitle('LinuxLog | Filter')
+        style = "background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
+        self.setStyleSheet(style)
+
+        # Create table widget - "Buffer"
+        self.tw_buffer = QTableWidget()
+        self.tw_buffer.setColumnCount(len(self.allCollumn)+1)
+        style_table = "background-color:" + self.settingsDict['form-background'] + "; color:" + self.settingsDict[
+            'color-table'] + "; font: 12px;  gridline-color: " + self.settingsDict['solid-color'] + ";"
+        self.tw_buffer.setStyleSheet(style_table)
+        fnt = self.tw_buffer.font()
+        fnt.setPointSize(9)
+        self.tw_buffer.setHorizontalHeaderLabels(
+            ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
+             "RST s", "      Name      ", "      QTH      ", " Comments ",
+             " Time off ", " eQSL Sent ", "Club Log Sent", "Operation"])
+        self.tw_buffer.resizeColumnsToContents()
+
+        # Create layer button for "Buffer table"
+        self.bt_for_buffer = QHBoxLayout()
+
+        self.bt_clear_all = QPushButton('Clear all "Buffer"')
+        self.bt_clear_all.setFixedWidth(70)
+        self.bt_clear_all.setFixedHeight(20)
+        self.bt_clear_all.clicked.connect(self.clear_all_buffer)
+        self.bt_for_buffer.addWidget(self.bt_clear_all)
+
+        # Create layer button for find
+        self.bt_for_find = QHBoxLayout()
+        # Button add all
+        self.bt_add_all = QPushButton("Add all")
+        self.bt_add_all.setFixedWidth(70)
+        self.bt_add_all.setFixedHeight(20)
+        self.bt_add_all.clicked.connect(self.add_all_find)
+        # Button clear find
+        self.bt_clear_find = QPushButton('Clear all "Find"')
+        self.bt_clear_find.setFixedWidth(70)
+        self.bt_clear_find .setFixedHeight(20)
+        self.bt_clear_find .clicked.connect(self.clear_all_find)
 
 
+        self.bt_for_find.addWidget(self.bt_add_all)
+        self.bt_for_find.addWidget(self.bt_clear_find)
+
+        # Create table widget Find
+        self.tw_find = QTableWidget()
+        self.tw_find.setColumnCount(len(self.allCollumn) + 1)
+        style_table = "background-color:" + self.settingsDict['form-background'] + "; color:" + self.settingsDict[
+            'color-table'] + "; font: 12px;  gridline-color: " + self.settingsDict['solid-color'] + ";"
+        self.tw_find.setStyleSheet(style_table)
+        fnt = self.tw_buffer.font()
+        fnt.setPointSize(9)
+        self.tw_find.setHorizontalHeaderLabels(
+            ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
+             "RST s", "      Name      ", "      QTH      ", " Comments ",
+             " Time off ", " eQSL Sent ", "Club Log Sent", "Operation"])
+        self.tw_find.resizeColumnsToContents()
+
+        # Create horizontal layer with two vertical layers with fields and button
+        self.horizontal_layer_fields = QHBoxLayout()
+        self.find_fields = QVBoxLayout()
+        # call field
+        self.call_find_lay = QHBoxLayout()
+        self.call_label = QLabel("Call (with RegExp)")
+        self.call_label.setFixedWidth(150)
+        self.call_label.setStyleSheet(style)
+
+        self.call_input = QLineEdit()
+        self.call_input.setFixedWidth(120)
+        self.call_input.setFixedHeight(30)
+        self.call_input.setStyleSheet(style_table)
+        self.call_find_lay.addWidget(self.call_label)
+        self.call_find_lay.addWidget(self.call_input)
+
+        # Band field
+        self.band_find_lay = QHBoxLayout()
+        self.band_label = QLabel("Band(s)")
+        self.band_label.setFixedWidth(150)
+        self.band_label.setStyleSheet(style)
+        self.band_input = QLineEdit()
+        self.band_input.setFixedWidth(120)
+        self.band_input.setFixedHeight(30)
+        self.band_input.setStyleSheet(style_table)
+
+        self.band_find_lay.addWidget(self.band_label)
+        self.band_find_lay.addWidget(self.band_input)
+
+        # Freq field
+        self.freq_find_lay = QHBoxLayout()
+        self.freq_label = QLabel("Freq(s)")
+        self.freq_label.setFixedWidth(150)
+        self.freq_label.setStyleSheet(style)
+        self.freq_input = QLineEdit()
+        self.freq_input.setFixedWidth(120)
+        self.freq_input.setFixedHeight(30)
+        self.freq_input.setStyleSheet(style_table)
+
+        self.freq_find_lay.addWidget(self.freq_label)
+        self.freq_find_lay.addWidget(self.freq_input)
+
+        # Mode field
+        self.mode_find_lay = QHBoxLayout()
+        self.mode_label = QLabel("Mode(s)")
+        self.mode_label.setFixedWidth(150)
+        self.mode_label.setStyleSheet(style)
+        self.mode_input = QLineEdit()
+        self.mode_input.setFixedWidth(120)
+        self.mode_input.setFixedHeight(30)
+        self.mode_input.setStyleSheet(style_table)
+
+        self.mode_find_lay.addWidget(self.mode_label)
+        self.mode_find_lay.addWidget(self.mode_input)
+
+        # Date field
+        self.date_find_lay = QHBoxLayout()
+        self.date_label = QLabel("Date(s)")
+        self.date_label.setFixedWidth(150)
+        self.date_label.setStyleSheet(style)
+        self.date_input = QLineEdit()
+        self.date_input.setFixedWidth(120)
+        self.date_input.setFixedHeight(30)
+        self.date_input.setStyleSheet(style_table)
+
+        self.date_find_lay.addWidget(self.date_label)
+        self.date_find_lay.addWidget(self.date_input)
+
+        # Time field
+        self.time_find_lay = QHBoxLayout()
+        self.time_label = QLabel("Time(s)")
+        self.time_label.setFixedWidth(150)
+        self.time_label.setStyleSheet(style)
+        self.time_input = QLineEdit()
+        self.time_input.setFixedWidth(120)
+        self.time_input.setFixedHeight(30)
+        self.time_input.setStyleSheet(style_table)
+
+        self.time_find_lay.addWidget(self.time_label)
+        self.time_find_lay.addWidget(self.time_input)
+
+        # Search button lay
+        self.search_find_lay = QHBoxLayout()
+        self.search_bt = QPushButton("Search")
+        self.search_bt.setFixedWidth(120)
+        self.search_bt.setFixedHeight(30)
+        self.search_bt.setStyleSheet(style)
+        self.search_label = QLabel()
+        self.search_label.setFixedWidth(150)
+        self.search_label.setStyleSheet(style)
+
+        self.search_find_lay.addWidget(self.search_bt)
+        self.search_find_lay.addWidget(self.search_label)
+
+        self.find_fields.addLayout(self.call_find_lay)
+        self.find_fields.addLayout(self.band_find_lay)
+        self.find_fields.addLayout(self.freq_find_lay)
+        self.find_fields.addLayout(self.mode_find_lay)
+        self.find_fields.addLayout(self.date_find_lay)
+        self.find_fields.addLayout(self.time_find_lay)
+        self.find_fields.addLayout(self.search_find_lay)
+
+        self.buffer_fields = QVBoxLayout()
+
+        # Send eQSL PB
+        self.bt_send_eqsl = QPushButton("Send eQSL")
+        self.bt_send_eqsl.setFixedWidth(150)
+        self.bt_send_eqsl.clicked.connect(self.send_eqsl)
+
+        # send to CL PB
+        self.bt_send_cl = QPushButton("Send to Club Log")
+        self.bt_send_cl.setFixedWidth(150)
+        self.bt_send_cl.clicked.connect(self.send_cl)
+
+        # export to ADI
+        self.bt_export_adi = QPushButton('Export to ADI')
+        self.bt_export_adi.setFixedWidth(150)
+        self.bt_export_adi.clicked.connect(self.export_adi)
+
+        # delete from Club Log button
+        self.bt_delete_cl = QPushButton("Delete from Club Log")
+        self.bt_delete_cl.setFixedWidth(150)
+        self.bt_delete_cl.clicked.connect(self.delete_cl)
+
+        self.buffer_fields.addWidget(self.bt_send_eqsl)
+        self.buffer_fields.addWidget(self.bt_send_cl)
+        self.buffer_fields.addWidget(self.bt_export_adi)
+        self.buffer_fields.addWidget(self.bt_delete_cl)
 
 
+        self.horizontal_layer_fields.addLayout(self.find_fields)
+        self.horizontal_layer_fields.addLayout(self.buffer_fields)
+        self.filter_main_lay = QVBoxLayout()
+        self.filter_main_lay.addLayout(self.horizontal_layer_fields)
+        self.filter_main_lay.addWidget(self.tw_find)
+        self.filter_main_lay.addLayout(self.bt_for_find)
+        self.filter_main_lay.addWidget(self.tw_buffer)
+        self.filter_main_lay.addLayout(self.bt_for_buffer)
+        self.setLayout(self.filter_main_lay)
 
 
-
-
+    def clear_all_buffer(self):
+        print("clear_all_buffer")
+    def add_all_find(self):
+        print("add_all_find")
+    def clear_all_find(self):
+        print("clear_all_find")
+    def send_eqsl(self):
+        print("send_eqsl")
+    def send_cl(self):
+        print("send_cl")
+    def export_adi(self):
+        print("export_adi")
+    def delete_cl(self):
+        print("delete_cl")

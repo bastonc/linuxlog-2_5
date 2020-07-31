@@ -374,7 +374,7 @@ class Reciev_allRecords:
         #print("Reciev_allRecords: _>", allRecords)
         #print("Reciev_allRecords: _>", All_records)
 
-class log_Window(QWidget):
+class Log_Window(QWidget):
 
         def __init__(self):
             super().__init__()
@@ -444,7 +444,7 @@ class log_Window(QWidget):
                 # Set layouts
                 self.layout = QVBoxLayout()
 
-                #self.layout.addLayout(self.menu_log_button)
+                self.layout.addLayout(self.menu_log_button)
                 self.layout.addWidget(self.tableWidget_qso)
                 #self.layout.addWidget(self.label)
                 self.setLayout(self.layout)
@@ -453,6 +453,8 @@ class log_Window(QWidget):
                     self.refresh_data()
 
         def filter_log_pressed(self):
+            self.filter_log = ext.Filter_log(settingsDict, All_records)
+            self.filter_log.show()
             print ("filter_log_pressed")
 
         def context_menu(self, point):
@@ -941,16 +943,18 @@ class log_Window(QWidget):
                  " Time off ", " eQSL Sent ", "Club Log Sent"])
             #self.tableWidget_qso.resizeRowsToContents()
             #self.tableWidget_qso.resizeColumnsToContents()
-            self.allRecords = Fill_table(all_column=self.allCollumn, window=self, all_record=All_records, communicate=signal_complited, settingsDict=settingsDict)
+            self.allRecords = Fill_table(all_column=self.allCollumn,
+                                         window=self,
+                                         all_record=All_records,
+                                         communicate=signal_complited,
+                                         settingsDict=settingsDict)
             self.allRecords.fill_complite.connect(self.fill_complited)
             self.allRecords.start()
-
-
             self.allRows = len(All_records)
 
         @QtCore.pyqtSlot(name='fill_complited')
         def fill_complited(self):
-            print("All_records", len(All_records))
+            #print("All_records", len(All_records))
             self.tableWidget_qso.resizeRowsToContents()
             self.tableWidget_qso.resizeColumnsToContents()
 
@@ -1179,7 +1183,7 @@ class log_Window(QWidget):
                         print("Search in table > Don't Load text from table")
                 return list_dict
 
-class logSearch(QWidget):
+class LogSearch(QWidget):
     def __init__(self):
         super().__init__()
         self.foundList = []
@@ -2013,16 +2017,12 @@ class FreqWindow(QWidget):
         Settings_file.update_file_to_disk(self)
         self.close()
 
-class logForm(QMainWindow):
+class LogForm(QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.diploms_init()
-
-        #self.diploms = self.get_diploms()
-        #self.freq_window_status = 0
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
-
         self.initUI()
 
 
@@ -3121,7 +3121,7 @@ class clusterThread(QThread):
           except:
               continue
 
-class telnetCluster(QWidget):
+class TelnetCluster(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -3303,7 +3303,7 @@ class telnetCluster(QWidget):
 
         self.setStyleSheet(style)
 
-class internetSearch(QWidget):
+class InternetSearch(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -3481,11 +3481,11 @@ if __name__ == '__main__':
 
     else:
 
-        logWindow = log_Window()
-        logSearch = logSearch()
-        internetSearch = internetSearch()
-        logForm = logForm()
-        telnetCluster = telnetCluster()
+        logWindow = Log_Window()
+        logSearch = LogSearch()
+        internetSearch = InternetSearch()
+        logForm = LogForm()
+        telnetCluster = TelnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         
         adi_file = Adi_file()
