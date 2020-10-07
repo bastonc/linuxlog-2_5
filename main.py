@@ -7,6 +7,7 @@ import parse
 import re
 import os
 import datetime
+
 import telnetlib
 import internetworker
 import time
@@ -2571,6 +2572,7 @@ class LogForm(QMainWindow):
                                  'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
                                  'EQSL_QSL_SENT': 'N', 'CLUBLOG_QSO_UPLOAD_STATUS': 'N'}
 
+            db.record_qso_to_base(self.recordObject)
             logWindow.addRecord(self.recordObject)
 
             call_dict = {'call': call, 'mode': mode, 'band': band}
@@ -3371,8 +3373,9 @@ class InternetSearch(QWidget):
 
 class hello_window(QWidget):
 
-    def __init__(self):
+    def __init__(self, table_columns):
         super().__init__()
+        self.table_columns = table_columns
         self.initUI()
 
     def initUI(self):
@@ -3417,37 +3420,10 @@ class hello_window(QWidget):
         if self.call_input.text().strip() != "":
             settingsDict['my-call'] = self.call_input.text().strip().upper()
             settings_file.save_all_settings(self, settingsDict)
-            table_columns = [
-                 ["CALL", "VARCHAR(50)"],
-                 ["NAME", "VARCHAR(50)"],
-                 ["CLUBLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
-                 ["CLUBLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
-                 ["CNTY", "VARCHAR(50)"],
-                 ["COMMENT", "VARCHAR(500)"],
-                 ["COUNTRY", "VARCHAR(50)"],
-                 ["DXCC", "VARCHAR(50)"],
-                 ["EQSL_QSL_RCVD","VARCHAR(50)"],
-                 ["EQSL_QSL_SENT", "VARCHAR(50)"],
-                 ["HRDLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
-                 ["HRDLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
-                 ["LOTW_QSLRDATE", "VARCHAR(50)"],
-                 ["LOTW_QSLSDATE", "VARCHAR(50)"],
-                 ["LOTW_QSL_RCVD", "VARCHAR(50)"],
-                 ["LOTW_QSL_SENT", "VARCHAR(50)"],
-                 ["QRZCOM_QSO_UPLOAD_DATE", "VARCHAR(50)"],
-                 ["QRZCOM_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
-                 ["QSL_RCVD", "VARCHAR(50)"],
-                 ["QSL_SENT", "VARCHAR(50)"],
-                 ["QSO_DATE", "DATE"],
-                 ["TIME_ON", "TIME"],
-                 ["TIME_OFF", "TIME"],
-                 ["QTH", "VARCHAR(50)"],
-                 ["RST_RCVD", "VARCHAR(50)"],
-                 ["RST_SENT", "VARCHAR(50)"],
-            ]
+
             table = db.create_table(
                         self.call_input.text().strip().upper().replace("/",""),
-                        table_columns
+                        self.table_columns
                     )
 
             hello_window.close()
@@ -3484,13 +3460,14 @@ class settings_file:
         #print("Save_and_Exit_button: ", old_data)
 
 class Db:
-    def __init__(self, db_host, db_user, db_pass, db_name='', db_charset='utf8mb4'):
+    def __init__(self, db_host, db_user, db_pass, settingsDict, db_name='', db_charset='utf8mb4'):
         super().__init__()
-        self.db_host = db_host
-        self.db_user = db_user
-        self.db_pass = db_pass
-        self.db_name = db_name
-        self.db_charset = db_charset
+        self.db_host = settingsDict['db-host']
+        self.db_user = settingsDict['db-user']
+        self.db_pass = settingsDict['db-pass']
+        self.db_name = settingsDict['db-name']
+        self.db_charset = settingsDict['db-charset']
+        self.settingsDict = settingsDict
 
     def connect(self):
         if self.db_name == '':
@@ -3526,6 +3503,51 @@ class Db:
             #print("RESULT", result, pymysql.err.OperationalError)
         return result
 
+    def record_qso_to_base(self, qso_dict):
+        db_connect.cursor().execute("INSERT INTO `" + self.settingsDict['my-call'] + "` (`CALL`, `MODE`, `NAME`, `QSO_DATE`, `TIME_ON`,\
+        `TIME_OFF`, `QTH`, `RST_RCVD`, `RST_SENT`, `OPERATOR`, `COMMENT`, `EQSL_QSL_SENT`, `CLUBLOG_QSO_UPLOAD_STATUS`,\
+         `FREQ`, `BAND`) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (
+            qso_dict['CALL'],
+            qso_dict['MODE'],
+            qso_dict['NAME'],
+            datetime.date.today(),
+            time.localtime(),
+            time.localtime(),
+            qso_dict["QTH"],
+            qso_dict["RST_RCVD"],
+            qso_dict["RST_SENT"],
+            qso_dict["OPERATOR"],
+            qso_dict["COMMENTS"],
+            qso_dict["EQSL_QSL_SENT"],
+            qso_dict["CLUBLOG_QSO_UPLOAD_STATUS"],
+            qso_dict["FREQ"],
+            qso_dict["BAND"]
+            )
+                                    )
+        db_connect.commit()
+
+
+        """sql_query = "INSERT INTO `" + self.settingsDict['my-call'] + "` ("
+        values = ''
+        i = 0
+        for cell in table_columns:
+            i += 1
+            sql_query += "`" + cell[0] + "`"
+            if cell[0] == "QSO_DATE":
+                values += str(datetime.date.today())
+            elif cell[0] == "TIME_ON" or cell[0] == "TIME_OFF":
+                values += strftime("%H:%M", gmtime())
+            else:
+                values += "'Test " + cell[0] + "'"
+
+            if len(table_columns) != i:
+                sql_query += ", "
+                values += ", "
+        sql_query += ") VALUES (" + values + ") "
+        print("SQL Querry", sql_query)
+
+        db_connect.cursor().execute(sql_query)
+        ##"""
 
 class Test(QObject):
 
@@ -3580,8 +3602,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     system_answer = os.system("ps -C linlog")
     if system_answer == 0:
-        message = Messages("Atention", "Linux Log already running")
-
+        message = Messages("Attention", "Linux Log already running")
         exit(1)
     #print(type(system_answer), system_answer)
     # print(settingsDict)
@@ -3592,7 +3613,8 @@ if __name__ == '__main__':
             db_user=settingsDict['db-user'],
             db_pass=settingsDict['db-pass'],
             db_name=settingsDict['db-name'],
-            db_charset=settingsDict['db-charset']
+            db_charset=settingsDict['db-charset'],
+            settingsDict=settingsDict
         )
         db_connect = db.connect()
 
@@ -3603,6 +3625,7 @@ if __name__ == '__main__':
                 db_host=settingsDict['db-host'],
                 db_user=settingsDict['db-user'],
                 db_pass=settingsDict['db-pass'],
+                settingsDict=settingsDict
              )
             db_connect_new = db.connect()
             db_connect_new.cursor().execute('CREATE DATABASE linuxlog')
@@ -3612,7 +3635,9 @@ if __name__ == '__main__':
                 db_user=settingsDict['db-user'],
                 db_pass=settingsDict['db-pass'],
                 db_name=settingsDict['db-name'],
-                db_charset=settingsDict['db-charset']
+                db_charset=settingsDict['db-charset'],
+                settingsDict=settingsDict
+
             )
             db_connect = db.connect()
             print("Create DB Linuxlog")
@@ -3620,12 +3645,43 @@ if __name__ == '__main__':
             Messages("<span style='color: red;'>STOP</span>", "Can't connected to Database\nCheck DB parameters in settings.cfg")
             exit(1)
 
-
+    table_columns = [
+        ["CALL", "VARCHAR(50)"],
+        ["MODE", "VARCHAR(50)"],
+        ["FREQ", "VARCHAR(50)"],
+        ["BAND", "VARCHAR(50)"],
+        ["NAME", "VARCHAR(50)"],
+        ["OPERATOR", "VARCHAR(50)"],
+        ["CLUBLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+        ["CLUBLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+        ["CNTY", "VARCHAR(50)"],
+        ["COMMENT", "VARCHAR(500)"],
+        ["COUNTRY", "VARCHAR(50)"],
+        ["DXCC", "VARCHAR(50)"],
+        ["EQSL_QSL_RCVD", "VARCHAR(50)"],
+        ["EQSL_QSL_SENT", "VARCHAR(50)"],
+        ["HRDLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+        ["HRDLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+        ["LOTW_QSLRDATE", "VARCHAR(50)"],
+        ["LOTW_QSLSDATE", "VARCHAR(50)"],
+        ["LOTW_QSL_RCVD", "VARCHAR(50)"],
+        ["LOTW_QSL_SENT", "VARCHAR(50)"],
+        ["QRZCOM_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+        ["QRZCOM_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+        ["QSL_RCVD", "VARCHAR(50)"],
+        ["QSL_SENT", "VARCHAR(50)"],
+        ["QSO_DATE", "DATE"],
+        ["TIME_ON", "TIME"],
+        ["TIME_OFF", "TIME"],
+        ["QTH", "VARCHAR(50)"],
+        ["RST_RCVD", "VARCHAR(50)"],
+        ["RST_SENT", "VARCHAR(50)"],
+    ]
 
     signal_complited = Communicate()
 
     if settingsDict['my-call'] == "":
-        hello_window = hello_window()
+        hello_window = hello_window(table_columns)
 
     else:
 
