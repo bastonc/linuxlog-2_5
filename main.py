@@ -18,7 +18,9 @@ import ext
 import json
 import requests
 import cat
+import pymysql
 from os.path import expanduser
+from pymysql.cursors import DictCursor
 from bs4 import BeautifulSoup
 from gi.repository import Notify, GdkPixbuf
 from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, QWidget, \
@@ -424,12 +426,12 @@ class Log_Window(QWidget):
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
         self.tableWidget_qso.setStyleSheet(style_table)
-        # self.tableWidget_qso.item().
+
         fnt = self.tableWidget_qso.font()
         fnt.setPointSize(9)
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
-        # self.tableWidget_qso.setSortingEnabled(True)
+        self.tableWidget_qso.setSortingEnabled(True)
         self.tableWidget_qso.setFont(fnt)
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         # self.tableWidget.resizeRowsToContents()
@@ -3377,7 +3379,7 @@ class hello_window(QWidget):
         desktop = QApplication.desktop()
         width_coordinate = (desktop.width() / 2) - 200
         height_coordinate = (desktop.height() / 2) - 125
-        print("hello_window: ", desktop.width(), width_coordinate)
+       # print("hello_window: ", desktop.width(), width_coordinate)
 
         self.setGeometry(round(width_coordinate), round(height_coordinate), 400, 250)
         self.setWindowIcon(QIcon('logo.png'))
@@ -3415,23 +3417,56 @@ class hello_window(QWidget):
         if self.call_input.text().strip() != "":
             settingsDict['my-call'] = self.call_input.text().strip().upper()
             settings_file.save_all_settings(self, settingsDict)
+            table_columns = [
+                 ["CALL", "VARCHAR(50)"],
+                 ["NAME", "VARCHAR(50)"],
+                 ["CLUBLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+                 ["CLUBLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+                 ["CNTY", "VARCHAR(50)"],
+                 ["COMMENT", "VARCHAR(500)"],
+                 ["COUNTRY", "VARCHAR(50)"],
+                 ["DXCC", "VARCHAR(50)"],
+                 ["EQSL_QSL_RCVD","VARCHAR(50)"],
+                 ["EQSL_QSL_SENT", "VARCHAR(50)"],
+                 ["HRDLOG_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+                 ["HRDLOG_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+                 ["LOTW_QSLRDATE", "VARCHAR(50)"],
+                 ["LOTW_QSLSDATE", "VARCHAR(50)"],
+                 ["LOTW_QSL_RCVD", "VARCHAR(50)"],
+                 ["LOTW_QSL_SENT", "VARCHAR(50)"],
+                 ["QRZCOM_QSO_UPLOAD_DATE", "VARCHAR(50)"],
+                 ["QRZCOM_QSO_UPLOAD_STATUS", "VARCHAR(50)"],
+                 ["QSL_RCVD", "VARCHAR(50)"],
+                 ["QSL_SENT", "VARCHAR(50)"],
+                 ["QSO_DATE", "DATE"],
+                 ["TIME_ON", "TIME"],
+                 ["TIME_OFF", "TIME"],
+                 ["QTH", "VARCHAR(50)"],
+                 ["RST_RCVD", "VARCHAR(50)"],
+                 ["RST_SENT", "VARCHAR(50)"],
+            ]
+            table = db.create_table(
+                        self.call_input.text().strip().upper().replace("/",""),
+                        table_columns
+                    )
+
             hello_window.close()
             subprocess.call(["python3", "main.py"])
-            # subprocess.call("./main")
-            # app.exit()
+            exit(0)
+
 
 
 
 
         else:
             self.welcome_text_label.setText("Please enter you callsign")
-        print("Ok_button")
+        #print("Ok_button")
 
 
 class settings_file:
 
     def save_all_settings(self, settingsDict):
-        print("save_all_settings", settingsDict)
+        #print("save_all_settings", settingsDict)
         filename = 'settings.cfg'
         with open(filename, 'r') as f:
             old_data = f.readlines()
@@ -3446,7 +3481,50 @@ class settings_file:
 
         with open(filename, 'w') as f:
             f.writelines(old_data)
-        print("Save_and_Exit_button: ", old_data)
+        #print("Save_and_Exit_button: ", old_data)
+
+class Db:
+    def __init__(self, db_host, db_user, db_pass, db_name='', db_charset='utf8mb4'):
+        super().__init__()
+        self.db_host = db_host
+        self.db_user = db_user
+        self.db_pass = db_pass
+        self.db_name = db_name
+        self.db_charset = db_charset
+
+    def connect(self):
+        if self.db_name == '':
+            connection = pymysql.connect(
+                host=self.db_host,
+                user=self.db_user,
+                password=self.db_pass,
+                )
+
+        else:
+
+            connection = pymysql.connect(
+                host=self.db_host,
+                user=self.db_user,
+                password=self.db_pass,
+                db=self.db_name,
+                charset=self.db_charset,
+                cursorclass=DictCursor
+                )
+            self.connection = connection
+        return connection
+    def create_table(self, name_table, column_list):
+
+        sql_query = "CREATE TABLE " + name_table + "(`id` INT NOT NULL AUTO_INCREMENT"
+        for column in column_list:
+            sql_query += ", `" + column[0] + "` " + column[1]
+        sql_query += ', PRIMARY KEY (`id`))'
+        #print (sql_query)
+        try:
+            result = self.connection.cursor().execute(sql_query)
+        except Exception:
+            result = -1
+            #print("RESULT", result, pymysql.err.OperationalError)
+        return result
 
 
 class Test(QObject):
@@ -3480,13 +3558,7 @@ class Messages (QWidget):
 if __name__ == '__main__':
     # test = Test()
     # test.test()
-    app = QApplication(sys.argv)
-    system_answer = os.system("ps -C linlog")
-    if system_answer == 0:
-        message = Messages("Atention", "Linux Log already running")
 
-        exit(1)
-    print(type(system_answer), system_answer)
 
 
     APP_VERSION = '1.28'
@@ -3504,8 +3576,50 @@ if __name__ == '__main__':
     global All_records
     All_records = []
 
+    ####
+    app = QApplication(sys.argv)
+    system_answer = os.system("ps -C linlog")
+    if system_answer == 0:
+        message = Messages("Atention", "Linux Log already running")
+
+        exit(1)
+    #print(type(system_answer), system_answer)
     # print(settingsDict)
     flag = 1
+    try:
+        db = Db(
+            db_host=settingsDict['db-host'],
+            db_user=settingsDict['db-user'],
+            db_pass=settingsDict['db-pass'],
+            db_name=settingsDict['db-name'],
+            db_charset=settingsDict['db-charset']
+        )
+        db_connect = db.connect()
+
+        print("Get DB linuxlog")
+    except Exception:
+        try:
+            db = Db(
+                db_host=settingsDict['db-host'],
+                db_user=settingsDict['db-user'],
+                db_pass=settingsDict['db-pass'],
+             )
+            db_connect_new = db.connect()
+            db_connect_new.cursor().execute('CREATE DATABASE linuxlog')
+            db_connect_new.close()
+            db = Db(
+                db_host=settingsDict['db-host'],
+                db_user=settingsDict['db-user'],
+                db_pass=settingsDict['db-pass'],
+                db_name=settingsDict['db-name'],
+                db_charset=settingsDict['db-charset']
+            )
+            db_connect = db.connect()
+            print("Create DB Linuxlog")
+        except Exception:
+            Messages("<span style='color: red;'>STOP</span>", "Can't connected to Database\nCheck DB parameters in settings.cfg")
+            exit(1)
+
 
 
     signal_complited = Communicate()
