@@ -217,7 +217,8 @@ class Filter(QObject):
         if event.type() == QEvent.FocusOut:
 
             textCall = logForm.inputCall.text()
-            foundList = self.searchInBase(textCall)
+            foundList = db.search_qso_in_base(textCall)
+            #self.searchInBase(textCall)
 
             logSearch.overlap(foundList)
 
@@ -259,45 +260,34 @@ class Filter(QObject):
 
     def searchInBase(self, call):
         # print ("search_in Base:_>", call)
-        foundList = []  # create empty list for result list
-        All_records = logWindow.get_all_record()
-        lenRecords = len(All_records)  # get count all Records
-        # print("Search InBase: lenRecords: _>", All_records)
-        for counter in range(lenRecords):  # start cicle where chek all elements at equivivalent at input call
-            if All_records[counter]['CALL'].strip() == call.strip():
-                foundList.append(All_records[counter])
-
-        # print("search_in Base:_>",foundList)
-        return foundList
-        # print (foundList)
-        #
-
+        records = db.search_qso_in_base(call)
+        return records
 
 class Communicate(QObject):
-    signalComplited = pyqtSignal(list)
-
+    signalComplited = pyqtSignal(int)
 
 class Fill_table(QThread):
-    fill_complite = QtCore.pyqtSignal()
 
-    def __init__(self, all_column, window, all_record, communicate, settingsDict, parent=None):
+    fill_complite = QtCore.pyqtSignal()
+    qsos_counter = QtCore.pyqtSignal(int)
+
+    def __init__(self, all_column, window, all_record, settingsDict, parent=None):
         super().__init__()
         self.all_collumn = all_column
         self.window = window
         self.all_record = all_record
-        self.c = communicate
+
+
         self.settingsDict = settingsDict
 
     def run(self):
-
-        self.allRecord = parse.getAllRecord(self.all_collumn, "log.adi")
+        records_dict = db.get_all_records()
+        counter = len(records_dict)
+        #print ("Records", records_dict)
+        self.allRecord = records_dict
         self.all_record = self.allRecord
-        self.c = Communicate()
-        self.c.signalComplited.connect(Reciev_allRecords)
-        self.c.signalComplited.emit(self.allRecord)
-
         self.allRows = len(self.allRecord)
-        print(" self.allRecords:_> ", len(self.allRecord))
+        #print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
         self.window.tableWidget_qso.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         for row in range(self.allRows):
@@ -305,15 +295,12 @@ class Fill_table(QThread):
             for col in range(allCols):
                 # print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
-                # print(self.allRows, row, self.allRows - row )
-                # print("Number record:", self.allRecord[row][pole])
-
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
                     if col == 0:
                         self.window.tableWidget_qso.setItem(row, col,
                                                             self.protectionItem(
-                                                                self.allRecord[(self.allRows - 1) - row][pole],
+                                                                str(self.allRecord[(self.allRows - 1) - row][pole]),
                                                                 Qt.ItemIsSelectable | Qt.ItemIsEnabled))
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
@@ -321,26 +308,26 @@ class Fill_table(QThread):
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
                     elif col == 1:
                         date = str(self.allRecord[(self.allRows - 1) - row][pole])
-                        date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                        #date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                         # print(time_formated)
                         self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(date_formated))
+                                                            QTableWidgetItem(date))
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
                     elif col == 2:
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
-                        time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                        #time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         # print(time_formated)
                         self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(time_formated))
+                                                            QTableWidgetItem(time))
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
                     elif col == 11:
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
-                        time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                        #time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(time_formated))
+                                                            QTableWidgetItem(time))
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
@@ -357,8 +344,8 @@ class Fill_table(QThread):
                         self.window.tableWidget_qso.item(row, col).setBackground(
                             QColor(self.settingsDict['eqsl-sent-color']))
         self.fill_complite.emit()
-        # self.window.tableWidget.resizeColumnsToContents()
-        # self.window.tableWidget.resizeRowsToContents()
+        self.qsos_counter.connect(logWindow.counter_qso)
+        self.qsos_counter.emit(counter)
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -370,6 +357,11 @@ class Fill_table(QThread):
         tableWidgetItem.setFlags(flags)
         return tableWidgetItem
 
+class Qso_counter:
+    def __init__(self, counter):
+        self.counter = counter
+        qso_counter = self.counter
+        print ("Counter", counter)
 
 class Reciev_allRecords:
     def __init__(self, allRecords):
@@ -378,25 +370,19 @@ class Reciev_allRecords:
         for i in range(len(self.allRecords)):
             All_records.append(self.allRecords[i])
 
-        # print("Reciev_allRecords: _>", allRecords)
-        # print("Reciev_allRecords: _>", All_records)
-
-
-class Log_Window(QWidget):
+class Log_Window_2(QWidget):
 
     def __init__(self):
         super().__init__()
+
         self.filename = "log.adi"
         if os.path.isfile(self.filename):
             pass
         else:
             with open(self.filename, "w") as file:
                 file.write(Adi_file().get_header())
-
-        self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
-                           'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
-        # self.allRecord = parse.getAllRecord(self.allCollumn, self.filename)
-
+        self.allCollumn = ['id', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
+                           'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
         self.initUI()
 
     def initUI(self):
@@ -433,6 +419,7 @@ class Log_Window(QWidget):
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
         self.tableWidget_qso.setSortingEnabled(True)
+        self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
         self.tableWidget_qso.setFont(fnt)
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         # self.tableWidget.resizeRowsToContents()
@@ -440,12 +427,21 @@ class Log_Window(QWidget):
         self.tableWidget_qso.itemActivated.connect(self.store_change_record)
 
         # MENU LOG WINDOW Lay
+        button_style = "font-size: 9px;"
         self.filter_button = QPushButton("Filter")
-        self.filter_button.setStyleSheet("font-size: 9px;")
+        self.filter_button.setStyleSheet(button_style)
         self.filter_button.setFixedWidth(50)
         self.filter_button.setFixedHeight(20)
         self.filter_button.clicked.connect(self.filter_log_pressed)
+
+        #self.refresh_button = QPushButton("🗘")
+        #self.refresh_button.setStyleSheet(button_style)
+        #self.refresh_button.setFixedWidth(50)
+        #self.refresh_button.setFixedHeight(20)
+        #self.refresh_button.clicked.connect(self.refresh_data_button)
+
         self.menu_log_button = QHBoxLayout()
+        #self.menu_log_button.addWidget(self.refresh_button)
         self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
         # Set layouts
@@ -458,6 +454,10 @@ class Log_Window(QWidget):
         # self.show()
         if self.isEnabled():
             self.refresh_data()
+
+    def refresh_data_button(self):
+        #self.tableWidget_qso.clear()
+        self.refresh_data()
 
     def filter_log_pressed(self):
         self.filter_log = ext.Filter_log(settingsDict, All_records)
@@ -603,48 +603,55 @@ class Log_Window(QWidget):
 
     def data_from_row(self, row):
 
-        record_number = self.tableWidget_qso.item(row, 0).text()
+        record_id = self.tableWidget_qso.item(row, 0).text()
+        data_from_base = db.get_record_by_id(record_id)
+        print(data_from_base)
+        date = str(data_from_base[0]["QSO_DATE"]).replace("-","")
+        time_on = str(data_from_base[0]["TIME_ON"]).replace(":","")
+        time_off = str(data_from_base[0]["TIME_OFF"]).replace(":", "")
         data_from_string = {
-            "record_number": self.tableWidget_qso.item(row, 0).text(),
-            "date": self.tableWidget_qso.item(row, 1).text().replace("-", ""),
-            "time": self.tableWidget_qso.item(row, 2).text().replace(":", ""),
-            "call": self.tableWidget_qso.item(row, 4).text(),
-            "freq": All_records[int(record_number) - 1]['FREQ'],
-            "rstR": self.tableWidget_qso.item(row, 6).text(),
-            "rstS": self.tableWidget_qso.item(row, 7).text(),
-            "name": self.tableWidget_qso.item(row, 8).text(),
-            "qth": self.tableWidget_qso.item(row, 9).text(),
-            "band": self.tableWidget_qso.item(row, 3).text(),
-            "comment": self.tableWidget_qso.item(row, 10).text(),
-            "time_off": self.tableWidget_qso.item(row, 11).text(),
-            "EQSL_QSL_SENT": self.tableWidget_qso.item(row, 12).text(),
-            "CLUBLOG_QSO_UPLOAD_STATUS": self.tableWidget_qso.item(row, 13).text(),
-            "mode": self.tableWidget_qso.item(row, 5).text()
+
+            "date": date,
+            "time": time_on,
+            "call": data_from_base[0]["CALL"],
+            "freq": data_from_base[0]["FREQ"],
+            "rstR": data_from_base[0]["RST_RCVD"],
+            "rstS": data_from_base[0]["RST_SENT"],
+            "name": data_from_base[0]["NAME"],
+            "qth": data_from_base[0]["QTH"],
+            "band": data_from_base[0]["BAND"],
+            "comment": data_from_base[0]["COMMENT"],
+            "time_off": time_off,
+            "EQSL_QSL_SENT": data_from_base[0]["EQSL_QSL_SENT"],
+            "CLUBLOG_QSO_UPLOAD_STATUS": data_from_base[0]["CLUBLOG_QSO_UPLOAD_STATUS"],
+            "mode": data_from_base[0]["MODE"],
+            "operator": settingsDict['my-call']
         }
-        self.operator = All_records[int(data_from_string['record_number']) - 1]['OPERATOR']
-        data_from_string.update({"operator": self.operator})
+        #self.operator = All_records[int(data_from_string['record_number']) - 1]['OPERATOR']
+        #data_from_string.update({"operator": self.operator})
 
         return data_from_string
 
     def send_eqsl_for_call(self, row):
         # row = self.tableWidget.currentItem().row()
         record_number = self.tableWidget_qso.item(row, 0).text()
+        qso_data = db.get_record_by_id(record_number)
         date = self.tableWidget_qso.item(row, 1).text().replace("-", "")
         time = self.tableWidget_qso.item(row, 2).text().replace(":", "")
         call = self.tableWidget_qso.item(row, 4).text()
-        freq = All_records[int(record_number) - 1]['FREQ']
+        freq = qso_data[0]['FREQ']
         rstR = self.tableWidget_qso.item(row, 6).text()
         rstS = self.tableWidget_qso.item(row, 7).text()
         name = self.tableWidget_qso.item(row, 8).text()
         qth = self.tableWidget_qso.item(row, 9).text()
-        self.operator = All_records[int(record_number) - 1]['OPERATOR']
+        self.operator = qso_data[0]["OPERATOR"]
         band = self.tableWidget_qso.item(row, 3).text()
         comment = self.tableWidget_qso.item(row, 10).text()
         time_off = self.tableWidget_qso.item(row, 11).text()
         EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
         mode = self.tableWidget_qso.item(row, 5).text()
-        self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
-        self.records_number_edit = All_records[int(record_number) - 1]['records_number']
+        #self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
+        #self.records_number_edit = All_records[int(record_number) - 1]['records_number']
 
         recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq,
                         'CALL': call, 'MODE': mode,
@@ -652,8 +659,11 @@ class Log_Window(QWidget):
                         'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
                         'EQSL_QSL_SENT': EQSL_QSL_SENT}
 
-        self.eqsl_send = internetworker.Eqsl_services(settingsDict=settingsDict, recordObject=recordObject, std=std.std,
-                                                      parent_window=self)
+        self.eqsl_send = internetworker.Eqsl_services(
+            settingsDict=settingsDict,
+            recordObject=recordObject,
+            std=std.std,
+            parent_window=self)
         self.eqsl_send.send_ok.connect(self.procesing_row)
 
     @QtCore.pyqtSlot(name='send_eqsl_ok')
@@ -668,26 +678,28 @@ class Log_Window(QWidget):
 
     def edit_qso(self, row):
         row = self.tableWidget_qso.currentItem().row()
-        record_number = self.tableWidget_qso.item(row, 0).text()
-        print("record_number", record_number)
+        self.record_id = self.tableWidget_qso.item(row, 0).text()
+        print("record_id", self.record_id)
+        qso_data = db.get_record_by_id(self.record_id)
         date = self.tableWidget_qso.item(row, 1).text()
         time = self.tableWidget_qso.item(row, 2).text()
         call = self.tableWidget_qso.item(row, 4).text()
-        freq = All_records[int(record_number) - 1]['FREQ']
+        freq = qso_data[0]['FREQ']
         rstR = self.tableWidget_qso.item(row, 6).text()
         rstS = self.tableWidget_qso.item(row, 7).text()
         name = self.tableWidget_qso.item(row, 8).text()
         qth = self.tableWidget_qso.item(row, 9).text()
-        self.operator_edit = All_records[int(record_number) - 1]['OPERATOR']
+        self.operator_edit = qso_data[0]['OPERATOR']
         band = self.tableWidget_qso.item(row, 3).text()
         comment = self.tableWidget_qso.item(row, 10).text()
         time_off = self.tableWidget_qso.item(row, 11).text()
         EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
 
         mode = self.tableWidget_qso.item(row, 5).text()
-        self.string_in_file_edit = All_records[int(record_number) - 1]['string_in_file']
-        self.records_number_edit = All_records[int(record_number) - 1]['records_number']
-        print("self.string_in_file_edit", self.string_in_file_edit)
+
+        #self.string_in_file_edit = All_records[int(record_id) - 1]['string_in_file']
+        #self.records_number_edit = All_records[int(record_id) - 1]['records_number']
+        #print("self.string_in_file_edit", self.string_in_file_edit)
 
         # GUI for edit window
         self.edit_window = QWidget()
@@ -901,30 +913,24 @@ class Log_Window(QWidget):
                       'FREQ': self.freq_input.text().strip(),
                       'MODE': self.mode_input.text().strip(),
                       'OPERATOR': self.operator_edit,
-                      'QSO_DATE': date_format,
-                      'TIME_ON': time_format,
+                      'QSO_DATE': self.date_input.text().strip(),
+                      'TIME_ON': self.time_input.text().strip(),
                       'RST_RCVD': self.rstr_input.text().strip(),
                       'RST_SENT': self.rsts_input.text().strip(),
                       'NAME': self.name_input.text().strip(),
                       'QTH': self.qth_input.text().strip(),
-                      'COMMENTS': self.comment_input.text().strip(),
+                      'COMMENT': self.comment_input.text().strip(),
                       'TIME_OFF': self.timeoff_input.text().strip(),
                       'EQSL_QSL_SENT': eqsl,
-                      'CLUBLOG_QSO_UPLOAD_STATUS': club_log,
-                      'EOR': '<EOR>\n',
-                      'string_in_file': self.string_in_file_edit,
-                      'records_number': self.records_number_edit}
-        Adi_file().store_changed_qso(new_object)
-        All_records[int(self.records_number_edit) - 1] = new_object
-        print("Object for edit:_>", new_object)
+                      'CLUBLOG_QSO_UPLOAD_STATUS': club_log
+                      }
+        db.edit_qso(self.record_id, new_object)
         self.refresh_data()
         self.edit_window.close()
 
     def delete_qso(self, row):
-        record_number = self.tableWidget_qso.item(row, 0).text()
-        string_in_file = All_records[int(record_number) - 1]['string_in_file']
-        print("delete_qso number:_>", record_number)
-        Adi_file().delete_qso_from_file(string_in_file)
+        record_id = self.tableWidget_qso.item(row, 0).text()
+        db.delete_qso(record_id)
         self.tableWidget_qso.removeRow(row)
         self.refresh_data()
 
@@ -941,22 +947,20 @@ class Log_Window(QWidget):
             QWidget.changeEvent(self, event)
 
     def refresh_data(self):
-        # print("refresh_data:_>", All_records)
-        self.tableWidget_qso.clear()
-        # self.tableWidget.insertRow()
 
+        self.tableWidget_qso.clear()
         self.tableWidget_qso.setHorizontalHeaderLabels(
-            ["No", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
+            ["id", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
              "RST s", "      Name      ", "      QTH      ", " Comments ",
              " Time off ", " eQSL Sent ", "Club Log Sent"])
-        # self.tableWidget_qso.resizeRowsToContents()
-        # self.tableWidget_qso.resizeColumnsToContents()
+
+
         self.allRecords = Fill_table(all_column=self.allCollumn,
                                      window=self,
                                      all_record=All_records,
-                                     communicate=signal_complited,
                                      settingsDict=settingsDict)
         self.allRecords.fill_complite.connect(self.fill_complited)
+        #self.allRecords.qsos_counter.connect(self.counter_qso)
         self.allRecords.start()
         self.allRows = len(All_records)
 
@@ -965,6 +969,13 @@ class Log_Window(QWidget):
         # print("All_records", len(All_records))
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
+        #logForm.counter_qso = db.get_max_id
+
+    @QtCore.pyqtSlot(int, name="counter_qso")
+    def counter_qso(self, val):
+        logForm.counter_qso = val
+        #print("Slot counter QSO", logForm.counter_qso )
+
 
     def get_all_record(self):
         return All_records
@@ -981,43 +992,31 @@ class Log_Window(QWidget):
             row = self.tableWidget_qso.currentItem().row()
         else:
             row = int(row_arg)
-        record_number = self.tableWidget_qso.item(row, 0).text()
+        record_id = self.tableWidget_qso.item(row, 0).text()
         date = str(self.tableWidget_qso.item(row, 1).text())
         date_formated = date.replace("-", "")
         time = str(self.tableWidget_qso.item(row, 2).text())
         time_formated = time.replace(":", "")
         call = self.tableWidget_qso.item(row, 4).text()
-        freq = All_records[int(record_number) - 1]['FREQ']
         rstR = self.tableWidget_qso.item(row, 6).text()
         rstS = self.tableWidget_qso.item(row, 7).text()
         name = self.tableWidget_qso.item(row, 8).text()
         qth = self.tableWidget_qso.item(row, 9).text()
-        operator = All_records[int(record_number) - 1]['OPERATOR']
+        operator = settingsDict['my-call']
         band = self.tableWidget_qso.item(row, 3).text()
         comment = self.tableWidget_qso.item(row, 10).text()
         time_off = self.tableWidget_qso.item(row, 11).text()
         EQSL_QSL_SENT = self.tableWidget_qso.item(row, 12).text()
         CLUBLOG_QSO_UPLOAD_STATUS = self.tableWidget_qso.item(row, 13).text()
         mode = self.tableWidget_qso.item(row, 5).text()
-        string_in_file = All_records[int(record_number) - 1]['string_in_file']
-        records_number = All_records[int(record_number) - 1]['records_number']
 
-        # if 'string_in_file' in self.allRecord:
-        #     pass
-
-        # else:
-        #    pass
-
-        new_object = {'BAND': band, 'CALL': call, 'FREQ': freq, 'MODE': mode, 'OPERATOR': operator,
+        new_object = {'BAND': band, 'CALL': call, 'MODE': mode, 'OPERATOR': operator,
                       'QSO_DATE': date_formated, 'TIME_ON': time_formated, 'RST_RCVD': rstR, 'RST_SENT': rstS,
-                      'NAME': name, 'QTH': qth, 'COMMENTS': comment, 'TIME_OFF': time_off,
+                      'NAME': name, 'QTH': qth, 'COMMENT': comment, 'TIME_OFF': time_off,
                       'EQSL_QSL_SENT': EQSL_QSL_SENT,
-                      'CLUBLOG_QSO_UPLOAD_STATUS': CLUBLOG_QSO_UPLOAD_STATUS,
-                      'EOR': 'R\n', 'string_in_file': string_in_file, 'records_number': records_number}
-
-        # print("store_change_record: NEW Object", new_object)
-        Adi_file().store_changed_qso(new_object)
-        All_records[int(record_number) - 1] = new_object
+                      'CLUBLOG_QSO_UPLOAD_STATUS': CLUBLOG_QSO_UPLOAD_STATUS
+                      }
+        db.edit_qso(record_id, new_object)
 
     def refresh_interface(self):
 
@@ -1072,8 +1071,8 @@ class Log_Window(QWidget):
             'RST_SENT'] + "<NAME:" + str(
             len(recordObject['NAME'])) + ">" + recordObject['NAME'] + "<QTH:" + str(
             len(recordObject['QTH'])) + ">" + recordObject['QTH'] + "<COMMENTS:" + str(
-            len(recordObject['COMMENTS'])) + ">" + recordObject[
-                              'COMMENTS'] + "<TIME_OFF:" + str(len(recordObject['TIME_OFF'])) + ">" + recordObject[
+            len(recordObject['COMMENT'])) + ">" + recordObject[
+                              'COMMENT'] + "<TIME_OFF:" + str(len(recordObject['TIME_OFF'])) + ">" + recordObject[
                               'TIME_OFF'] + "<EQSL_QSL_SENT:" + str(len(recordObject['EQSL_QSL_SENT'])) + ">" + str(
             recordObject['EQSL_QSL_SENT']) + \
                           "<CLUBLOG_QSO_UPLOAD_STATUS:" + str(
@@ -1102,9 +1101,17 @@ class Log_Window(QWidget):
         # self.tableWidget_qso.setRowCount(all_rows)
         self.tableWidget_qso.insertRow(0)
         self.tableWidget_qso.resizeRowsToContents()
+        last_id = db.record_qso_to_base(recordObject)
 
         for col in range(allCols):
-            if col == 1:
+            if col == 0:
+                self.tableWidget_qso.setItem(
+                    0,
+                    col,
+                    self.protectionItem(str(last_id[0]['LAST_INSERT_ID()']), Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                )
+
+            elif col == 1:
                 date = str(recordObject[self.allCollumn[col]])
                 date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(date_formated))
@@ -1115,7 +1122,7 @@ class Log_Window(QWidget):
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(time_formated))
 
             else:
-                self.tableWidget_qso.setItem(0, col, QTableWidgetItem(recordObject[self.allCollumn[col]]))
+                self.tableWidget_qso.setItem(0, col, QTableWidgetItem(str(recordObject[self.allCollumn[col]])))
             self.tableWidget_qso.item(0, col).setForeground(QColor(settingsDict['color-table']))
 
         if settingsDict['clublog'] == 'enable':
@@ -1252,7 +1259,7 @@ class LogSearch(QWidget):
             for row in range(allRows):
                 for col in range(allCols):
                     pole = logWindow.allCollumn[col]
-                    self.tableWidget.setItem(row, col, QTableWidgetItem(foundList[row][pole]))
+                    self.tableWidget.setItem(row, col, QTableWidgetItem(str(foundList[row][pole])))
                     self.tableWidget.item(row, col).setForeground(QColor(settingsDict["color-table"]))
             self.tableWidget.resizeRowsToContents()
             self.tableWidget.resizeColumnsToContents()
@@ -2033,6 +2040,7 @@ class LogForm(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        #self.counter_qso = 0
         self.diploms_init()
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
         self.initUI()
@@ -2251,7 +2259,7 @@ class LogForm(QMainWindow):
         # adjust for your QLineEdit
         self.inputCall.installEventFilter(self._filter)
         self.inputCall.returnPressed.connect(
-            self.logFormInput)  # событие нажатия Enter, привязываем в слот функцию logSettings
+            self.logFormInput)
         # self.inputCall.tabPressed.connect(self.internetWorker.get_internet_info)
         # inputCall.move(40,40)
 
@@ -2559,20 +2567,20 @@ class LogForm(QMainWindow):
             self.CLUBLOG_QSO_UPLOAD_STATUS = "N"
 
             all_records = logWindow.get_all_record()  # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
-            record_number = len(All_records) + 1
+            #record_number = self.counter_qso + 1
 
-            print("record_number in logFrom:", len(All_records))
+            #print("record_number in logFrom:", record_number)
             datenow = datetime.datetime.now()
             date = datenow.strftime("%Y%m%d")
             time = str(strftime("%H%M%S", gmtime()))
 
-            self.recordObject = {'records_number': str(record_number), 'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq,
+            self.recordObject = {'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq,
                                  'CALL': call, 'MODE': mode,
                                  'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': operator,
-                                 'BAND': band, 'COMMENTS': comment, 'TIME_OFF': time,
+                                 'BAND': band, 'COMMENT': comment, 'TIME_OFF': time,
                                  'EQSL_QSL_SENT': 'N', 'CLUBLOG_QSO_UPLOAD_STATUS': 'N'}
 
-            db.record_qso_to_base(self.recordObject)
+
             logWindow.addRecord(self.recordObject)
 
             call_dict = {'call': call, 'mode': mode, 'band': band}
@@ -3489,6 +3497,7 @@ class Db:
                 )
             self.connection = connection
         return connection
+
     def create_table(self, name_table, column_list):
 
         sql_query = "CREATE TABLE " + name_table + "(`id` INT NOT NULL AUTO_INCREMENT"
@@ -3517,7 +3526,7 @@ class Db:
             qso_dict["RST_RCVD"],
             qso_dict["RST_SENT"],
             qso_dict["OPERATOR"],
-            qso_dict["COMMENTS"],
+            qso_dict["COMMENT"],
             qso_dict["EQSL_QSL_SENT"],
             qso_dict["CLUBLOG_QSO_UPLOAD_STATUS"],
             qso_dict["FREQ"],
@@ -3525,29 +3534,55 @@ class Db:
             )
                                     )
         db_connect.commit()
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT LAST_INSERT_ID()")
+        last_id = cursor.fetchall()
+        return last_id
 
 
-        """sql_query = "INSERT INTO `" + self.settingsDict['my-call'] + "` ("
-        values = ''
+
+    def get_all_records(self):
+        cursor = self.connection.cursor()
+        records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"])
+        records_dict = cursor.fetchall()
+        return records_dict
+
+    def get_record_by_id(self, id):
+        cursor = self.connection.cursor()
+        records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " WHERE `id`=%s", [id])
+        records_dict = cursor.fetchall()
+        return records_dict
+
+    def search_qso_in_base(self, call):
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s", (call.strip()))
+        records = cursor.fetchall()
+        # print ("Search in Base Found record:_>", records)
+        return records
+
+    def edit_qso(self, record_id, object_dict):
+        cursor = self.connection.cursor()
+        update_query = "UPDATE `" + self.settingsDict['my-call'] + "` SET "
+        keys = object_dict.keys()
+        values = []
         i = 0
-        for cell in table_columns:
-            i += 1
-            sql_query += "`" + cell[0] + "`"
-            if cell[0] == "QSO_DATE":
-                values += str(datetime.date.today())
-            elif cell[0] == "TIME_ON" or cell[0] == "TIME_OFF":
-                values += strftime("%H:%M", gmtime())
-            else:
-                values += "'Test " + cell[0] + "'"
+        for key in keys:
+            i +=1
+            if object_dict[key] != "" and object_dict[key] != " ":
+                update_query += "`" + key + "` = %s"
+                if len(keys) != i:
+                    update_query += ", "
+                values.append(object_dict[key])
+        update_query += " WHERE id=%s"
+        values.append(record_id)
+        cursor.execute(update_query, values)
+        db_connect.commit()
+        #print("Object Dict:_>", values)
 
-            if len(table_columns) != i:
-                sql_query += ", "
-                values += ", "
-        sql_query += ") VALUES (" + values + ") "
-        print("SQL Querry", sql_query)
-
-        db_connect.cursor().execute(sql_query)
-        ##"""
+    def delete_qso(self, record_id):
+            cursor = self.connection.cursor()
+            cursor.execute("DELETE FROM " + settingsDict['my-call'] + " WHERE `id`=%s", [int(record_id)])
+            db_connect.commit()
 
 class Test(QObject):
 
@@ -3595,8 +3630,10 @@ if __name__ == '__main__':
             settingsDict.update({splitString[0]: splitString[1]})
 
     file.close()
-    global All_records
+    global All_records, qso_counter
     All_records = []
+
+    #qso_counter = 0
 
     ####
     app = QApplication(sys.argv)
@@ -3678,14 +3715,14 @@ if __name__ == '__main__':
         ["RST_SENT", "VARCHAR(50)"],
     ]
 
-    signal_complited = Communicate()
+
 
     if settingsDict['my-call'] == "":
         hello_window = hello_window(table_columns)
 
     else:
 
-        logWindow = Log_Window()
+        logWindow = Log_Window_2()
         logSearch = LogSearch()
         internetSearch = InternetSearch()
         logForm = LogForm()
