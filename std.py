@@ -99,3 +99,17 @@ class std:
         message.setInformativeText(detail_text)
         message.setStandardButtons(QMessageBox.Ok)
         message.exec_()
+
+    def std_time(self, string_time):
+        time_formated = string_time
+        time_split = time_formated.split(":")
+        #print("time_split", time_split)
+        time_string = ""
+        for digit in time_split:
+            if len(digit) < 2:
+                digit_new = "0" + digit
+            else:
+                digit_new = digit
+            time_string += digit_new
+        #print("time_string", time_string)
+        return time_string

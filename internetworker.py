@@ -460,17 +460,18 @@ class Clublog(QtCore.QObject):
         '''
         date = record_object['date']
         date_formated = date[0:4] + '-' + date[4:6] + '-' + date[6:8]
-        time = record_object['time']
+        time = std.std.std_time(self,record_object['time'])
+
         time_formated = time[0:2] +':' + time[2:4] + ':' + time[4:]
         date_time = date_formated + " " + time_formated
-        #print ("Band:_>", record_object['band'].replace("M",'').strip(), "\nDate time:", date_time)
+        print ("Band:_>", record_object['band'].replace("M",'').strip(), "\nDate time:", date_time)
         multipart_data = {
             "email": self.settingsDict['email-clublog'],
             "password": self.settingsDict['pass-clublog'],
             "callsign": self.settingsDict['my-call'],
             "dxcall": record_object['call'],
             "datetime": date_time,
-            "bandid" : record_object['band'].replace("M",''),
+            "bandid": record_object['band'].replace("M",'').strip(),
             "api": self.key
         }
         try:

@@ -310,8 +310,13 @@ class Fill_table(QThread):
                         date = str(self.allRecord[(self.allRows - 1) - row][pole])
                         #date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                         # print(time_formated)
-                        self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(date))
+                        self.window.tableWidget_qso.setItem(
+                            row, col,
+                            self.protectionItem(
+                            QTableWidgetItem(date),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                        )
+                        )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
@@ -319,24 +324,37 @@ class Fill_table(QThread):
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         #time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         # print(time_formated)
-                        self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(time))
+                        self.window.tableWidget_qso.setItem(
+                            row, col,
+                            self.protectionItem(
+                            QTableWidgetItem(time),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                        )
+                        )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
                     elif col == 11:
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         #time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                        self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(time))
+                        self.window.tableWidget_qso.setItem(
+                            row, col,
+                            self.protectionItem(
+                            QTableWidgetItem(time),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                        )
+                        )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
 
 
                     else:
-                        self.window.tableWidget_qso.setItem(row, col,
-                                                            QTableWidgetItem(
-                                                                self.allRecord[(self.allRows - 1) - row][pole]))
+                        self.window.tableWidget_qso.setItem(
+                            row, col,
+                            self.protectionItem(
+                                self.allRecord[(self.allRows - 1) - row][pole],
+                                Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
@@ -424,7 +442,8 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         # self.tableWidget.resizeRowsToContents()
 
-        self.tableWidget_qso.itemActivated.connect(self.store_change_record)
+
+        #self.tableWidget_qso.itemActivated.connect(self.store_change_record)
 
         # MENU LOG WINDOW Lay
         button_style = "font-size: 9px;"
@@ -529,7 +548,10 @@ class Log_Window_2(QWidget):
         '''
 
         row_data = self.data_from_row(row)
-        print("row_data:_>", row_data)
+        time_string = std.std.std_time(self,row_data["time"])
+
+        #time_to_adi = time_string[:2]+":"+time_string[2:4]+":"+time_string[4:]
+        #print ("time_to_adi", time_to_adi)
         adi_string = "<BAND:" + str(len(str(row_data['band']))) + ">" + str(row_data['band']) + "M" \
                                                                                                 "<CALL:" + str(
             len(str(row_data['call']))) + ">" + str(row_data['call']) + \
@@ -537,13 +559,13 @@ class Log_Window_2(QWidget):
                      "<FREQ:" + str(len(str(row_data['freq']))) + ">" + str(row_data['freq']) + \
                      "<MODE:" + str(len(str(row_data['mode']))) + ">" + str(row_data['mode']) + \
                      "<OPERATOR:" + str(len(str(row_data['operator']))) + ">" + str(row_data['operator']) + \
-                     "<TIME_ON:" + str(len(str(row_data['time']))) + ">" + str(row_data['time']) + \
+                     "<TIME_ON:" + str(len(time_string)) + ">" + str(time_string) + \
                      "<RST_RCVD:" + str(len(str(row_data['rstR']))) + ">" + str(row_data['rstR']) + \
                      "<RST_SENT:" + str(len(str(row_data['rstS']))) + ">" + str(row_data['rstS']) + \
                      "<NAME:" + str(len(str(row_data['name']))) + ">" + str(row_data['name']) + \
                      "<QTH:" + str(len(str(row_data['qth']))) + ">" + str(row_data['qth']) + \
                      "<COMMENTS:" + str(len(str(row_data['comment']))) + ">" + str(row_data['comment']) + \
-                     "<TIME_OFF:" + str(len(str(row_data['time_off']))) + ">" + str(row_data['time_off']) + \
+                     "<TIME_OFF:" + str(len(time_string)) + ">" + str(time_string) + \
                      "<EQSL_QSL_SENT:" + str(len(str(row_data['EQSL_QSL_SENT']))) + ">" + str(
             row_data['EQSL_QSL_SENT']) + \
                      "<EOR>"
@@ -561,11 +583,12 @@ class Log_Window_2(QWidget):
                 cols = self.tableWidget_qso.columnCount()
                 self.tableWidget_qso.setItem(row, 13, QTableWidgetItem("Y"))
                 self.store_change_record(row)
-            elif response.status_code == 403:
+            else:
                 print("response for Club log:_>", response, response.content)
                 std.std.message(self,
                                 "Club log: " + response.content.decode(settingsDict['encodeStandart']) + "\n",
                                 "<p style='color: red;'>ERROR</p>")
+
         except Exception:
             std.std.message(self,
                             "<b>Can't sent to Club log</b><br>Check internet connection",
@@ -607,8 +630,10 @@ class Log_Window_2(QWidget):
         data_from_base = db.get_record_by_id(record_id)
         print(data_from_base)
         date = str(data_from_base[0]["QSO_DATE"]).replace("-","")
-        time_on = str(data_from_base[0]["TIME_ON"]).replace(":","")
-        time_off = str(data_from_base[0]["TIME_OFF"]).replace(":", "")
+        time_on = str(data_from_base[0]["TIME_ON"])
+            #.replace(":","")
+        time_off = str(data_from_base[0]["TIME_OFF"])
+            #.replace(":", "")
         data_from_string = {
 
             "date": date,
@@ -634,10 +659,12 @@ class Log_Window_2(QWidget):
 
     def send_eqsl_for_call(self, row):
         # row = self.tableWidget.currentItem().row()
+        time_formated = std.std.std_time(self, self.tableWidget_qso.item(row, 2).text().replace(":", ""))
+        print("time formated in eQSL module:_>",time_formated)
         record_number = self.tableWidget_qso.item(row, 0).text()
         qso_data = db.get_record_by_id(record_number)
         date = self.tableWidget_qso.item(row, 1).text().replace("-", "")
-        time = self.tableWidget_qso.item(row, 2).text().replace(":", "")
+        time = time_formated
         call = self.tableWidget_qso.item(row, 4).text()
         freq = qso_data[0]['FREQ']
         rstR = self.tableWidget_qso.item(row, 6).text()
@@ -985,7 +1012,7 @@ class Log_Window_2(QWidget):
         tableWidgetItem.setFlags(flags)
         return tableWidgetItem
 
-    def store_change_record(self, row_arg=''):
+    def store_change_record(self, row_arg=""):
 
         # print("store_change_record")
         if row_arg == '':
