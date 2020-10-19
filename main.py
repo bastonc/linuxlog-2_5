@@ -221,10 +221,16 @@ class Filter(QObject):
             #self.searchInBase(textCall)
 
             logSearch.overlap(foundList)
+            logForm.set_data_qso(foundList)
 
             freq = logForm.get_freq()
 
             if textCall != '' and textCall != Filter.previous_call:
+                country = logForm.get_country(textCall)
+                print(country)
+                if country != []:
+                    logForm.set_country_label(country[0] + ' | ITU: ' + country[1])
+
                 if settingsDict['search-internet-window'] == 'true':
 
                     Filter.previous_call = textCall
@@ -990,6 +996,7 @@ class Log_Window_2(QWidget):
         #self.allRecords.qsos_counter.connect(self.counter_qso)
         self.allRecords.start()
         self.allRows = len(All_records)
+
 
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
@@ -2071,8 +2078,32 @@ class LogForm(QMainWindow):
         self.diploms_init()
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
         self.initUI()
+        self.country_dict = self.get_country_dict()
+
 
         # print("self.Diploms in logForm init:_>", self.diploms)
+
+
+    def set_data_qso(self, found_list):
+        print("Found_list:", found_list)
+        if len(found_list) > 0:
+            for record in found_list:
+                if record['NAME'] != '':
+                    self.inputName.setText(record['NAME'])
+                if record['QTH'] != '':
+                    self.inputQth.setText(record['QTH'])
+        else:
+            self.inputName.setText('')
+            self.inputQth.setText('')
+            print ("Found_list:", found_list)
+
+
+    def get_country_dict(self):
+
+        with open(settingsDict['country-file'], 'r') as f:
+            country_json = json.load(f)
+
+        return country_json
 
     def start_cat(self):
         self.cat_system = cat.Cat_start(settingsDict, self)
@@ -2281,7 +2312,7 @@ class LogForm(QMainWindow):
         self.inputCall.setFixedWidth(108)
         self.inputCall.setFixedHeight(30)
         self.inputCall.textChanged[str].connect(
-            self.onChanged)  # событие изминения текста, привязываем в слот функцию onChanged
+            self.onChanged)
         self._filter = Filter()
         # adjust for your QLineEdit
         self.inputCall.installEventFilter(self._filter)
@@ -2386,6 +2417,9 @@ class LogForm(QMainWindow):
         self.comments.setPlaceholderText("Comment")
         self.comments.setFixedHeight(60)
 
+        self.country_label = QLabel()
+        self.country_label.setStyleSheet(style+"font-size: 12px;")
+
         hBoxHeader = QHBoxLayout()
         hBoxHeader.addWidget(self.labelTime)
 
@@ -2409,6 +2443,7 @@ class LogForm(QMainWindow):
         hCall = QHBoxLayout(self)
         hCall.addWidget(self.labelCall)
         hCall.addWidget(self.inputCall)
+        hCall.addWidget(self.country_label)
         hCall.addStretch(1)
         vBoxLeft.addLayout(hCall)
 
@@ -2439,6 +2474,7 @@ class LogForm(QMainWindow):
 
         vBoxRight.addWidget(self.comboBand)
         vBoxRight.addWidget(self.comboMode)
+        #vBoxRight.addWidget(self.country_label)
         vBoxRight.addStretch(1)
         # vBoxRight.addWidget(self.labelStatusCat)
         # vBoxRight.addWidget(self.labelStatusTelnet)
@@ -2489,6 +2525,7 @@ class LogForm(QMainWindow):
         self.inputName.clear()
         self.inputQth.clear()
         self.comments.clear()
+        self.country_label.clear()
 
     def change_freq_event(self):
         freq = self.labelFreq.text()
@@ -2562,13 +2599,57 @@ class LogForm(QMainWindow):
         return new_string
 
     def onChanged(self, text):
-        '''метод которій отрабатывает как только произошло изменение в поле ввода'''
+        '''метод который отрабатывает как только произошло изменение в поле ввода'''
         self.inputCall.setText(text.upper())
 
         if re.search('[А-Я]', text):
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
+
+        country = self.get_country(text)
+        #self.set_country_label(country)
+        if country != []:
+            self.set_country_label(country[0] + ' | ITU: ' + country[1])
+
+
+        if len(text) < 2:
+            self.set_country_label("")
+
+    def get_country(self, call_dark):
+
+        call = call_dark.upper()
+        print(call)
+        country_lists = []
+        country_list = []
+        for keys in self.country_dict:
+            for list_elem in self.country_dict[keys]['prefix']:
+                #print("find in elem:",call.find(list_elem), list_elem)
+                if call.find(list_elem) == 0:
+
+                    country_lists.append([list_elem, keys, self.country_dict[keys]['itu'], self.country_dict[keys]['cq-zone']])
+
+        print("find in elements:", country_lists)
+        count = 0
+        for i in range(len(country_lists)):
+            print (len(country_lists[i][0]))
+            lenght_str =  len(country_lists[i][0])
+            if lenght_str > count:
+                count = lenght_str
+                country_list = country_lists[i]
+                country_list.pop(0)
+        print("Max element:", country_list)
+
+        return country_list
+
+                #if call.find(list_elem) == 0:
+                #    print(keys)
+                #    return keys
+
+        #return None
+
+    def set_country_label(self, country):
+        self.country_label.setText(country)
 
     def logFormInput(self):
 
@@ -2589,7 +2670,15 @@ class LogForm(QMainWindow):
             comment = comment.replace("\r", " ")
             comment = comment.replace("\n", " ")
             freq = self.get_freq()
+            country_data = self.get_country(call)
+            country = country_data[0]
+            itu = country_data[1]
+            cq_zone = country_data[2]
+            print("country_data",country_data)
 
+            country_label  = self.country_label.text().strip()
+            data_country = country_label.split("|")
+            country = data_country[0]
             self.EQSL_QSL_SENT = 'N'
             self.CLUBLOG_QSO_UPLOAD_STATUS = "N"
 
@@ -2601,11 +2690,24 @@ class LogForm(QMainWindow):
             date = datenow.strftime("%Y%m%d")
             time = str(strftime("%H%M%S", gmtime()))
 
-            self.recordObject = {'QSO_DATE': date, 'TIME_ON': time, 'FREQ': freq,
-                                 'CALL': call, 'MODE': mode,
-                                 'RST_RCVD': rstR, 'RST_SENT': rstS, 'NAME': name, 'QTH': qth, 'OPERATOR': operator,
-                                 'BAND': band, 'COMMENT': comment, 'TIME_OFF': time,
-                                 'EQSL_QSL_SENT': 'N', 'CLUBLOG_QSO_UPLOAD_STATUS': 'N'}
+            self.recordObject = {
+                'QSO_DATE': date,
+                'TIME_ON': time,
+                'FREQ': freq,
+                'CALL': call,
+                'MODE': mode,
+                'RST_RCVD': rstR,
+                'RST_SENT': rstS,
+                'NAME': name,
+                'QTH': qth,
+                'OPERATOR': operator,
+                'BAND': band,
+                'COMMENT': comment,
+                'TIME_OFF': time,
+                'COUNTRY': country,
+                'ITUZ': itu,
+                'EQSL_QSL_SENT': 'N',
+                'CLUBLOG_QSO_UPLOAD_STATUS': 'N',}
 
 
             logWindow.addRecord(self.recordObject)
@@ -2947,6 +3049,7 @@ class LogForm(QMainWindow):
 
     def refresh_interface(self):
         self.labelMyCall.setText(settingsDict['my-call'])
+        self.country_dict = self.get_country_dict()
         if settingsDict['mode-swl'] == 'enable':
             self.inputRstR.setText("SWL")
             self.inputRstR.setEnabled(False)

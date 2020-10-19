@@ -5,7 +5,8 @@ import internetworker
 import parse
 import shutil
 import std
-from PyQt5.QtWidgets import QSpacerItem, QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
+import json
+from PyQt5.QtWidgets import QMenu, QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
     QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QSizePolicy
 from PyQt5 import QtCore
@@ -37,7 +38,7 @@ class Menu (QWidget):
 
         self.setGeometry(300,
                          300,
-                         300,
+                         600,
                          300)
         self.setWindowTitle('LinLog | Settings')
 
@@ -52,6 +53,7 @@ class Menu (QWidget):
         self.cat_tab = QWidget()
         self.io_tab = QWidget()
         self.service_widget = QWidget()
+        self.country_list_edit = QWidget()
     #
         self.tab.addTab(self.general_tab, "General")
         self.tab.addTab(self.cluster_tab, "Cluster")
@@ -59,6 +61,7 @@ class Menu (QWidget):
         self.tab.addTab(self.cat_tab, "CAT")
         self.tab.addTab(self.io_tab, "Log file")
         self.tab.addTab(self.service_widget, "Services")
+        self.tab.addTab(self.country_list_edit, "Country List")
     # create General Tab
         formstyle = "background: "+self.settingsDict['form-background']+"; color: "+\
                     self.settingsDict['color-table']+"; "
@@ -554,6 +557,25 @@ class Menu (QWidget):
 
         self.service_widget.setLayout(self.service_tab)
 
+        # Create country_tab
+        self.country_tab = QVBoxLayout()
+        self.country_table = QTableWidget()
+        self.country_table.setStyleSheet(formstyle)
+        self.country_table.setColumnCount(4)
+        self.country_table.setHorizontalHeaderLabels(['Country', 'Prefixes', 'ITU', 'CQ-zone'])
+        self.country_table.sortByColumn(0, Qt.AscendingOrder)
+        self.country_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.country_table.customContextMenuRequested.connect(self.context_country)
+        self.pb_add_country = QPushButton()
+        self.pb_add_country.setStyleSheet(style)
+        self.pb_add_country.setFixedWidth(100)
+        self.pb_add_country.clicked.connect(self.add_country_row)
+        self.pb_add_country.setText('Add country')
+
+        self.country_tab.addWidget(self.country_table)
+        self.country_tab.addWidget(self.pb_add_country)
+        self.country_list_edit.setLayout(self.country_tab)
+
 
 
     # button panel
@@ -580,12 +602,50 @@ class Menu (QWidget):
         #self.mainLayout.addWidget(self.tab)
         self.setLayout(self.mainLayout)
 
+    def context_country(self, point):
+        context_country = QMenu()
+        #print(self.country_table.currentRow())
+        index_row = self.country_table.currentRow()
+        #if self.country_table.itemAt(point):
+        delete_country = QAction("Delete country", context_country)
+        delete_country.triggered.connect(lambda: self.country_del(index_row))
+        context_country.addAction(delete_country)
+        context_country.exec_(self.country_table.mapToGlobal(point))
 
-        
 
-        #self.setLayout(self.mainLayout)
-        #self.show()
-        #print("Menu() initUi")
+    def country_del(self, index_row):
+        #print("delete country", index_row)
+        self.country_table.removeRow(index_row)
+
+
+    def add_country_row(self):
+        self.country_table.insertRow(self.country_table.rowCount())
+        #self.fill_country()
+        self.country_table.scrollToBottom()
+
+    def fill_country(self):
+        with open(self.settingsDict['country-file'], 'r') as f:
+            country_dict = json.load(f)
+        self.country_table.setRowCount(0)
+
+
+        for country in country_dict:
+
+            prefix_string = ''
+            i = 0
+            for prefix in country_dict[country]['prefix']:
+                prefix_string += prefix
+                if i != len(country_dict[country]['prefix']) - 1 :
+                    prefix_string += ','
+                i += 1
+
+            self.country_table.insertRow(0)
+            self.country_table.setItem(0, 0, QTableWidgetItem(country))
+            self.country_table.setItem(0, 1, QTableWidgetItem(prefix_string))
+            self.country_table.setItem(0, 2, QTableWidgetItem(country_dict[country]['itu']))
+            self.country_table.setItem(0, 3, QTableWidgetItem(country_dict[country]['cq-zone']))
+
+
     def select_eqsl_color(self):
         color_eqsl = QColorDialog.getColor(initial=QColor(self.color_button_eqsl.text()), parent=None,
                                       title="Select color for sent eQSL")
@@ -655,6 +715,8 @@ class Menu (QWidget):
         self.stop_cat_combo.setCurrentIndex(cat_stop_index)
         cat_protocol_index = self.protocol_cat_combo.findText(self.settingsDict['cat-protocol'])
         self.protocol_cat_combo.setCurrentIndex(cat_protocol_index)
+        # Init country_data
+        self.fill_country()
 
     def closeEvent(self, e):
         #print("Close menu", e)
@@ -826,6 +888,9 @@ class Menu (QWidget):
         else:
             self.settingsDict['cat'] = 'disable'
 
+        # Save country list
+        self.update_country_list()
+
         # Save cluster
         cluster_change_flag = 0
         if self.cluster_filter_band_combo.isChecked():
@@ -858,10 +923,35 @@ class Menu (QWidget):
 
         return cluster_change_flag
 
+    def update_country_list(self):
+        #self.country_table.
+
+        data_object = {}
+        for i in range(self.country_table.rowCount()):
+            try:
+                if self.country_table.item(i,0).text() != '' and \
+                        self.country_table.item(i, 1).text() != '':
+                    country = self.country_table.item(i,0).text()
+                    pfx_list_dark = self.country_table.item(i,1).text().split(',')
+                    pfx_list_clean = []
+                    for elem in pfx_list_dark:
+                        elem = elem.strip().upper()
+                        pfx_list_clean.append(elem)
+                    itu = self.country_table.item(i,2).text()
+                    cq_zone = self.country_table.item(i,3).text()
+                    data_object.update({country : {'prefix': pfx_list_clean,'itu': itu,'cq-zone': cq_zone }})
+            except Exception:
+                print("Exception in row")
+            #print(data_object)
+
+        with open(self.settingsDict['country-file'], 'w') as f:
+            json.dump(data_object, f)
+
     def apply_button(self):
 
         cluster_change_flag = self.store_new_settingsDict()   # save all lines from menu window \
                                                                 # to dictionary settingsDict
+
         if self.settingsDict['tci'] == 'enable':
             self.tci_class.stop_tci()
             self.tci_class.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
