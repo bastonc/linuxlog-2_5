@@ -44,6 +44,8 @@ class Tci_reciever(QThread):
         super().__init__()
         self.uri = uri
         self.log_form = log_form
+        print("uri:_>", self.uri)
+
         self.ws = websocket.WebSocket()
         self.settingsDict = settingsDict
 
@@ -110,13 +112,14 @@ class Tci_reciever(QThread):
 
 
                 time.sleep(0.002)
+
             except Exception:
                 #print("Tci_reciever: Exception in listen port loop", Exception)
                 self.log_form.set_tci_stat(' ')
                 #self.log_form.set_tci_label_found()
                 try:
                     self.ws.close()
-                    self.ws = websocket.WebSocket()
+                    self.ws = websockets.WebSocket()
                     self.ws.connect(self.uri)
                     self.log_form.set_tci_stat("•TCI")
 
@@ -125,8 +128,9 @@ class Tci_reciever(QThread):
                     self.log_form.set_tci_label_found()
                 #time.sleep(2)
                 continue
-        else:
-            self.ws.close()
+
+        #else:
+            #self.ws.close()
 
 
 class Tci_sender (QApplication):

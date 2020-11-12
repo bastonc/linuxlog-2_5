@@ -18,8 +18,8 @@ from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime
 
 class Menu (QWidget):
-    def __init__(self, settingsDict, telnetCluster, logForm, logSearch,
-                 logWindow, internetSearch, tci_class, parent=None):
+    def __init__(self, app_env, settingsDict, telnetCluster, logForm, logSearch,
+                 logWindow, internetSearch, tci_class, table_columns, parent=None):
         super(Menu, self).__init__(parent)
         self.settingsDict = settingsDict
         self.label_style = "font: 12px;"
@@ -31,6 +31,8 @@ class Menu (QWidget):
         self.logWindow = logWindow
         self.internetSearch = internetSearch
         self.tci_class = tci_class
+        self.table_columns = table_columns
+        self.app_env = app_env
         #print ("Menu init tci class:", self.tci_class.currentThreadId())
         #self.initUI()
 
@@ -47,7 +49,10 @@ class Menu (QWidget):
         self.setStyleSheet(style)
     # declaration tab
         self.tab = QtWidgets.QTabWidget()
+        self.tab.setMovable(False)
+        self.tab.setUsesScrollButtons(False)
         self.general_tab = QWidget()
+
         self.cluster_tab = QWidget()
         self.tci_tab = QWidget()
         self.cat_tab = QWidget()
@@ -68,7 +73,8 @@ class Menu (QWidget):
         self.style_headers = "font-weight: bold; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
         self.style_small = "font-style: italic; font-size: 12px; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
         self.general_tab.layout = QVBoxLayout(self) # create vertical lay
-        self.call_label = QLabel("You Callsign")
+        self.call_label = QLabel("You Callsign:")
+        self.call_label.setFixedWidth(80)
         self.call_input = QLineEdit()
         self.call_input.setFixedWidth(100)
         self.call_input.setStyleSheet(formstyle)
@@ -109,21 +115,131 @@ class Menu (QWidget):
         self.text_form_color_button.setStyleSheet("background: " + self.settingsDict['color-table']+ "; color: " + self.settingsDict['color-table'] + ";")
         self.text_form_color_button.setText(self.settingsDict['color-table'])
 
+        # Fields DB
+        self.label_db = QLabel()
+        self.label_db.setAlignment(Qt.AlignVCenter)
+        self.label_db.setStyleSheet(style+"text-align: center;")
+        self.label_db.setText("Enter fields for MySQL database")
+
+        # Login (Username) DB fields
+        self.db_login_label = QLabel()
+        self.db_login_label.setStyleSheet(style)
+        self.db_login_label.setFixedWidth(70)
+        self.db_login_label.setText("Username:")
+
+        self.db_login = QLineEdit()
+        self.db_login.setFixedWidth(150)
+        self.db_login.setFixedHeight(30)
+        self.db_login.setStyleSheet(formstyle)
+
+        # Password DB fields
+        self.db_pass_label = QLabel()
+        self.db_pass_label.setStyleSheet(style)
+        self.db_pass_label.setFixedWidth(70)
+        self.db_pass_label.setText("Password:")
+
+        self.db_pass = QLineEdit()
+        self.db_pass.setFixedWidth(150)
+        self.db_pass.setFixedHeight(30)
+        self.db_pass.setStyleSheet(formstyle)
+
+        # DB Name (Username) DB fields
+        self.db_name_label = QLabel()
+        self.db_name_label.setStyleSheet(style)
+        self.db_name_label.setFixedWidth(70)
+        self.db_name_label.setText("DB Name:")
+
+        self.db_name = QLineEdit()
+        self.db_name.setFixedWidth(150)
+        self.db_name.setFixedHeight(30)
+        self.db_name.setStyleSheet(formstyle)
+
+        # DB Name (Username) DB fields
+        self.db_host_label = QLabel()
+        self.db_host_label.setStyleSheet(style)
+        self.db_host_label.setFixedWidth(70)
+        self.db_host_label.setText("Host:")
+
+        self.db_host = QLineEdit()
+        self.db_host.setFixedWidth(150)
+        self.db_host.setFixedHeight(30)
+        self.db_host.setStyleSheet(formstyle)
+        ########
+
         # setup all elements to vertical lay
-        self.general_tab.layout.addWidget(self.call_label)
-        self.general_tab.layout.addWidget(self.call_input)
+        self.call_lay = QHBoxLayout()
+        self.call_lay.setAlignment(Qt.AlignCenter)
+        self.call_lay.addWidget(self.call_label)
+        self.call_lay.addWidget(self.call_input)
+        self.call_lay.addWidget(self.swl_chekbox)
+        self.general_tab.layout.addLayout(self.call_lay)
+
+
         self.general_tab.layout.addSpacing(20)
-        self.general_tab.layout.addWidget(self.swl_chekbox)
-        self.general_tab.layout.addWidget(self.back_color_label)
-        self.general_tab.layout.addWidget(self.back_color_input)
-        self.general_tab.layout.addSpacing(20)
-        self.general_tab.layout.addWidget(self.text_color_label)
-        self.general_tab.layout.addWidget(self.text_color_input)
-        self.general_tab.layout.addSpacing(20)
-        self.general_tab.layout.addWidget(self.form_color_label)
-        self.general_tab.layout.addWidget(self.form_color_input)
-        self.general_tab.layout.addWidget(self.text_form_color_label)
-        self.general_tab.layout.addWidget(self.text_form_color_button)
+
+        #self.general_tab.layout.addWidget(self.swl_chekbox)
+
+        self.horizontal_lay = QHBoxLayout()
+        self.color_lay = QVBoxLayout()
+        self.color_lay.setAlignment(Qt.AlignCenter)
+        self.color_lay.addWidget(self.back_color_label)
+        self.color_lay.addWidget(self.back_color_input)
+        self.color_lay.addWidget(self.text_color_label)
+        self.color_lay.addWidget(self.text_color_input)
+        self.color_lay.addWidget(self.form_color_label)
+        self.color_lay.addWidget(self.form_color_input)
+        self.color_lay.addWidget(self.text_form_color_label)
+        self.color_lay.addWidget(self.text_form_color_button)
+        self.horizontal_lay.addLayout(self.color_lay)
+        self.db_lay = QVBoxLayout()
+        self.db_lay.setAlignment(Qt.AlignCenter)
+
+        # Setup label db
+        self.db_lay.addWidget(self.label_db)
+        self.db_lay.addSpacing(5)
+
+        # setup login (Username) fields on lay
+        self.login_bd_lay = QHBoxLayout()
+        self.login_bd_lay.addWidget(self.db_login_label)
+        self.login_bd_lay.addWidget(self.db_login)
+
+        # setup password fields on lay
+        self.password_bd_lay = QHBoxLayout()
+        self.password_bd_lay.addWidget(self.db_pass_label)
+        self.password_bd_lay.addWidget(self.db_pass)
+
+        # setup DB Name fields on lay
+        self.name_bd_lay = QHBoxLayout()
+        self.name_bd_lay.addWidget(self.db_name_label)
+        self.name_bd_lay.addWidget(self.db_name)
+
+        # setup DB Host fields on lay
+        self.host_bd_lay = QHBoxLayout()
+        self.host_bd_lay.addWidget(self.db_host_label)
+        self.host_bd_lay.addWidget(self.db_host)
+
+        # self.db_lay.addWidget(self.label_db)
+        self.db_lay.addLayout(self.login_bd_lay)
+        self.db_lay.addLayout(self.password_bd_lay)
+        self.db_lay.addLayout(self.login_bd_lay)
+        self.db_lay.addLayout(self.password_bd_lay)
+        self.db_lay.addLayout(self.name_bd_lay)
+        self.db_lay.addLayout(self.host_bd_lay)
+        self.db_lay.addStretch(1)
+
+        self.horizontal_lay.addLayout(self.db_lay)
+        self.general_tab.layout.addLayout(self.horizontal_lay)
+
+        #self.general_tab.layout.addWidget(self.back_color_label)
+        #self.general_tab.layout.addWidget(self.back_color_input)
+        #self.general_tab.layout.addSpacing(20)
+        #self.general_tab.layout.addWidget(self.text_color_label)
+        #self.general_tab.layout.addWidget(self.text_color_input)
+        #self.general_tab.layout.addSpacing(20)
+        #self.general_tab.layout.addWidget(self.form_color_label)
+        #self.general_tab.layout.addWidget(self.form_color_input)
+        #self.general_tab.layout.addWidget(self.text_form_color_label)
+        #self.general_tab.layout.addWidget(self.text_form_color_button)
 
         self.general_tab.setLayout(self.general_tab.layout)
 
@@ -572,6 +688,50 @@ class Menu (QWidget):
         self.pb_add_country.clicked.connect(self.add_country_row)
         self.pb_add_country.setText('Add country')
 
+        self.country_found_label = QLabel()
+        self.country_found_label.setStyleSheet(style)
+        self.country_found_label.setFixedWidth(50)
+        self.country_found_label.setText("Country:")
+        self.country_found = QLineEdit()
+        self.country_found.setStyleSheet(formstyle)
+        self.country_found.setFixedWidth(100)
+        self.country_found.setFixedHeight(25)
+        self.country_found.returnPressed.connect(self.search_country)
+
+        self.country_lay = QHBoxLayout()
+        self.country_lay.addWidget(self.country_found_label)
+        self.country_lay.addWidget(self.country_found)
+        self.country_lay.setAlignment(Qt.AlignLeft)
+
+        self.pfx_found_label = QLabel()
+        self.pfx_found_label.setFixedWidth(20)
+        self.pfx_found_label.setStyleSheet(style)
+        self.pfx_found_label.setText("Pfx:")
+
+        self.pfx_found = QLineEdit()
+        self.pfx_found.setStyleSheet(formstyle)
+        self.pfx_found.setFixedWidth(100)
+        self.pfx_found.setFixedHeight(25)
+        self.pfx_found.returnPressed.connect(self.search_country)
+
+        self.pfx_lay = QHBoxLayout()
+
+        self.pfx_lay.addWidget(self.pfx_found_label)
+        self.pfx_lay.addWidget(self.pfx_found)
+        self.pfx_lay.setAlignment(Qt.AlignLeft)
+
+        self.search_go_bt = QPushButton()
+        self.search_go_bt.setStyleSheet(style)
+        self.search_go_bt.setText('Search')
+        self.search_go_bt.clicked.connect(self.search_country)
+
+
+        self.country_found_lay = QHBoxLayout()
+        self.country_found_lay.addLayout(self.country_lay)
+        self.country_found_lay.addLayout(self.pfx_lay)
+        self.country_found_lay.addWidget(self.search_go_bt)
+
+        self.country_tab.addLayout(self.country_found_lay)
         self.country_tab.addWidget(self.country_table)
         self.country_tab.addWidget(self.pb_add_country)
         self.country_list_edit.setLayout(self.country_tab)
@@ -676,6 +836,11 @@ class Menu (QWidget):
         self.cluster_filter_spotter_input.setText(self.settingsDict['filter-prefix-spotter'])
         self.cluster_start_calibrate_button.clicked.connect(self.start_calibrate_cluster)
 
+        self.db_login.setText(self.settingsDict['db-user'])
+        self.db_pass.setText(self.settingsDict['db-pass'])
+        self.db_name.setText(self.settingsDict['db-name'])
+        self.db_host.setText(self.settingsDict['db-host'])
+
         #init data in tci tab
         if self.settingsDict['tci'] == 'enable':
             self.tci_enable_combo.setChecked(True)
@@ -722,6 +887,27 @@ class Menu (QWidget):
         #print("Close menu", e)
         self.close()
 
+    def search_country(self):
+        country = self.country_found.text().strip().lower()
+        pfx = self.pfx_found.text().strip().lower()
+        print(pfx)
+
+        for i in range(self.country_table.rowCount()):
+            #print(country, self.country_table.item(i, 0).text())
+            if self.country_table.item(i,0).text().lower() == country:
+                self.country_table.scrollToItem(self.country_table.item(i,0))
+                self.country_table.item(i, 0).setBackground(
+                            QColor(self.settingsDict["eqsl-sent-color"]))
+
+            if pfx != '':
+                pfx_list = self.country_table.item(i, 1).text().lower().split(",")
+                for pfx_elem in pfx_list:
+                   if pfx_elem == pfx:
+                        self.country_table.scrollToItem(self.country_table.item(i, 1))
+                        self.country_table.item(i, 1).setBackground(
+                            QColor(self.settingsDict["eqsl-sent-color"]))
+
+
     def import_adi(self):
         fileimport = QFileDialog()
         options = QFileDialog.Options()
@@ -732,14 +918,17 @@ class Menu (QWidget):
         if fname:
            # print(fname)
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
-                               'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR']
+                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
             try:
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
-                main.Adi_file.record_dict_qso(self, allRecords)
+                print(allRecords)
+                for record in allRecords:
+                    main.Db(self.settingsDict).record_qso_to_base(record)
+                    #main.Adi_file.record_dict_qso(self, allRecords)
                 self.logWindow.refresh_data()
                 std.std.message(self, "Import complete!", "Ok")
             except Exception:
-                std.std.message(self, "Can't import\nUnknown problem", "STOP!")
+                std.std.message(self, Exception, "STOP!")
 
     def export_adi(self):
        # print("export_adi")
@@ -749,13 +938,19 @@ class Menu (QWidget):
                                                   "Adi (*.adi)", options=options)
         if file_name:
            # print(file_name)
-            copy_file = shutil.copyfile('log.adi', file_name+'.adi')
+            allRecords = main.Db(self.settingsDict).get_all_records()
+            #print(allRecords)
+            main.Adi_file(self.app_env.appVersion(),self.settingsDict).record_dict_qso(
+                list_data=allRecords,
+                fields_list=self.table_columns,
+                name_file=file_name+'.adi')
+            #copy_file = shutil.copyfile('log.adi', file_name+'.adi')
 
-            if copy_file!='':
+            #if copy_file!='':
                 #print("Export complete")
-                std.std.message(self, "Export to\n"+copy_file+"\n completed", "Export complited")
-            else:
-                std.std.message(self, "Can't export to file", "Sorry")
+            std.std.message(self, "Export to\n"+file_name+"\n completed", "Export complited")
+            #else:
+           #     std.std.message(self, "Can't export to file", "Sorry")
 
     def export_adi_clublog(self):
 
@@ -829,6 +1024,8 @@ class Menu (QWidget):
         self.setStyleSheet(style)
 
     def store_new_settingsDict(self):
+
+        # SAve general tab
         call = self.settingsDict['my-call']
         self.settingsDict['my-call'] = self.call_input.text()
         self.settingsDict['background-color'] = self.back_color_input.text()
@@ -844,6 +1041,10 @@ class Menu (QWidget):
             self.settingsDict['telnet-call-position'] = self.cluster_combo_call.currentText().split(":")[0]
         if self.cluster_combo_freq.currentText() != '':
             self.settingsDict['telnet-freq-position'] = self.cluster_combo_freq.currentText().split(":")[0]
+        self.settingsDict['db-user'] = self.db_login.text().strip()
+        self.settingsDict['db-pass'] = self.db_pass.text().strip()
+        self.settingsDict['db-name'] = self.db_name.text().strip()
+        self.settingsDict['db-host'] = self.db_host.text().strip()
 
         # Save eQSL data
         self.settingsDict['eqsl_user'] = self.eqsl_login.text()

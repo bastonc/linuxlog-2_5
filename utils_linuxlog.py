@@ -1,6 +1,7 @@
 import sys
 import json
-
+import pymysql
+from pymysql.cursors import DictCursor
 
 
 def reset_country_file(country_dict={}):
@@ -114,6 +115,20 @@ def csv_to_json_country(csv_file):
     reset_country_file(object_to_json)
     #print("Full Object", object_to_json)
 
+def delete_all_qso(table_name):
+
+    connection = pymysql.connect(
+        host=settingsDict['db-host'],
+        user=settingsDict['db-user'],
+        password=settingsDict['db-pass'],
+        db=settingsDict['db-name'],
+        charset=settingsDict['db-charset'],
+        cursorclass=DictCursor
+    )
+    query = "DELETE FROM "+str(table_name[0])
+    result = connection.cursor().execute(query)
+    connection.commit()
+    print("Result clear operation for", table_name, ":", result)
 
 parameter = sys.argv[1]
 settingsDict = {}
@@ -134,3 +149,6 @@ if parameter == 'reset-country':
 if parameter == 'csv-country':
     if sys.argv[2] != '':
         csv_to_json_country(sys.argv[2])
+if parameter == 'clear-log':
+    if sys.argv[2] != '':
+        delete_all_qso(str(sys.argv[2]).split())
