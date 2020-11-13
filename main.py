@@ -320,18 +320,17 @@ class Fill_table(QThread):
         #print ("Records", records_dict)
         self.allRecord = records_dict
         self.all_record = self.allRecord
-        self.allRows = len(self.allRecord)
+        self.allRows = len(records_dict)
         #print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
         self.window.tableWidget_qso.setRowCount(self.allRows)
         allCols = len(self.all_collumn)
         for row in range(self.allRows):
-
-            for col in range(allCols):
-                # print("col -", col, self.all_collumn[col])
+           for col in range(allCols):
+                #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
-                    if col == 0:
+                    if self.all_collumn[col] == 'id':
                         self.window.tableWidget_qso.setItem(row, col,
                                                             self.protectionItem(
                                                                 str(self.allRecord[(self.allRows - 1) - row][pole]),
@@ -340,7 +339,7 @@ class Fill_table(QThread):
                             QColor(self.settingsDict["color-table"]))
 
                         # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
-                    elif col == 1:
+                    elif self.all_collumn[col] == 'QSO_DATE':
                         date = str(self.allRecord[(self.allRows - 1) - row][pole])
                         # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                         # print(time_formated)
@@ -354,7 +353,7 @@ class Fill_table(QThread):
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
-                    elif col == 2:
+                    elif self.all_collumn[col] == 'TIME_ON':
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         # print(time_formated)
@@ -367,7 +366,7 @@ class Fill_table(QThread):
                         )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
-                    elif col == 11:
+                    elif self.all_collumn[col] == 'TIME_OFF':
                         time = str(self.allRecord[(self.allRows - 1) - row][pole])
                         # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                         self.window.tableWidget_qso.setItem(
@@ -395,9 +394,10 @@ class Fill_table(QThread):
                     if self.allRecord[(self.allRows - 1) - row]['EQSL_QSL_SENT'] == 'Y':
                         self.window.tableWidget_qso.item(row, col).setBackground(
                             QColor(self.settingsDict['eqsl-sent-color']))
-                    self.fill_complite.emit()
-                    self.qsos_counter.connect(logWindow.counter_qso)
-                    self.qsos_counter.emit(counter)
+
+        self.fill_complite.emit()
+        self.qsos_counter.connect(logWindow.counter_qso)
+        self.qsos_counter.emit(counter)
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -489,8 +489,13 @@ class Log_Window_2(QWidget):
         self.filter_button.setFixedWidth(50)
         self.filter_button.setFixedHeight(20)
         self.filter_button.clicked.connect(self.filter_log_pressed)
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setFixedWidth(50)
+        self.refresh_button.setFixedHeight(20)
+        self.refresh_button.setStyleSheet(button_style)
+        self.refresh_button.clicked.connect(self.refresh_data_button)
         self.menu_log_button = QHBoxLayout()
-        #self.menu_log_button.addWidget(self.refresh_button)
+        self.menu_log_button.addWidget(self.refresh_button)
         self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
         # Set layouts
@@ -500,8 +505,8 @@ class Log_Window_2(QWidget):
         
         self.setLayout(self.layout)
         # self.show()
-        if self.isEnabled():
-            self.refresh_data()
+
+        self.refresh_data()
 
     def refresh_data_button(self):
         #self.tableWidget_qso.clear()
@@ -1008,10 +1013,13 @@ class Log_Window_2(QWidget):
     def refresh_data(self):
 
         self.tableWidget_qso.clear()
-        self.tableWidget_qso.setHorizontalHeaderLabels(
-            ["id", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
-             "RST s", "      Name      ", "      QTH      ", " Comments ",
-             " Time off ", " eQSL Sent ", "Club Log Sent"])
+        #self.tableWidget_qso.clear()
+
+        self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
+
+            #["id", "     Date     ", "   Time   ", "Band", "   Call   ", "Mode", "RST r",
+            # "RST s", "      Name      ", "      QTH      ", " Comments ",
+            # " Time off ", " eQSL Sent ", "Club Log Sent"])
 
 
         self.allRecords = Fill_table(all_column=self.allCollumn,
@@ -1027,8 +1035,11 @@ class Log_Window_2(QWidget):
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
         # print("All_records", len(All_records))
+
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
+        self.tableWidget_qso.hide()
+        self.tableWidget_qso.show()
         #logForm.counter_qso = db.get_max_id
 
     @QtCore.pyqtSlot(int, name="counter_qso")
@@ -1156,31 +1167,41 @@ class Log_Window_2(QWidget):
         # record to table
         allCols = len(self.allCollumn)
         self.tableWidget_qso.insertRow(0)
-        self.tableWidget_qso.resizeRowsToContents()
+
         last_id = db.record_qso_to_base(recordObject)
 
         for col in range(allCols):
-            if col == 0:
+            #print(col)
+            header = self.tableWidget_qso.horizontalHeaderItem(col).text()
+            #print(header)
+            #if self.allCollumn[col] == header:
+             #   print(self.allCollumn[col], "==",  header)
+                #if header == ""
+            #print(self.tableWidget_qso.takeHorizontalHeaderItem(col).text())
+            if header == 'id':
                 self.tableWidget_qso.setItem(
                     0,
                     col,
                     self.protectionItem(str(last_id[0]['LAST_INSERT_ID()']), Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 )
 
-            elif col == 1:
+            elif header == 'QSO_DATE':
                 date = str(recordObject[self.allCollumn[col]])
                 date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(date_formated))
 
-            elif col == 2:
+            elif header == 'TIME_ON' or header == 'TIME_OFF':
                 time = str(recordObject[self.allCollumn[col]])
                 time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(time_formated))
 
+
             else:
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(str(recordObject[self.allCollumn[col]])))
             self.tableWidget_qso.item(0, col).setForeground(QColor(settingsDict['color-table']))
-
+        self.tableWidget_qso.resizeRowsToContents()
+        #self.tableWidget_qso.hide()
+        #self.tableWidget_qso.show()
         if settingsDict['clublog'] == 'enable':
             self.clublog_thread = QThread()
             self.clublog = internetworker.Clublog(settingsDict, adi_string=stringToAdiFile)
