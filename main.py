@@ -3894,7 +3894,7 @@ if __name__ == '__main__':
                 print("Create DB Linuxlog")
             except Exception:
                 #Messages("<span style='color: red;'>STOP</span>", "Can't connected to Database\nCheck DB parameters in settings.cfg")
-                subprocess.call(["python3", "help_system.py", 'db-error'])
+                subprocess.call(["python3", "help_system.py-old", 'db-error'])
                 #Help("db")
                 exit(1)
 
