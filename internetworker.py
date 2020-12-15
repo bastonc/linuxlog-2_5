@@ -226,6 +226,7 @@ class Eqsl_services(QtCore.QObject):
     @QtCore.pyqtSlot(str)
     def show_message(self, string: str):
         # pass
+
         std.std.message(self.parrent_window, string, "<p style='color: red;'>ERROR</p>")
         if self.input_form_key == 1:
             self.settingsDict['eqsl_user'] = ''
@@ -441,7 +442,7 @@ class Clublog(QtCore.QObject):
         }
         try:
             response = requests.post(self.add_record_url, data=multipart_data)
-            print("Type response:_>",type(response))
+            print("Type response:_>", type(response))
             if response.status_code == 200:
                 self.sent_qso_ok.emit(response)
             if response.status_code != 200:

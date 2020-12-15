@@ -38,6 +38,41 @@ class std:
         return mode
 
 
+    def get_index_column(self, tableWidget_qso):
+
+        index_columns = {}
+        for i in range(tableWidget_qso.columnCount()):
+            column = tableWidget_qso.horizontalHeaderItem(i).text()
+            if column == 'id':
+                index_columns.update({'id': i})
+            if column == 'QSO_DATE':
+                index_columns.update({'QSO_DATE': i})
+            if column == 'TIME_ON':
+                index_columns.update({'TIME_ON': i})
+            if column == 'CALL':
+                index_columns.update({'CALL': i})
+            if column == 'RST_RCVD':
+                index_columns.update({'RST_RCVD': i})
+            if column == 'RST_SENT':
+                index_columns.update({'RST_SENT': i})
+            if column == 'NAME':
+                index_columns.update({'NAME': i})
+            if column == 'QTH':
+                index_columns.update({'QTH': i})
+            if column == 'BAND':
+                index_columns.update({'BAND': i})
+            if column == 'COMMENT':
+                index_columns.update({'COMMENT': i})
+            if column == 'TIME_OFF':
+                index_columns.update({'TIME_OFF': i})
+            if column == 'EQSL_QSL_SENT':
+                index_columns.update({'EQSL_QSL_SENT': i})
+            if column == 'MODE':
+                index_columns.update({'MODE': i})
+            if column == 'CLUBLOG_QSO_UPLOAD_STATUS':
+                index_columns.update({'CLUBLOG_QSO_UPLOAD_STATUS': i})
+
+        return index_columns
 
     def get_std_band(self, freq):  # get Band in m
         #print(freq)

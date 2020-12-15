@@ -2,6 +2,7 @@ import telnetlib
 import time
 import main
 import internetworker
+import traceback
 import parse
 import shutil
 import std
@@ -914,21 +915,30 @@ class Menu (QWidget):
         #options |= QFileDialog.DontUseNativeDialog
         #fileimport.setNameFilter("Adi file(*.adi)")
         #fileimport.setFilter()
-        fname = fileimport.getOpenFileName(self, 'Import adi file', '/home', "*.adi", options=options)[0]
+        home_page = '~'
+        fname = fileimport.getOpenFileName(self, 'Import adi file', home_page , "*.adi | *.ADI", options=options)[0]
+        time.sleep(0.150)
         if fname:
            # print(fname)
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
                                'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
             try:
+
+
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
-                print(allRecords)
-                for record in allRecords:
-                    main.Db(self.settingsDict).record_qso_to_base(record)
+                #print(allRecords)
+                self.logWindow.load_bar.show()
+                all_records_count = len(allRecords)
+                for i, record in enumerate(allRecords):
+                    main.Db(self.settingsDict).record_qso_to_base(record, mode="import")
                     #main.Adi_file.record_dict_qso(self, allRecords)
+                    self.logWindow.load_bar.setValue(int(i * 100 / all_records_count))
+                #self.logWindow.load_bar.hide()
                 self.logWindow.refresh_data()
+
                 std.std.message(self, "Import complete!", "Ok")
             except Exception:
-                std.std.message(self, Exception, "STOP!")
+                std.std.message(self, traceback.format_exc(), "STOP!")
 
     def export_adi(self):
        # print("export_adi")
