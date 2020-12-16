@@ -520,7 +520,7 @@ class Log_Window_2(QWidget):
 
         self.menu_log_button = QHBoxLayout()
         self.menu_log_button.addWidget(self.refresh_button)
-        self.menu_log_button.addWidget(self.filter_button)
+        #self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
@@ -4021,10 +4021,11 @@ if __name__ == '__main__':
 
     ####
     app = QApplication(sys.argv)
-    system_answer = os.system("ps -C linlog")
-    if system_answer == 0:
-        message = Messages("Attention", "Linux Log already running")
-        exit(1)
+    #app.setApplicationDisplayName("LinuxLog")
+    #system_answer = os.system("ps -C linlog")
+    #if system_answer == 0:
+    #    message = Messages("Attention", "Linux Log already running")
+    #   exit(1)
 
     flag = 1
     if settingsDict['my-call'] == "":
