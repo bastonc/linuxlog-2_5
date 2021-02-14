@@ -319,16 +319,18 @@ class Fill_table(QThread):
         self.settingsDict = settingsDict
 
     def run(self):
-        #global time
+
         records_dict = db.get_all_records(100)
         #print("records_dict", records_dict)
         counter = len(records_dict)
         #print ("Records", records_dict)
         self.allRecord = records_dict
         self.all_record = self.allRecord
+        self.window.tableWidget_qso.clear()
+        self.window.tableWidget_qso.setHorizontalHeaderLabels(self.all_collumn)
         self.allRows = len(records_dict)
         #print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
-        self.window.tableWidget_qso.setRowCount(self.allRows)
+        self.window.tableWidget_qso.setRowCount(len(records_dict))
         allCols = len(self.all_collumn)
         #self.window.header_label.hide()
         self.window.load_bar.show()
@@ -1075,10 +1077,6 @@ class Log_Window_2(QWidget):
 
     def refresh_data(self):
 
-        self.tableWidget_qso.clear()
-
-
-        self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
         self.allRecords = Fill_table(all_column=self.allCollumn,
                                      window=self,
                                      all_record=All_records,
