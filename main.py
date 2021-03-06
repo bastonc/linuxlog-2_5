@@ -238,6 +238,19 @@ class Adi_file:
         with open(name, 'w') as f:
             f.writelines(self.get_header())
 
+class Filter_event_table_qso(QObject):
+
+    def eventFilter(self, widget, event):
+
+        if event.type() == QEvent.Wheel:
+            logWindow.append_record()
+            print("Scroll__")  # do something useful
+                # you could emit a signal here if you wanted
+
+            return True
+        else:
+            return False
+
 
 class Filter(QObject):
     previous_call = ''
@@ -292,6 +305,7 @@ class Filter(QObject):
                 # return False so that the widget will also handle the event
                 # otherwise it won't focus out
             return False
+
         else:
             # we don't care about other events
             return False
@@ -472,6 +486,11 @@ class Log_Window_2(QWidget):
         #		   )
 
         self.tableWidget_qso = QTableWidget()
+
+        self.event_qso_table = Filter_event_table_qso()
+        #self.tableWidget_qso.wheelEvent(self.append_qso)
+        self.tableWidget_qso.installEventFilter(self.event_qso_table)
+
         self.tableWidget_qso.move(0, 0)
         self.tableWidget_qso.verticalHeader().hide()
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
@@ -535,6 +554,102 @@ class Log_Window_2(QWidget):
         # self.show()
 
         self.refresh_data()
+
+    def append_qso(self):
+        self.append_record()
+
+    def append_record(self):
+        count_col = len(self.allCollumn)
+        print("Bottom ---", self.tableWidget_qso.rowCount())
+        for col in range(count_col):
+            if self.allCollumn[col] == "id":
+                if self.tableWidget_qso.item(self.tableWidget_qso.rowCount()-1, col):
+                    start_id = self.tableWidget_qso.item(self.tableWidget_qso.rowCount()-1, col).text()
+                else:
+                    start_id = 0;
+        step = 100
+        page = db.getRange(start_id, step)
+        if page != []:
+            page_count = len(page)
+            col_count = len(self.allCollumn)
+            for record in page:
+
+                    next_string = self.tableWidget_qso.rowCount()
+                    self.tableWidget_qso.insertRow(next_string)
+                    for col in range(col_count):
+                        pole = self.allCollumn[col]
+                        if self.allCollumn[col] == 'id':
+                            self.tableWidget_qso.setItem(next_string, col,
+                                                                self.protectionItem(
+                                                                    str(record[pole]),
+                                                                    Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                            self.tableWidget_qso.item(next_string, col).setForeground(
+                                QColor(settingsDict["color-table"]))
+
+                            # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                        elif self.allCollumn[col] == 'QSO_DATE':
+                            date = str(record[pole])
+                            # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                            # print(time_formated)
+                            self.tableWidget_qso.setItem(
+                                next_string, col,
+                                self.protectionItem(
+                                    QTableWidgetItem(date),
+                                    Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                                )
+                            )
+                            self.tableWidget_qso.item(next_string, col).setForeground(
+                                QColor(settingsDict["color-table"]))
+
+                        elif self.allCollumn[col] == 'TIME_ON':
+                            time = str(record[pole])
+                            # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                            # print(time_formated)
+                            self.tableWidget_qso.setItem(
+                                next_string, col,
+                                self.protectionItem(
+                                    QTableWidgetItem(time),
+                                    Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                                )
+                            )
+                            self.tableWidget_qso.item(next_string, col).setForeground(
+                                QColor(settingsDict["color-table"]))
+                        elif self.allCollumn[col] == 'TIME_OFF':
+                            time = str(record[pole])
+                            # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                            self.tableWidget_qso.setItem(
+                                next_string, col,
+                                self.protectionItem(
+                                    QTableWidgetItem(time),
+                                    Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                                )
+                            )
+                            self.tableWidget_qso.item(next_string, col).setForeground(
+                                QColor(settingsDict["color-table"]))
+
+
+
+                        else:
+                            self.tableWidget_qso.setItem(
+                                next_string, col,
+                                self.protectionItem(
+                                    record[pole],
+                                    Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                            )
+                            self.tableWidget_qso.item(next_string, col).setForeground(
+                                QColor(settingsDict["color-table"]))
+
+                        if record['EQSL_QSL_SENT'] == 'Y':
+                            self.tableWidget_qso.item(next_string, col).setBackground(
+                                QColor(settingsDict['eqsl-sent-color']))
+
+            self.tableWidget_qso.resizeRowsToContents()
+            self.tableWidget_qso.resizeColumnsToContents()
+            self.tableWidget_qso.repaint()
+
+
+            print ("Bottom", page)
+
 
     def refresh_data_button(self):
         #self.tableWidget_qso.clear()
@@ -1342,7 +1457,6 @@ class Log_Window_2(QWidget):
                     print("Search in table > Don't Load text from table")
             return list_dict
 
-
 class LogSearch(QWidget):
     def __init__(self):
         super().__init__()
@@ -1431,7 +1545,6 @@ class LogSearch(QWidget):
                 self.tableWidget.item(row, col).setForeground(QColor(settingsDict['color-table']))
 
         self.setStyleSheet(style)
-
 
 class check_update():
 
@@ -1611,7 +1724,6 @@ class check_update():
         else:
             std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
 
-
 class Check_update_thread(QtCore.QObject):
     update_response = QtCore.pyqtSignal(object)
 
@@ -1632,7 +1744,6 @@ class Check_update_thread(QtCore.QObject):
     #    self.update_response.emit(response_upd_server)
     # else:
     #    self.error_request.emit()
-
 
 class update_after_run(QObject):
 
@@ -1703,7 +1814,6 @@ class update_after_run(QObject):
                 10000
             )
 
-
 class About_window(QWidget):
     def __init__(self, capture, text):
         super().__init__()
@@ -1761,7 +1871,6 @@ class About_window(QWidget):
         self.check = check_update(APP_VERSION, settingsDict=settingsDict, parrentWindow=self)
         # self.check.start()
 
-
 class realTime(QThread):
 
     def __init__(self, logformwindow, parent=None):
@@ -1774,7 +1883,6 @@ class realTime(QThread):
                                                  "  |  GMT: " + strftime("%H:%M:%S", gmtime()))
             sleep(1)
 
-
 class ClikableLabel(QLabel):
     click_signal = QtCore.pyqtSignal()
     change_value_signal = QtCore.pyqtSignal()
@@ -1784,7 +1892,6 @@ class ClikableLabel(QLabel):
 
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
         self.click_signal.emit()
-
 
 class FreqWindow(QWidget):
     figure = QtCore.pyqtSignal(str)
@@ -2627,8 +2734,8 @@ class LogForm(QMainWindow):
         # self.show()
 
         # run time in Thread
-        self.run_time = realTime(logformwindow=self)  # run time in Thread
-        self.run_time.start()
+        #self.run_time = realTime(logformwindow=self)  # run time in Thread
+        #self.run_time.start()
 
     def full_clear_form(self):
         self.inputCall.clear()
@@ -3256,6 +3363,7 @@ class clusterThread(QThread):
                 sleep(3)
                 continue
 
+
         lastRow = 0
         message = (call + "\n").encode('ascii')
         telnetObj.read_until(b": ")
@@ -3372,7 +3480,7 @@ class clusterThread(QThread):
                              + output_data.decode(settingsDict['encodeStandart']).replace('\x07\x07\r\n', ''))
                         # print("Ionosphere status: ", output_data.decode(settingsDict['encodeStandart']))
                     del cleanList[0:len(cleanList)]
-                    sleep(0.1)
+                sleep(0.1)
 
             except:
                 continue
@@ -3729,17 +3837,28 @@ class Db:
         self.db_charset = settingsDict['db-charset']
         self.settingsDict = settingsDict
 
+    def getRange(self, start_id, step):
+        db_conn = self.connect()
+        query = db_conn.cursor()
+        query.execute("SELECT * FROM " + settingsDict['my-call'] + " WHERE `id`>" + str(start_id) + " ORDER BY QSO_DATE DESC LIMIT " + str(step))
+        answer_db = query.fetchall()
+        return answer_db
+
     def check_database(self, name_db):
 
-        connection = pymysql.connect(
-            host=self.db_host,
-            user=self.db_user,
-            password=self.db_pass,
-            )
-        cursor = connection.cursor()
-        cursor.execute("SHOW DATABASES LIKE '" + name_db + "'")
-        answer = cursor.fetchall()
-            #print("Answer", answer)
+        try:
+            connection = pymysql.connect(
+                host=self.db_host,
+                user=self.db_user,
+                password=self.db_pass,
+                )
+            cursor = connection.cursor()
+            cursor.execute("SHOW DATABASES LIKE '" + name_db + "'")
+            answer = cursor.fetchall()
+
+        except Exception:
+            subprocess.call(["python3", "help_system.py-old", 'db-error'])
+            exit(1)
         return answer
 
     def create_database(self):
@@ -3749,24 +3868,32 @@ class Db:
 
     def connect(self):
         if self.db_name == '':
+            try:
+                connection = pymysql.connect(
+                    host=self.db_host,
+                    user=self.db_user,
+                    password=self.db_pass,
 
-            connection = pymysql.connect(
-                host=self.db_host,
-                user=self.db_user,
-                password=self.db_pass,
-
-                )
+                    )
+            except Exception:
+                subprocess.call(["python3", "help_system.py-old", 'db-error'])
+                # Help("db")
+                exit(0)
 
         else:
-
-            connection = pymysql.connect(
-                host=self.db_host,
-                user=self.db_user,
-                password=self.db_pass,
-                db=self.db_name,
-                charset=self.db_charset,
-                cursorclass=DictCursor
-                )
+            try:
+                connection = pymysql.connect(
+                    host=self.db_host,
+                    user=self.db_user,
+                    password=self.db_pass,
+                    db=self.db_name,
+                    charset=self.db_charset,
+                    cursorclass=DictCursor
+                    )
+            except Exception:
+                subprocess.call(["python3", "help_system.py-old", 'db-error'])
+                #Help("db")
+                exit(0)
             self.connection = connection
         return connection
 
