@@ -119,7 +119,7 @@ class Tci_reciever(QThread):
                 #self.log_form.set_tci_label_found()
                 try:
                     self.ws.close()
-                    self.ws = websockets.WebSocket()
+                    self.ws = websocket.WebSocket()
                     self.ws.connect(self.uri)
                     self.log_form.set_tci_stat("•TCI")
 
