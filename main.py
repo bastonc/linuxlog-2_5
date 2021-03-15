@@ -441,12 +441,6 @@ class Qso_counter:
         qso_counter = self.counter
         print ("Counter", counter)
 
-class Reciev_allRecords:
-    def __init__(self, allRecords):
-        self.allRecords = allRecords
-        All_records.clear()
-        for i in range(len(self.allRecords)):
-            All_records.append(self.allRecords[i])
 
 class Log_Window_2(QWidget):
 
@@ -1221,6 +1215,7 @@ class Log_Window_2(QWidget):
 
 
     def get_all_record(self):
+        Db(settingsDict).get_all_records()
         return All_records
 
     def protectionItem(self, text, flags):
@@ -2377,11 +2372,11 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-
-        self.otherMenu = self.menuBarw.addMenu('&Diploms')
-        window_form_diplom = QAction('New diploma', self)
-        window_form_diplom.triggered.connect(self.new_diplom)
-        self.otherMenu.addAction(window_form_diplom)
+####### Diploms
+        #self.otherMenu = self.menuBarw.addMenu('&Diploms')
+        #window_form_diplom = QAction('New diploma', self)
+        #window_form_diplom.triggered.connect(self.new_diplom)
+        #self.otherMenu.addAction(window_form_diplom)
         #
         aboutAction = QAction('&About', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
@@ -2457,19 +2452,21 @@ class LogForm(QMainWindow):
         # pass
 
     def menu_add(self, name_menu):
+        pass
+        #### diplom
         # self.otherMenu = self.menuBarw.addMenu('&Other')
 
         # print(name_menu)
-        self.item_menu = self.otherMenu.addMenu(name_menu)
-        edit_diploma = QAction('Edit ' + name_menu, self)
-        edit_diploma.triggered.connect(lambda checked, name_menu=name_menu: self.edit_diplom(name_menu))
-        show_stat = QAction('Show statistic', self)
-        show_stat.triggered.connect(lambda checked, name_menu=name_menu: self.show_statistic_diplom(name_menu))
-        del_diploma = QAction("Delete " + name_menu, self)
-        del_diploma.triggered.connect(lambda checked, name_menu=name_menu: self.del_diplom(name_menu))
-        self.item_menu.addAction(show_stat)
-        self.item_menu.addAction(edit_diploma)
-        self.item_menu.addAction(del_diploma)
+        #self.item_menu = self.otherMenu.addMenu(name_menu)
+        #edit_diploma = QAction('Edit ' + name_menu, self)
+        #edit_diploma.triggered.connect(lambda checked, name_menu=name_menu: self.edit_diplom(name_menu))
+        #show_stat = QAction('Show statistic', self)
+        #show_stat.triggered.connect(lambda checked, name_menu=name_menu: self.show_statistic_diplom(name_menu))
+        #del_diploma = QAction("Delete " + name_menu, self)
+        #del_diploma.triggered.connect(lambda checked, name_menu=name_menu: self.del_diplom(name_menu))
+        #self.item_menu.addAction(show_stat)
+        #self.item_menu.addAction(edit_diploma)
+        #self.item_menu.addAction(del_diploma)
 
     def menu_rename_diplom(self):
         self.menuBarw.clear()
@@ -3985,9 +3982,14 @@ class Db:
 
 
 
-    def get_all_records(self, count):
+    def get_all_records(self, count=0):
         cursor = self.connect().cursor()
-        records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC LIMIT " + str(count))
+        if count !=0:
+            records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC LIMIT " + str(count))
+        else:
+            records = cursor.execute(
+                "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC")
+
         print(records)
         records_dict = cursor.fetchall()
         return records_dict
@@ -4093,7 +4095,7 @@ if __name__ == '__main__':
 
 
 
-    APP_VERSION = '1.28'
+    APP_VERSION = '2.1'
     settingsDict = {}
     table_columns = [
         ["CALL", "VARCHAR(50)"],

@@ -941,26 +941,20 @@ class Menu (QWidget):
                 std.std.message(self, traceback.format_exc(), "STOP!")
 
     def export_adi(self):
-       # print("export_adi")
+
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(self, "Export adi", "",
                                                   "Adi (*.adi)", options=options)
         if file_name:
-           # print(file_name)
+
             allRecords = main.Db(self.settingsDict).get_all_records()
-            #print(allRecords)
-            main.Adi_file(self.app_env.appVersion(),self.settingsDict).record_dict_qso(
+            main.Adi_file(self.app_env.appVersion(), self.settingsDict).record_dict_qso(
                 list_data=allRecords,
                 fields_list=self.table_columns,
                 name_file=file_name+'.adi')
-            #copy_file = shutil.copyfile('log.adi', file_name+'.adi')
-
-            #if copy_file!='':
-                #print("Export complete")
             std.std.message(self, "Export to\n"+file_name+"\n completed", "Export complited")
-            #else:
-           #     std.std.message(self, "Can't export to file", "Sorry")
+
 
     def export_adi_clublog(self):
 

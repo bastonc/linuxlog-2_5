@@ -241,23 +241,10 @@ class Diplom_form(QWidget):
         if flag == 1:
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
-            #if self.prefix_check_box.isEnabled():
-             #   prefix_only = 'y'
-           # else:
-            #    prefix_only = 'n'
 
-            #if self.date_checkbox.isChecked():
-            #    date_enable = "y"
-            #    date_start = self.start_date_input.text().strip()
-            #    date_finish = self.end_date_input.text().strip()
-
-            #else:
-            #    date_enable = "n"
-            #    date_start = ""
-            #    date_finish = ""
             repeats = self.repeat_combo.currentIndex()
             count_sps = self.sps_table_widget.rowCount()
-            #print("count_sps:_>", count_sps)
+
             for row in range(count_sps):
 
                 if self.sps_table_widget.item(row,0) != None and \
