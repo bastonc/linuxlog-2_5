@@ -335,22 +335,24 @@ class Fill_table(QThread):
     def run(self):
 
         records_dict = db.get_all_records(100)
-        #print("records_dict", records_dict)
+        print("records_dict", records_dict)
         counter = len(records_dict)
-        #print ("Records", records_dict)
+        print ("Records", counter)
         self.allRecord = records_dict
-        self.all_record = self.allRecord
+        #self.all_record = self.allRecord
         self.window.tableWidget_qso.clear()
         self.window.tableWidget_qso.setHorizontalHeaderLabels(self.all_collumn)
         self.allRows = len(records_dict)
         #print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
         self.window.tableWidget_qso.setRowCount(len(records_dict))
         allCols = len(self.all_collumn)
+        print("AllCols", allCols)
         #self.window.header_label.hide()
         self.window.load_bar.show()
         for row in range(self.allRows):
+           print ("string:", row)
            for col in range(allCols):
-                #print("col -", col, self.all_collumn[col])
+                print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
@@ -418,8 +420,8 @@ class Fill_table(QThread):
                     if self.allRecord[row]['EQSL_QSL_SENT'] == 'Y':
                         self.window.tableWidget_qso.item(row, col).setBackground(
                             QColor(self.settingsDict['eqsl-sent-color']))
-           #sleep(0.0001)
-           self.window.load_bar.setValue(int(row * 100 / self.allRows))
+
+           self.window.load_bar.setValue(round(row * 100 / self.allRows))
         #self.window.header_label.setText("Total QSO: "+str(self.allRows))
         self.fill_complite.emit()
         #self.qsos_counter.connect(logWindow.counter_qso)
@@ -455,6 +457,7 @@ class Log_Window_2(QWidget):
                 file.write(Adi_file(app_version=APP_VERSION, settingsDict=settingsDict).get_header())
         self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
+        self.fill_flag = 0
         self.initUI()
 
     def initUI(self):
@@ -534,7 +537,7 @@ class Log_Window_2(QWidget):
         self.header_label.hide()
 
         self.menu_log_button = QHBoxLayout()
-        self.menu_log_button.addWidget(self.refresh_button)
+        #self.menu_log_button.addWidget(self.refresh_button)
         #self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
@@ -1185,15 +1188,16 @@ class Log_Window_2(QWidget):
             QWidget.changeEvent(self, event)
 
     def refresh_data(self):
+        if self.fill_flag == 0:
+            self.fill_flag = 1
+            self.allRecords = Fill_table(all_column=self.allCollumn,
+                                         window=self,
+                                         all_record=All_records,
+                                         settingsDict=settingsDict)
+            self.allRecords.fill_complite.connect(self.fill_complited)
+            #self.allRecords.qsos_counter.connect(self.counter_qso)
+            self.allRecords.start()
 
-        self.allRecords = Fill_table(all_column=self.allCollumn,
-                                     window=self,
-                                     all_record=All_records,
-                                     settingsDict=settingsDict)
-        self.allRecords.fill_complite.connect(self.fill_complited)
-        #self.allRecords.qsos_counter.connect(self.counter_qso)
-        self.allRecords.start()
-        #self.allRows = len(All_records)
 
 
     @QtCore.pyqtSlot(name='fill_complited')
@@ -1204,8 +1208,9 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.resizeColumnsToContents()
         self.load_bar.hide()
         self.header_label.show()
+        self.fill_flag = 0
         #self.tableWidget_qso.hide()
-        self.tableWidget_qso.show()
+        #self.tableWidget_qso.show()
         #logForm.counter_qso = db.get_max_id
 
     @QtCore.pyqtSlot(int, name="counter_qso")
@@ -3777,12 +3782,17 @@ class hello_window(QWidget):
             db_name = 'linuxlog'
             db = Db(settingsDict)
             answer = db.check_database(db_name)
+            print ("Answer:", answer)
             if answer == ():
                 db.create_database()
                 settingsDict['db-name'] = db_name
+                table = Db(settingsDict).create_table(
+                    self.call_input.text().strip().upper(),
+                    self.table_columns
+                )
             else:
                 if settingsDict['db-name'] == '':
-                    settingsDict['db-name'] = 'linuxlog'
+                    settingsDict['db-name'] = db_name
                 table = Db(settingsDict).create_table(
                         self.call_input.text().strip().upper(),
                         self.table_columns
@@ -3854,14 +3864,24 @@ class Db:
             answer = cursor.fetchall()
 
         except Exception:
-            subprocess.call(["python3", "help_system.py-old", 'db-error'])
+            print("Except check connection to mysql")
+            subprocess.call(["python3", "help_system.py", 'db-error'])
             exit(1)
+            #answer = ()
+
         return answer
 
     def create_database(self):
-        db_connect_new = self.connect()
+
+        db_connect_new = pymysql.connect(
+                    host=self.db_host,
+                    user=self.db_user,
+                    password=self.db_pass,
+
+                    )
         cursor = db_connect_new.cursor()
         cursor.execute('CREATE DATABASE linuxlog')
+
 
     def connect(self):
         if self.db_name == '':
@@ -3873,7 +3893,9 @@ class Db:
 
                     )
             except Exception:
-                subprocess.call(["python3", "help_system.py-old", 'db-error'])
+                print("Exception on DB.connect")
+                subprocess.call(["python3", "help_system.py", 'db-error'])
+
                 # Help("db")
                 exit(0)
 
@@ -3888,7 +3910,9 @@ class Db:
                     cursorclass=DictCursor
                     )
             except Exception:
-                subprocess.call(["python3", "help_system.py-old", 'db-error'])
+                print("Exception on DB.connect (else) ")
+                subprocess.call(["python3", "help_system.py", 'db-error'])
+
                 #Help("db")
                 exit(0)
             self.connection = connection
@@ -3984,7 +4008,7 @@ class Db:
 
     def get_all_records(self, count=0):
         cursor = self.connect().cursor()
-        if count !=0:
+        if count != 0:
             records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC LIMIT " + str(count))
         else:
             records = cursor.execute(
@@ -4144,16 +4168,10 @@ if __name__ == '__main__':
     global All_records, qso_counter, db
     All_records = []
 
-    #qso_counter = 0
+
 
     ####
     app = QApplication(sys.argv)
-    #app.setApplicationDisplayName("LinuxLog")
-    #system_answer = os.system("ps -C linlog")
-    #if system_answer == 0:
-    #    message = Messages("Attention", "Linux Log already running")
-    #   exit(1)
-
     flag = 1
     if settingsDict['my-call'] == "":
         hello_window = hello_window(table_columns)
