@@ -536,7 +536,7 @@ class Log_Window_2(QWidget):
         self.header_label.hide()
 
         self.menu_log_button = QHBoxLayout()
-        self.menu_log_button.addWidget(self.refresh_button)
+        #self.menu_log_button.addWidget(self.refresh_button)
         #self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
