@@ -284,8 +284,7 @@ class Filter(QObject):
                     self.isearch.start()
                     if settingsDict['tci'] == 'enable':
                         try:
-                            tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_spot(
-                                textCall, freq)
+                            tci_sndr.set_spot(textCall, freq)
                         except:
                             print("Filter: Can't connect to TCI-server")
 
@@ -537,7 +536,7 @@ class Log_Window_2(QWidget):
         self.header_label.hide()
 
         self.menu_log_button = QHBoxLayout()
-        #self.menu_log_button.addWidget(self.refresh_button)
+        self.menu_log_button.addWidget(self.refresh_button)
         #self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
@@ -2191,7 +2190,7 @@ class FreqWindow(QWidget):
                 band = std_value.get_std_band(frequency)
                 mode = std_value.mode_band_plan(band, frequency)
                 try:
-                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_freq(frequency)
+                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port'], self.parent_window).set_freq(frequency)
                     tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode("0", mode)
                 except Exception:
                     print("enter_freq:_> Can't setup tci_freq")
@@ -3468,12 +3467,11 @@ class clusterThread(QThread):
                                 freq = std.std().std_freq(freq=cleanList[3])
                                 try:
                                     if settingsDict['tci'] == 'enable':
-                                        tci.Tci_sender(
-                                            settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_spot(
+                                        tci_sndr.set_spot(
                                             cleanList[4], freq, color="19711680")
                                 except Exception:
-                                    pass
-                                    #print("clusterThread: Except in Tci_sender.set_spot")
+                                    #pass
+                                    print("clusterThread: Except in Tci_sender.set_spot", traceback.format_exc())
                             self.reciev_spot_signal.emit()
                         ####
                     # #print(output_data) # Check point - output input-string with data from cluster telnet-server
@@ -4262,4 +4260,6 @@ if __name__ == '__main__':
 
         if settingsDict['tci'] == 'enable':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
+            tci_sndr = tci.Tci_sender(settingsDict["tci-server"]+":"+settingsDict["tci-port"], "Disable")
+
     sys.exit(app.exec_())

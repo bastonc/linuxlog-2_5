@@ -6,6 +6,8 @@ import time
 import std
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtCore
+import main
 
 class tci_connect:
 
@@ -39,7 +41,8 @@ class tci_connect:
             print("TCI don't started")
 
 class Tci_reciever(QThread):
-
+    tx_flag = QtCore.pyqtSignal(str)
+    tx = "Disable"
     def __init__(self, uri, log_form, settingsDict, parent=None):
         super().__init__()
         self.uri = uri
@@ -78,6 +81,17 @@ class Tci_reciever(QThread):
                 #print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 tci_string=reciever.split(":")
                 # reciev vfo (freq)
+                if tci_string[0] == 'trx':
+                    #self.tx = 'Enable'
+                    values = tci_string[1].split(",")
+                    #print("TRX:_>", values[1])
+                    if values[1] == 'true;':
+                        self.tx_flag.emit('Enable')
+                        self.tx = 'Enable'
+                    elif values[1] == 'false;':
+                        self.tx = 'Disable'
+                        self.tx_flag.emit('Disable')
+
                 if tci_string[0] == 'vfo':
                     values = tci_string[1].split(",")
                     if values[1] == '0' and values[0] == '0':
@@ -135,12 +149,15 @@ class Tci_reciever(QThread):
 
 class Tci_sender (QApplication):
 
-    def __init__(self, uri):
+    def __init__(self, uri, tx_flag):
+
         try:
          self.uri = uri
          self.ws = websocket.WebSocket()
          self.ws.connect(self.uri)
-         self.ws.send("READY;")
+         #self.ws.send("READY;")
+         self.tx_flag = tx_flag
+
 
         except:
             self.log_form.set_tci_stat('Check')
@@ -151,7 +168,8 @@ class Tci_sender (QApplication):
 
 
     def send_command(self, string_command):
-        self.ws.send(string_command)
+        if self.tx_flag != "Enable":
+            self.ws.send(string_command)
 
     def set_freq(self, freq):
         print("set_freq:", freq)
@@ -166,18 +184,23 @@ class Tci_sender (QApplication):
  ### spots
 
     def set_spot(self, call, freq, color="12711680"):
-        string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
-        self.ws.send(string_command)
+        print("TX stat:", self.tx_flag)
+        # check enable TX mode
+        if self.tx_flag != "Enable":
+            string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
+            self.ws.send(string_command)
 
     def del_spot(self, call):
-        string_command = "SPOT_DELETE:"+str(call)+";"
-        self.ws.send(string_command)
+        if self.tx_flag != "Enable":
+            string_command = "SPOT_DELETE:"+str(call)+";"
+            self.ws.send(string_command)
 
     def change_color_spot(self, call, freq, color="21711680"):
-        string_command = "SPOT_DELETE:"+str(call)+";"
-        self.ws.send(string_command)
-        string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
-        self.ws.send(string_command)
+        if self.tx_flag != "Enable":
+            string_command = "SPOT_DELETE:"+str(call)+";"
+            self.ws.send(string_command)
+            string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
+            self.ws.send(string_command)
 
 ##########
 
