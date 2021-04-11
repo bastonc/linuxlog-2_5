@@ -351,7 +351,7 @@ class Fill_table(QThread):
         for row in range(self.allRows):
            print ("string:", row)
            for col in range(allCols):
-                print("col -", col, self.all_collumn[col])
+                #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
                 if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
                         self.allRecord[(self.allRows - 1) - row][pole] != '':
@@ -421,10 +421,8 @@ class Fill_table(QThread):
                             QColor(self.settingsDict['eqsl-sent-color']))
 
            self.window.load_bar.setValue(round(row * 100 / self.allRows))
-        #self.window.header_label.setText("Total QSO: "+str(self.allRows))
         self.fill_complite.emit()
-        #self.qsos_counter.connect(logWindow.counter_qso)
-        #self.qsos_counter.emit(counter)
+
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -454,7 +452,7 @@ class Log_Window_2(QWidget):
         else:
             with open(self.filename, "w") as file:
                 file.write(Adi_file(app_version=APP_VERSION, settingsDict=settingsDict).get_header())
-        self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
+        self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
         self.initUI()
@@ -536,7 +534,7 @@ class Log_Window_2(QWidget):
         self.header_label.hide()
 
         self.menu_log_button = QHBoxLayout()
-        #self.menu_log_button.addWidget(self.refresh_button)
+        self.menu_log_button.addWidget(self.refresh_button)
         #self.menu_log_button.addWidget(self.filter_button)
         self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
@@ -1208,6 +1206,7 @@ class Log_Window_2(QWidget):
         self.load_bar.hide()
         self.header_label.show()
         self.fill_flag = 0
+
         #self.tableWidget_qso.hide()
         #self.tableWidget_qso.show()
         #logForm.counter_qso = db.get_max_id
@@ -1509,8 +1508,8 @@ class LogSearch(QWidget):
             self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
-                ["No", "   Date   ", " Time ", "Band", "   Call   ", "Mode", "RST r",
-                 "RST s", "      Name      ", "      QTH      "])
+                ["   Date   ",  "Band", "   Freq   ", "Call", "Mode", "RST r",
+                 "RST s", " Time ", "      Name      ", "      QTH      "])
             self.tableWidget.resizeColumnsToContents()
             allCols = self.tableWidget.columnCount()
             # print(foundList[0]["CALL"])
