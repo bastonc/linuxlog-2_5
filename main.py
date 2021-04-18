@@ -2189,8 +2189,8 @@ class FreqWindow(QWidget):
                 band = std_value.get_std_band(frequency)
                 mode = std_value.mode_band_plan(band, frequency)
                 try:
-                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port'], self.parent_window).set_freq(frequency)
-                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode("0", mode)
+                    tci_sndr.set_freq(frequency)
+                    tci_sndr.set_mode("0", mode)
                 except Exception:
                     print("enter_freq:_> Can't setup tci_freq")
             if self.settings_dict['cat'] == 'enable':
@@ -3577,9 +3577,9 @@ class TelnetCluster(QWidget):
 
         if settingsDict['tci'] == 'enable':
             try:
-                tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_freq(freq)
+                tci_sndr.set_freq(freq)
                 if mode != 'ERROR':
-                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).set_mode('0', mode)
+                    tci_sndr.set_mode('0', mode)
 
             except:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
