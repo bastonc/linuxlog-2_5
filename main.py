@@ -2734,8 +2734,8 @@ class LogForm(QMainWindow):
         # self.show()
 
         # run time in Thread
-        #self.run_time = realTime(logformwindow=self)  # run time in Thread
-        #self.run_time.start()
+        self.run_time = realTime(logformwindow=self)  # run time in Thread
+        self.run_time.start()
 
     def full_clear_form(self):
         self.inputCall.clear()
