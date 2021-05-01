@@ -26,9 +26,9 @@ class tci_connect:
 
         self.tci_reciever.set_flag("run")
         self.tci_reciever.start()
-        print(self.settingsDict['tci-server'],
-              self.settingsDict['tci-port'])
-        print("Tci start:", self.tci_reciever.currentThreadId())
+        #print(self.settingsDict['tci-server'],
+        #      self.settingsDict['tci-port'])
+        #print("Tci start:", self.tci_reciever.currentThreadId())
 
     def stop_tci(self):
         try:
@@ -47,7 +47,7 @@ class Tci_reciever(QThread):
         super().__init__()
         self.uri = uri
         self.log_form = log_form
-        print("uri:_>", self.uri)
+        #print("uri:_>", self.uri)
 
         self.ws = websocket.WebSocket()
         self.settingsDict = settingsDict
@@ -184,7 +184,7 @@ class Tci_sender (QApplication):
  ### spots
 
     def set_spot(self, call, freq, color="12711680"):
-        print("TX stat:", self.tx_flag)
+        #print("TX stat:", self.tx_flag)
         # check enable TX mode
         if self.tx_flag != "Enable":
             string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"

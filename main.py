@@ -276,7 +276,7 @@ class Filter(QObject):
                 if country != []:
                     logForm.set_country_label(country[0] + ' <h6 style="font-size: 10px;">ITU: ' + country[1] + '</h6>')
 
-                if settingsDict['search-internet-window'] == 'true':
+                if settingsDict['search-internet-window'] == 'True':
 
                     Filter.previous_call = textCall
                     self.isearch = internetworker.internetWorker(window=internetSearch, callsign=textCall,
@@ -334,9 +334,9 @@ class Fill_table(QThread):
     def run(self):
 
         records_dict = db.get_all_records(100)
-        print("records_dict", records_dict)
+        #print("records_dict", records_dict)
         counter = len(records_dict)
-        print ("Records", counter)
+        #print ("Records", counter)
         self.allRecord = records_dict
         #self.all_record = self.allRecord
         self.window.tableWidget_qso.clear()
@@ -345,11 +345,11 @@ class Fill_table(QThread):
         #print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
         self.window.tableWidget_qso.setRowCount(len(records_dict))
         allCols = len(self.all_collumn)
-        print("AllCols", allCols)
+        #print("AllCols", allCols)
         #self.window.header_label.hide()
         self.window.load_bar.show()
         for row in range(self.allRows):
-           print ("string:", row)
+           #print ("string:", row)
            for col in range(allCols):
                 #print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
@@ -438,7 +438,7 @@ class Qso_counter:
     def __init__(self, counter):
         self.counter = counter
         qso_counter = self.counter
-        print ("Counter", counter)
+       # print ("Counter", counter)
 
 
 class Log_Window_2(QWidget):
@@ -554,7 +554,7 @@ class Log_Window_2(QWidget):
 
     def append_record(self):
         count_col = len(self.allCollumn)
-        print("Bottom ---", self.tableWidget_qso.rowCount())
+        #print("Bottom ---", self.tableWidget_qso.rowCount())
         for col in range(count_col):
             if self.allCollumn[col] == "id":
                 if self.tableWidget_qso.item(self.tableWidget_qso.rowCount()-1, col):
@@ -642,7 +642,7 @@ class Log_Window_2(QWidget):
             self.tableWidget_qso.repaint()
 
 
-            print ("Bottom", page)
+           # print ("Bottom", page)
 
 
     def refresh_data_button(self):
@@ -652,7 +652,7 @@ class Log_Window_2(QWidget):
     def filter_log_pressed(self):
         self.filter_log = ext.Filter_log(settingsDict, All_records)
         self.filter_log.show()
-        print("filter_log_pressed")
+      #  print("filter_log_pressed")
 
     def context_menu(self, point):
 
@@ -752,9 +752,9 @@ class Log_Window_2(QWidget):
             clublog.sent_qso_no.connect(self.clublog_sent_no_call)
             clublog.sent_qso_ok.connect(self.clublog_sent_ok_call)
             response = clublog.add_record()
-            print(response.status_code, response.content)
+          #  print(response.status_code, response.content)
             if response.status_code == 200:
-                print("response for Club log:_>", response, response.headers)
+           #     print("response for Club log:_>", response, response.headers)
                 std.std.message(self, "Club log: " + response.content.decode(settingsDict['encodeStandart']),
                                 "<p style='color: green;'><b>OK</b></p>")
                 row = self.tableWidget_qso.currentItem().row()
@@ -762,7 +762,7 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.setItem(row, self.collumns_index['CLUBLOG_QSO_UPLOAD_STATUS'], QTableWidgetItem("Y"))
                 self.store_change_record(row)
             else:
-                print("response for Club log:_>", response, response.content)
+         #       print("response for Club log:_>", response, response.content)
                 std.std.message(self,
                                 "Club log: " + response.content.decode(settingsDict['encodeStandart']) + "\n",
                                 "<p style='color: red;'>ERROR</p>")
@@ -774,7 +774,7 @@ class Log_Window_2(QWidget):
 
     def del_from_clublog(self, row):
         record_object = self.data_from_row(row)
-        print("Standatrt record_object:_>", record_object)
+        #print("Standatrt record_object:_>", record_object)
         club_log = internetworker.Clublog(settingsDict)
         club_log.del_qso_ok.connect(self.del_from_clublog_ok)
         club_log.del_qso_no.connect(self.del_from_clublog_no)
@@ -2333,9 +2333,6 @@ class LogForm(QMainWindow):
         # try:
         self.cat_system.stop_cat()
 
-    # except Exception:
-    #    pass
-
     def set_cat_label(self, flag: bool):
         if flag:
             self.labelStatusCat_cat.setStyleSheet("font-weight: bold; color: #57BD79;")
@@ -2393,65 +2390,7 @@ class LogForm(QMainWindow):
                 # print("self.diploms:_>", diplom_data[0]['name'])
                 self.menu_add(diplom_data[0]['name'])
 
-        '''
-        catSettingsAction = QAction(QIcon('logo.png'), 'Cat settings', self)
-        catSettingsAction.setStatusTip('Name, Call and other of station')
-        catSettingsAction.triggered.connect(self.logSettings)
-        #
-        logWindowAction = QAction(QIcon('logo.png'), 'All log Window', self)
-        logWindowAction.setStatusTip('Name, Call and other of station')
-        logWindowAction.triggered.connect(self.logSettings)
-        #
-        searchWindowAction = QAction(QIcon('logo.png'), 'Search window', self)
-        searchWindowAction.setStatusTip('Name, Call and other of station')
-        searchWindowAction.triggered.connect(self.searchWindow)
-        #
-        importAdiAction = QAction(QIcon('logo.png'), 'Import ADI', self)
-        importAdiAction.setStatusTip('Name, Call and other of station')
-        importAdiAction.triggered.connect(self.logSettings)
-        #
-        exportAdiAction = QAction(QIcon('logo.png'), 'Export ADI', self)
-        exportAdiAction.setStatusTip('Name, Call and other of station')
-        exportAdiAction.triggered.connect(self.logSettings)
-        #
 
-        telnetAction = QAction(QIcon('logo.png'), 'Cluster window', self)
-        telnetAction.setStatusTip('Name, Call and other of station')
-        telnetAction.triggered.connect(self.logSettings)
-        #
-        newDiplomEnvAction = QAction(QIcon('logo.png'), 'New Diplom Env', self)
-        newDiplomEnvAction.setStatusTip('Name, Call and other of station')
-        newDiplomEnvAction.triggered.connect(self.logSettings)
-        #
-        helpAction = QAction(QIcon('logo.png'), 'New Diplom Env', self)
-        helpAction.setStatusTip('Name, Call and other of station')
-        helpAction.triggered.connect(self.logSettings)
-        #
-        aboutAction = QAction(QIcon('logo.png'), 'New Diplom Env', self)
-        aboutAction.setStatusTip('Name, Call and other of station')
-        aboutAction.triggered.connect(self.logSettings)
-        #
-        exitAction = QAction(QIcon('logo.png'), '&Exit', self)
-        exitAction.triggered.connect(QApplication.quit)
-
-        menuBar = self.menuBar()
-        mainMenu = menuBar.addMenu('&Menu')
-        mainMenu.addAction(logSettingsAction)
-        mainMenu.addAction(catSettingsAction)
-        searchWindowMenu = mainMenu.addMenu('Window')
-        searchWindowMenu.addAction(telnetAction)
-        searchWindowMenu.addAction(logWindowAction)
-        searchWindowMenu.addAction(searchWindowAction)
-        mainMenu.addAction(importAdiAction)
-        mainMenu.addAction(exportAdiAction)
-        diplomMenu = mainMenu.addMenu('Diplom Env.')
-        diplomMenu.addAction(newDiplomEnvAction)
-        mainMenu.addAction(exitAction)
-        ###
-        helpMenu = menuBar.addMenu('Help')
-        helpMenu.addAction(helpAction)
-        helpMenu.addAction(aboutAction)
-        '''
         # pass
 
     def menu_add(self, name_menu):
@@ -2849,7 +2788,9 @@ class LogForm(QMainWindow):
 
         country_lists = []
         country_list = []
+
         for keys in self.country_dict:
+            #print("keys", keys)
             for list_elem in self.country_dict[keys]['prefix']:
 
                 if call.find(list_elem) == 0:
@@ -2864,8 +2805,6 @@ class LogForm(QMainWindow):
                 country_list = country_lists[i]
                 country_list.pop(0)
         return country_list
-
-
 
     def set_country_label(self, country):
         self.country_label.setText(country)
@@ -2979,29 +2918,29 @@ class LogForm(QMainWindow):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
-                if settingsDict['search-internet-window'] == 'true':
+                if settingsDict['search-internet-window'] == 'True':
                     internetSearch.showMinimized()
-                    settingsDict['search-internet-window'] = 'true'
-                if settingsDict['log-search-window'] == 'true':
+                    settingsDict['search-internet-window'] = 'True'
+                if settingsDict['log-search-window'] == 'True':
                     logSearch.showMinimized()
-                    settingsDict['log-search-window'] = 'true'
-                if settingsDict['log-window'] == 'true':
+                    settingsDict['log-search-window'] = 'True'
+                if settingsDict['log-window'] == 'True':
                     logWindow.showMinimized()
-                    settingsDict['log-window'] = 'true'
-                if settingsDict['telnet-cluster-window'] == 'true':
+                    settingsDict['log-window'] = 'True'
+                if settingsDict['telnet-cluster-window'] == 'True':
                     telnetCluster.showMinimized()
-                    settingsDict['telnet-cluster-window'] = 'true'
+                    settingsDict['telnet-cluster-window'] = 'True'
             QWidget.changeEvent(self, event)
 
     def showEvent(self, event):
-        if settingsDict['log-window'] == 'true':
+        if settingsDict['log-window'] == 'True':
             logWindow.showNormal()
 
-        if settingsDict['log-search-window'] == 'true':
+        if settingsDict['log-search-window'] == 'True':
             logSearch.showNormal()
-        if settingsDict['telnet-cluster-window'] == 'true':
+        if settingsDict['telnet-cluster-window'] == 'True':
             telnetCluster.showNormal()
-        if settingsDict['search-internet-window'] == 'true':
+        if settingsDict['search-internet-window'] == 'True':
             internetSearch.showNormal()
 
     def closeEvent(self, event):
@@ -3011,77 +2950,60 @@ class LogForm(QMainWindow):
         Close app
         '''
         self.parameter = {}
-        if settingsDict['log-window'] == 'true':
-            logWindow_geometry = logWindow.geometry()
-            self.parameter.update({'log-window-left': str(logWindow_geometry.left()),
-                                   'log-window-top': str(logWindow_geometry.top()),
-                                   'log-window-width': str(logWindow_geometry.width()),
-                                   'log-window-height': str(logWindow_geometry.height())
-                                   })
-
-        if settingsDict['search-internet-window'] == 'true':
-            internetSearch_geometry = internetSearch.geometry()
-            self.parameter.update({'search-internet-left': str(internetSearch_geometry.left()),
-                                   'search-internet-top': str(internetSearch_geometry.top()),
-                                   'search-internet-width': str(internetSearch_geometry.width()),
-                                   'search-internet-height': str(internetSearch_geometry.height())
-                                   })
-        if settingsDict['log-search-window'] == 'true':
-            logSearch_geometry = logSearch.geometry()
-            self.parameter.update({'log-search-window-left': str(logSearch_geometry.left()),
-                                   'log-search-window-top': str(logSearch_geometry.top()),
-                                   'log-search-window-width': str(logSearch_geometry.width()),
-                                   'log-search-window-height': str(logSearch_geometry.height())
-                                   })
-        if settingsDict['log-form-window'] == 'true':
-            logForm_geometry = logForm.geometry()
-            self.parameter.update({'log-form-window-left': str(logForm_geometry.left()),
-                                   'log-form-window-top': str(logForm_geometry.top()),
-                                   'log-form-window-width': str(logForm_geometry.width()),
-                                   'log-form-window-height': str(logForm_geometry.height())
-                                   })
-        if settingsDict['telnet-cluster-window'] == 'true':
-            telnetCluster_geometry = telnetCluster.geometry()
-            self.parameter.update({'telnet-cluster-window-left': str(telnetCluster_geometry.left()),
-                                   'telnet-cluster-window-top': str(telnetCluster_geometry.top()),
-                                   'telnet-cluster-window-width': str(telnetCluster_geometry.width()),
-                                   'telnet-cluster-window-height': str(telnetCluster_geometry.height())
-                                   })
-        # self.parameter.update({"band": settingsDict['band']})
-        '''
         internetSearch_geometry = internetSearch.geometry()
-        settingsDict['search-internet-left'] = str(internetSearch_geometry.left())
-        settingsDict['search-internet-top'] = str(internetSearch_geometry.top())
-        settingsDict['search-internet-width'] = str(internetSearch_geometry.width())
-        settingsDict['search-internet-height'] = str(internetSearch_geometry.height())
-        ###
+        print(internetSearch.isVisible())
         logWindow_geometry = logWindow.geometry()
-        settingsDict['log-window-left'] = str(logWindow_geometry.left())
-        settingsDict['log-window-top'] = str(logWindow_geometry.top())
-        settingsDict['log-window-width'] = str(logWindow_geometry.width())
-        settingsDict['log-window-height'] = str(logWindow_geometry.height())
-        ###
         logSearch_geometry = logSearch.geometry()
-        settingsDict['log-search-window-left'] = str(logSearch_geometry.left())
-        settingsDict['log-search-window-top'] = str(logSearch_geometry.top())
-        settingsDict['log-search-window-width'] = str(logSearch_geometry.width())
-        settingsDict['log-search-window-height'] = str(logSearch_geometry.height())
-        ###
         logForm_geometry = logForm.geometry()
-        settingsDict['log-form-window-left'] = str(logForm_geometry.left())
-        settingsDict['log-form-window-top'] = str(logForm_geometry.top())
-        settingsDict['log-form-window-width'] = str(logForm_geometry.width())
-        settingsDict['log-form-window-height'] = str(logForm_geometry.height())
-        ###
         telnetCluster_geometry = telnetCluster.geometry()
-        settingsDict['telnet-cluster-window-left'] = str(telnetCluster_geometry.left())
-        settingsDict['telnet-cluster-window-top'] = str(telnetCluster_geometry.top())
-        settingsDict['telnet-cluster-window-width'] = str(telnetCluster_geometry.width())
-        settingsDict['telnet-cluster-window-height'] = str(telnetCluster_geometry.height())
+        self.parameter.update({'search-internet-left': str(internetSearch_geometry.left()),
+                               'search-internet-top': str(internetSearch_geometry.top()),
+                               'search-internet-width': str(internetSearch_geometry.width()),
+                               'search-internet-height': str(internetSearch_geometry.height()),
+                               'log-window-left': str(logWindow_geometry.left()),
+                               'log-window-top': str(logWindow_geometry.top()),
+                               'log-window-width': str(logWindow_geometry.width()),
+                               'log-window-height': str(logWindow_geometry.height()),
+                               'log-search-window-left': str(logSearch_geometry.left()),
+                               'log-search-window-top': str(logSearch_geometry.top()),
+                               'log-search-window-width': str(logSearch_geometry.width()),
+                               'log-search-window-height': str(logSearch_geometry.height()),
+                               'log-form-window-left': str(logForm_geometry.left()),
+                               'log-form-window-top': str(logForm_geometry.top()),
+                               'log-form-window-width': str(logForm_geometry.width()),
+                               'log-form-window-height': str(logForm_geometry.height()),
+                               'telnet-cluster-window-left': str(telnetCluster_geometry.left()),
+                               'telnet-cluster-window-top': str(telnetCluster_geometry.top()),
+                               'telnet-cluster-window-width': str(telnetCluster_geometry.width()),
+                               'telnet-cluster-window-height': str(telnetCluster_geometry.height()),
+                               'log-search-window': str(logSearch.isVisible()),
+                               'telnet-cluster-window': str(telnetCluster.isVisible()),
+                               'search-internet-window': str(internetSearch.isVisible()),
 
-        ###
-        '''
+                               })
 
+
+        #self.parameter.update({
+         #                      })
+
+
+
+
+       # self.parameter.update({
+        #                       })
+
+
+        #self.parameter.update({})
+
+
+
+        #self.parameter.update({
+         #                      })
+        #self.parameter.update({'log-search-window': str(logSearch.isVisible()),
+        #                       'telnet-cluster-window-height': str(telnetCluster.isVisible()),
+          #                   })
+
+        #print ("paameter:", self.parameter)
         logWindow.close()
         internetSearch.close()
         logSearch.close()
@@ -3116,8 +3038,11 @@ class LogForm(QMainWindow):
         with open(filename, 'r') as f:
             old_data = f.readlines()
         for line, string in enumerate(old_data):
+            key_in_file = string.split('=')
             for key in parameter:
-                if key in string:
+                #print (string)
+                if key == key_in_file[0]:
+                    #print(key, string)
                     string = key + "=" + parameter[key] + "\n"
                     old_data[line] = string
         with open(filename, 'w') as f:
@@ -3270,7 +3195,9 @@ class LogForm(QMainWindow):
 
     def refresh_interface(self):
         self.labelMyCall.setText(settingsDict['my-call'])
+        print("country_dict", self.country_dict )
         self.country_dict = self.get_country_dict()
+        print("country_dict OUT", self.country_dict)
         if settingsDict['mode-swl'] == 'enable':
             self.inputRstR.setText("SWL")
             self.inputRstR.setEnabled(False)
@@ -3373,7 +3300,7 @@ class clusterThread(QThread):
         splitString = []
         cleanList = []
         i = 0
-        print('Starting Telnet cluster:', HOST, ':', PORT, '\nCall:', call, '\n\n')
+        print('Starting Telnet cluster:', HOST, ':', PORT, '\nCall:', call, '\n')
         while 1:
             try:
                 output_data = telnetObj.read_until(b"\r\n")
@@ -3704,11 +3631,11 @@ class InternetSearch(QWidget):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
-                settingsDict['search-internet-window'] = 'false'
+                settingsDict['search-internet-window'] = 'False'
                 print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
                 # telnetCluster.showMinimized()
             elif self.isVisible():
-                settingsDict['search-internet-window'] = 'true'
+                settingsDict['search-internet-window'] = 'True'
                 print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
 
             QWidget.changeEvent(self, event)
@@ -4011,7 +3938,7 @@ class Db:
             records = cursor.execute(
                 "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC")
 
-        print(records)
+        #print(records)
         records_dict = cursor.fetchall()
         return records_dict
 
@@ -4026,7 +3953,7 @@ class Db:
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s", [call.strip()])
         records = cursor.fetchall()
-        print ("Search in Base Found record:_>", records)
+        #print ("Search in Base Found record:_>", records)
         return records
 
     def edit_qso(self, record_id, object_dict):
@@ -4238,19 +4165,19 @@ if __name__ == '__main__':
         app_env = AppEnv(env_dict)
 
 
-        if settingsDict['log-window'] == 'true':
+        if settingsDict['log-window'] == 'True':
             logWindow.show()
 
-        if settingsDict['log-search-window'] == 'true':
+        if settingsDict['log-search-window'] == 'True':
             logSearch.show()
 
-        if settingsDict['search-internet-window'] == 'true':
+        if settingsDict['search-internet-window'] == 'True':
             internetSearch.show()
 
-        if settingsDict['log-form-window'] == 'true':
+        if settingsDict['log-form-window'] == 'True':
             logForm.show()
 
-        if settingsDict['telnet-cluster-window'] == 'true':
+        if settingsDict['telnet-cluster-window'] == 'True':
             telnetCluster.show()
 
         if settingsDict['cat'] == 'enable':

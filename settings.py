@@ -1142,11 +1142,11 @@ class Menu (QWidget):
                     for elem in pfx_list_dark:
                         elem = elem.strip().upper()
                         pfx_list_clean.append(elem)
-                    itu = self.country_table.item(i,2).text()
-                    cq_zone = self.country_table.item(i,3).text()
-                    data_object.update({country : {'prefix': pfx_list_clean,'itu': itu,'cq-zone': cq_zone }})
+                    itu = self.country_table.item(i, 2).text()
+                    cq_zone = self.country_table.item(i, 3).text()
+                    data_object.update({country: {'prefix': pfx_list_clean,'itu': itu,'cq-zone': cq_zone }})
             except Exception:
-                print("Exception in row")
+                print("Exception in update country list str: 1149")
             #print(data_object)
 
         with open(self.settingsDict['country-file'], 'w') as f:
@@ -1181,7 +1181,7 @@ class Menu (QWidget):
     def save_and_exit_button(self):
 
         cluster_change_flag = self.store_new_settingsDict()
-
+        self.logForm.refresh_interface()
         filename = 'settings.cfg'
         with open(filename, 'r') as f:
             old_data = f.readlines()

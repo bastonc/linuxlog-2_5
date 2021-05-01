@@ -34,7 +34,7 @@ class internetWorker(QThread):
     def run(self):
         # print (self.callsign)
         info_from_internet_array = internetWorker.get_image_from_server(self)
-        #  print (info_from_internet_array)
+        print (info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
             pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 20,
