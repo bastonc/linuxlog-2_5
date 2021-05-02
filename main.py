@@ -57,7 +57,6 @@ class Settings_file:
         # print("Update_to_disk: ", old_data)
         return True
 
-
 class Adi_file:
 
     def __init__(self, app_version, settingsDict):
@@ -251,7 +250,6 @@ class Filter_event_table_qso(QObject):
         else:
             return False
 
-
 class Filter(QObject):
     previous_call = ''
 
@@ -440,7 +438,6 @@ class Qso_counter:
         qso_counter = self.counter
        # print ("Counter", counter)
 
-
 class Log_Window_2(QWidget):
 
     def __init__(self):
@@ -531,12 +528,12 @@ class Log_Window_2(QWidget):
         self.header_label = QLabel()
         self.header_label.setFont(QtGui.QFont('SansSerif', 9))
         #self.header_label.setStyleSheet(style+" size: 9px;")
-        self.header_label.hide()
+        #self.header_label.hide()
 
         self.menu_log_button = QHBoxLayout()
         #self.menu_log_button.addWidget(self.refresh_button)
         #self.menu_log_button.addWidget(self.filter_button)
-        self.menu_log_button.addWidget(self.header_label)
+        #self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
         # Set layouts
@@ -1204,7 +1201,8 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
         self.load_bar.hide()
-        self.header_label.show()
+        #self.header_label
+        #self.header_label.show()
         self.fill_flag = 0
 
         #self.tableWidget_qso.hide()
@@ -1547,7 +1545,7 @@ class LogSearch(QWidget):
 class check_update():
 
     def __init__(self, APP_VERSION, settingsDict, parrentWindow):
-        super().__init__()
+        #super().__init__()
         self.version = APP_VERSION
         self.settingsDict = settingsDict
         self.parrent = parrentWindow
@@ -2285,7 +2283,6 @@ class FreqWindow(QWidget):
         Settings_file.update_file_to_disk(self)
         self.close()
 
-
 class LogForm(QMainWindow):
 
     def __init__(self):
@@ -2299,6 +2296,58 @@ class LogForm(QMainWindow):
 
         # print("self.Diploms in logForm init:_>", self.diploms)
 
+    def get_coordinate_windows(self):
+        '''
+        This method packing coordinates and visibale state in
+        dictionary
+         {key (name coordiantes in config-file): value
+
+        :return: dict: {name coordiantes in config-file: value}
+        '''
+        self.parameter = {}
+        internetSearch_geometry = internetSearch.geometry()
+        print(internetSearch.isVisible())
+        logWindow_geometry = logWindow.geometry()
+        logSearch_geometry = logSearch.geometry()
+        logForm_geometry = logForm.geometry()
+        telnetCluster_geometry = telnetCluster.geometry()
+        self.parameter.update({'search-internet-left': str(internetSearch_geometry.left()),
+                               'search-internet-top': str(internetSearch_geometry.top()),
+                               'search-internet-width': str(internetSearch_geometry.width()),
+                               'search-internet-height': str(internetSearch_geometry.height()),
+                               'log-window-left': str(logWindow_geometry.left()),
+                               'log-window-top': str(logWindow_geometry.top()),
+                               'log-window-width': str(logWindow_geometry.width()),
+                               'log-window-height': str(logWindow_geometry.height()),
+                               'log-search-window-left': str(logSearch_geometry.left()),
+                               'log-search-window-top': str(logSearch_geometry.top()),
+                               'log-search-window-width': str(logSearch_geometry.width()),
+                               'log-search-window-height': str(logSearch_geometry.height()),
+                               'log-form-window-left': str(logForm_geometry.left()),
+                               'log-form-window-top': str(logForm_geometry.top()),
+                               'log-form-window-width': str(logForm_geometry.width()),
+                               'log-form-window-height': str(logForm_geometry.height()),
+                               'telnet-cluster-window-left': str(telnetCluster_geometry.left()),
+                               'telnet-cluster-window-top': str(telnetCluster_geometry.top()),
+                               'telnet-cluster-window-width': str(telnetCluster_geometry.width()),
+                               'telnet-cluster-window-height': str(telnetCluster_geometry.height()),
+                               'log-search-window': str(logSearch.isVisible()),
+                               'telnet-cluster-window': str(telnetCluster.isVisible()),
+                               'search-internet-window': str(internetSearch.isVisible()),
+
+                               })
+        return self.parameter
+
+    def save_coordinate_to_profile(self):
+        name = "Test"
+        json_list = []
+        self.coordinates = self.get_coordinate_windows()
+        self.coordinates.update({"name":name})
+        json_list.append(self.coordinates)
+        json_string = json.dumps(json_list)
+        print("json_string:_>", json_string)
+        self.param = {'coordinate-profile': json_string}
+        self.remember_in_cfg(self.param)
 
     def set_data_qso(self, found_list):
         #print("Found_list:", found_list)
@@ -2362,6 +2411,8 @@ class LogForm(QMainWindow):
         #
         window_repeat_qso_action = QAction('Repeat QSO', self)
         window_repeat_qso_action.triggered.connect(self.stat_repeat_qso)
+        profile_name = QAction("Profil_1", self)
+        profile_name.triggered.connect(self.save_coordinate_to_profile)
 
         self.menuBarw = self.menuBar()
         self.menuBarw.setStyleSheet("QWidget{font: 12px;}")
@@ -2372,6 +2423,9 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
+        #ViewMenu = self.menuBarw.addMenu('&View')
+        #ViewMenu.addMenu()
+        #ViewMenu.addAction(profile_name)
 ####### Diploms
         #self.otherMenu = self.menuBarw.addMenu('&Diploms')
         #window_form_diplom = QAction('New diploma', self)
@@ -2439,6 +2493,7 @@ class LogForm(QMainWindow):
 
     def about_window(self):
         # print("About_window")
+        pass
         about_window.show()
 
     def searchWindow(self):
@@ -2949,8 +3004,9 @@ class LogForm(QMainWindow):
         Save coordinate and size all window
         Close app
         '''
-        self.parameter = {}
-        internetSearch_geometry = internetSearch.geometry()
+
+        self.parameter = self.get_coordinate_windows()
+        '''internetSearch_geometry = internetSearch.geometry()
         print(internetSearch.isVisible())
         logWindow_geometry = logWindow.geometry()
         logSearch_geometry = logSearch.geometry()
@@ -2981,29 +3037,8 @@ class LogForm(QMainWindow):
                                'search-internet-window': str(internetSearch.isVisible()),
 
                                })
-
-
-        #self.parameter.update({
-         #                      })
-
-
-
-
-       # self.parameter.update({
-        #                       })
-
-
-        #self.parameter.update({})
-
-
-
-        #self.parameter.update({
-         #                      })
-        #self.parameter.update({'log-search-window': str(logSearch.isVisible()),
-        #                       'telnet-cluster-window-height': str(telnetCluster.isVisible()),
-          #                   })
-
-        #print ("paameter:", self.parameter)
+                               '''
+        ###
         logWindow.close()
         internetSearch.close()
         logSearch.close()
@@ -3268,7 +3303,6 @@ class LogForm(QMainWindow):
                 names_diploms.append(list_string[i]['name_programm'])
         return names_diploms
 
-
 class clusterThread(QThread):
     reciev_spot_signal = pyqtSignal()
 
@@ -3410,7 +3444,6 @@ class clusterThread(QThread):
 
             except:
                 continue
-
 
 class TelnetCluster(QWidget):
 
@@ -3595,7 +3628,6 @@ class TelnetCluster(QWidget):
 
         self.setStyleSheet(style)
 
-
 class InternetSearch(QWidget):
 
     def __init__(self):
@@ -3654,7 +3686,6 @@ class InternetSearch(QWidget):
                 settingsDict['color'] + ";"
         self.labelImage.setStyleSheet(style)
         self.setStyleSheet(style)
-
 
 class hello_window(QWidget):
 
@@ -3736,7 +3767,6 @@ class hello_window(QWidget):
             Messages("Oops!", "Please enter correct HAM callsign")
             self.welcome_text_label.setText("Please enter you callsign")
         #print("Ok_button")
-
 
 class settings_file:
 
@@ -3982,7 +4012,7 @@ class Db:
             cursor.execute("DELETE FROM " + settingsDict['my-call'] + " WHERE `id`=%s", [int(record_id)])
             connect.commit()
 
-class Preloader(QWidget):
+'''class Preloader(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
@@ -4007,7 +4037,7 @@ class Test(QObject):
 
     def test(self):
         pass
-
+'''
 class Messages (QWidget):
     def __init__(self, caption, text_message):
         super().__init__()
@@ -4166,26 +4196,31 @@ if __name__ == '__main__':
 
 
         if settingsDict['log-window'] == 'True':
-            logWindow.show()
+            pass
+            #logWindow.show()
 
         if settingsDict['log-search-window'] == 'True':
-            logSearch.show()
+            #logSearch.show()
+            pass
 
         if settingsDict['search-internet-window'] == 'True':
-            internetSearch.show()
+            #internetSearch.show()
+            pass
 
         if settingsDict['log-form-window'] == 'True':
             logForm.show()
-
+            #
         if settingsDict['telnet-cluster-window'] == 'True':
-            telnetCluster.show()
+            pass
+            #telnetCluster.show()
 
         if settingsDict['cat'] == 'enable':
-            logForm.start_cat()
-            # pass
+            pass
+            #logForm.start_cat()
+
 
         if settingsDict['tci'] == 'enable':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
-            tci_sndr = tci.Tci_sender(settingsDict["tci-server"]+":"+settingsDict["tci-port"], "Disable")
+            tci_sndr = tci.Tci_sender(settingsDict["tci-server"]+":"+settingsDict["tci-port"], "Disable", logForm)
 
     sys.exit(app.exec_())

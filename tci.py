@@ -147,20 +147,23 @@ class Tci_reciever(QThread):
             #self.ws.close()
 
 
-class Tci_sender (QApplication):
+class Tci_sender (QtCore.QObject):
 
-    def __init__(self, uri, tx_flag):
-
+    def __init__(self, uri, tx_flag, log_form):
+        #super().__init__()
+        self.log_form = log_form
+        self.tx_flag = tx_flag
         try:
-         self.uri = uri
-         self.ws = websocket.WebSocket()
-         self.ws.connect(self.uri)
-         #self.ws.send("READY;")
-         self.tx_flag = tx_flag
+             self.uri = uri
+             self.ws = websocket.WebSocket()
+             self.ws.connect(self.uri)
+             #self.ws.send("READY;")
+
 
 
         except:
             self.log_form.set_tci_stat('Check')
+
             print("Can't connect to Tci_sender __init__:", uri)
 
 
@@ -187,8 +190,11 @@ class Tci_sender (QApplication):
         #print("TX stat:", self.tx_flag)
         # check enable TX mode
         if self.tx_flag != "Enable":
-            string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
-            self.ws.send(string_command)
+            try:
+                string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
+                self.ws.send(string_command)
+            except BaseException:
+                pass
 
     def del_spot(self, call):
         if self.tx_flag != "Enable":
