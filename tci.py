@@ -74,54 +74,65 @@ class Tci_reciever(QThread):
                 time.sleep(2)
 
                 continue
+        old_reciever = ""
         while self.flag == "run":
             try:
                 #print("Connect to ")
                 reciever = self.ws.recv()
-                #print("Tci_reciever.run: from socket (esdr):_>", reciever)
-                tci_string=reciever.split(":")
-                # reciev vfo (freq)
-                if tci_string[0] == 'trx':
-                    #self.tx = 'Enable'
-                    values = tci_string[1].split(",")
-                    #print("TRX:_>", values[1])
-                    if values[1] == 'true;':
-                        self.tx_flag.emit('Enable')
-                        self.tx = 'Enable'
-                    elif values[1] == 'false;':
-                        self.tx = 'Disable'
-                        self.tx_flag.emit('Disable')
+                if reciever != old_reciever:
+                    print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                    tci_string=reciever.split(":")
+                    # reciev vfo (freq)
 
-                if tci_string[0] == 'vfo':
-                    values = tci_string[1].split(",")
-                    if values[1] == '0' and values[0] == '0':
+                    if tci_string[0] == 'trx':
+                        #self.tx = 'Enable'
+                        values = tci_string[1].split(",")
+                        #print("TRX:_>", values[1])
+                        if values[1] == 'true;':
+                            self.tx_flag.emit('Enable')
+                            self.tx = 'Enable'
+                        elif values[1] == 'false;':
+                            self.tx = 'Disable'
+                            self.tx_flag.emit('Disable')
 
-                        self.log_form.set_freq(values[2].replace(';', ''))
+                    if tci_string[0] == 'vfo':
+                        values = tci_string[1].split(",")
+                        if values[1] == '0' and values[0] == '0':
+                            print("set freq:")
+                            self.log_form.set_freq(values[2].replace(';', ''))
 
-                # reciev protocol
-                        #print("Частота:", values[2])
-                if tci_string[0] == 'protocol':
-                    values = tci_string[1].replace(',', ' ')
-                    values = values.replace(";", "")
-                    self.log_form.set_tci_stat('•TCI: '+ values)
-                # reciev mode
-                if tci_string[0] == 'modulation':
-                     values = tci_string[1].split(",")
-                     if values[0] == '0':
-                         self.log_form.set_mode_tci(values[1].replace(';', ''))
+                    # reciev protocol
+                            #print("Частота:", values[2])
+                    if tci_string[0] == 'protocol':
+                        values = tci_string[1].replace(',', ' ')
+                        values = values.replace(";", "")
+                        self.log_form.set_tci_stat('•TCI: '+ values)
 
-                # reciev spot call
-                if tci_string[0] == 'clicked_on_spot':
-                    print("clicked_on_spot:_>", tci_string)
-                    values = tci_string[1].split(",")
-                    print("clicked_on_spot:_>", values)
-                    self.log_form.set_call(call=values[0].strip())
-                    band = std.std().get_std_band(values[1].strip().replace(";",""))
-                    print("band>", band)
-                    mode = std.std().mode_band_plan(band, values[1].strip().replace(";",""))
-                    print("mode>", mode)
-                    #self.log_form.set_mode_tci(mode.lower())
-                    Tci_sender(self.settingsDict['tci-server']+":"+self.settingsDict['tci-port']).set_mode("0",mode)
+                    # reciev mode
+                    if tci_string[0] == 'modulation':
+                         values = tci_string[1].split(",")
+                         if values[0] == '0':
+                             #print("values[1].replace(';', '')",values[2].replace(';', ''))
+                             self.log_form.set_mode_tci(values[2].replace(';', ''))
+
+                    #if tci_string[0] == 'ready':
+                    #     print("server: ready;")
+                    #     self.log_form.sendMesageToTCI("ready;")
+
+
+                    # reciev spot call
+                    if tci_string[0] == 'clicked_on_spot':
+                        print("clicked_on_spot:_>", tci_string)
+                        values = tci_string[1].split(",")
+                        print("clicked_on_spot:_>", values)
+                        self.log_form.set_call(call=values[0].strip())
+                        band = std.std().get_std_band(values[1].strip().replace(";",""))
+                        print("band>", band)
+                        mode = std.std().mode_band_plan(band, values[1].strip().replace(";",""))
+                        print("mode>", mode)
+                        self.log_form.set_mode_tci(mode.lower())
+                        Tci_sender(self.settingsDict['tci-server']+":"+self.settingsDict['tci-port']).set_mode("0",mode)
+                    old_reciever = reciever
 
 
 
@@ -140,7 +151,7 @@ class Tci_reciever(QThread):
                 except:
                     time.sleep(2)
                     self.log_form.set_tci_label_found()
-                #time.sleep(2)
+                    #time.sleep(2)
                 continue
 
         #else:

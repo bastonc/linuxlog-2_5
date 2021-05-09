@@ -22,6 +22,7 @@ import json
 import requests
 import cat
 import pymysql
+from functools import partial
 from os.path import expanduser
 from pymysql.cursors import DictCursor
 from bs4 import BeautifulSoup
@@ -1259,7 +1260,10 @@ class Log_Window_2(QWidget):
         db.edit_qso(record_id, new_object)
 
     def refresh_interface(self):
-
+        self.setGeometry(int(settingsDict['log-window-left']),
+                         int(settingsDict['log-window-top']),
+                         int(settingsDict['log-window-width']),
+                         int(settingsDict['log-window-height']))
         self.update_color_schemes()
 
     def update_color_schemes(self):
@@ -1524,6 +1528,9 @@ class LogSearch(QWidget):
         # print(self.foundList)
 
     def refresh_interface(self):
+
+        self.setGeometry(int(settingsDict['log-search-window-left']), int(settingsDict['log-search-window-top']),
+                         int(settingsDict['log-search-window-width']), int(settingsDict['log-search-window-height']))
 
         self.update_color_schemes()
 
@@ -2269,6 +2276,7 @@ class FreqWindow(QWidget):
                             + self.settings_dict['color'] + ";"
         self.style_mem_label = "background:" + self.settings_dict['form-background'] + \
                                "; color:" + self.settings_dict['color-table'] + "; font: 12px"
+
         self.updatesEnabled()
 
     def closeEvent(self, event):
@@ -2338,16 +2346,61 @@ class LogForm(QMainWindow):
                                })
         return self.parameter
 
+    def save_coordinate_to_new_profile(self):
+
+        self.name = std.wnd_what("Save Profile as...")
+        self.name.ok.connect(self.save_profile_name)
+
     def save_coordinate_to_profile(self):
-        name = "Test"
-        json_list = []
+        self.coordinates_w = self.get_coordinate_windows()
+        print(self.coordinates_w)
+        profile_list = json.loads(settingsDict['coordinate-profile'])
+
+        for elem in profile_list:
+            if elem['name'] == settingsDict['active-profile']:
+                elem.update(self.coordinates_w)
+        json_string = json.dumps(profile_list)
+        settingsDict['coordinate-profile'] = json_string
+        self.param = {'coordinate-profile': json_string,
+                      'active-profile': settingsDict['active-profile']}
+        self.remember_in_cfg(self.param)
+
+    @QtCore.pyqtSlot(str)
+    def save_profile_name(self, name):
+        json_list = json.loads(settingsDict['coordinate-profile'])
         self.coordinates = self.get_coordinate_windows()
-        self.coordinates.update({"name":name})
+        self.coordinates.update({"name": name})
         json_list.append(self.coordinates)
         json_string = json.dumps(json_list)
-        print("json_string:_>", json_string)
-        self.param = {'coordinate-profile': json_string}
+       # print("json_string:_>", json_string)
+        settingsDict['coordinate-profile'] = json_string
+        self.param = {'coordinate-profile': json_string,
+                      'active-profile': name}
         self.remember_in_cfg(self.param)
+        settingsDict['active-profile'] = name
+        self.update_cordinates()
+        self.profile_name = QAction(name)
+        self.profile_name.triggered.connect(partial(self.set_active_profile, settingsDict['active-profile']))
+        self.profiles.addAction(self.profile_name)
+
+    def update_cordinates(self):
+        json_list = json.loads(settingsDict['coordinate-profile'])
+        for elem in json_list:
+            if elem['name'] == settingsDict['active-profile']:
+                for key in elem:
+                    if key != "name":
+                        settingsDict[key]=elem[key]
+        logSearch.refresh_interface()
+        logWindow.refresh_interface()
+        telnetCluster.refresh_interface()
+        internetSearch.refresh_interface()
+        logForm.refresh_interface()
+
+    def change_profile(self, text):
+        print(text)
+
+    def sendMesageToTCI(self, message):
+        tci_sndr.send_command(message)
 
     def set_data_qso(self, found_list):
         #print("Found_list:", found_list)
@@ -2402,18 +2455,29 @@ class LogForm(QMainWindow):
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         logSettingsAction.triggered.connect(self.logSettings)
         #
-        window_cluster_action = QAction('Cluster', self)
+        window_cluster_action = QAction('Cluster window', self)
         # windowAction.setStatusTip('Name, Call and other of station')
         window_cluster_action.triggered.connect(self.stat_cluster)
         #
-        window_inet_search_action = QAction('Internet search', self)
+        window_inet_search_action = QAction('Image window', self)
         window_inet_search_action.triggered.connect(self.stat_internet_search)
         #
-        window_repeat_qso_action = QAction('Repeat QSO', self)
+        window_repeat_qso_action = QAction('Repeats window', self)
         window_repeat_qso_action.triggered.connect(self.stat_repeat_qso)
-        profile_name = QAction("Profil_1", self)
-        profile_name.triggered.connect(self.save_coordinate_to_profile)
+        profile_name = QAction("Save profile as", self)
 
+        profile_name.triggered.connect(self.save_coordinate_to_new_profile)
+        profile_save = QAction("Save profile", self)
+        profile_save.triggered.connect(self.save_coordinate_to_profile)
+        self.profiles = QMenu("Profiles")
+        self.profiles.setStyleSheet("QWidget{font: 10px; background-color: "+settingsDict['background-color'] + "; color: " + settingsDict['color']+";}")
+
+        #self.profiles.addSection()
+        self.profiles.addAction(profile_name)
+        self.profiles.addAction(profile_save)
+        self.profiles.addSeparator()
+        self.profiles.addSeparator()
+        #self.profiles.addAction()
         self.menuBarw = self.menuBar()
         self.menuBarw.setStyleSheet("QWidget{font: 12px;}")
         #  settings_menu = menuBar.addMenu('Settings')
@@ -2423,8 +2487,20 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        #ViewMenu = self.menuBarw.addMenu('&View')
-        #ViewMenu.addMenu()
+        ViewMenu = self.menuBarw.addMenu('&View')
+        ViewMenu.setStyleSheet("QWidget{font: 12px;}")
+        ViewMenu.addMenu(self.profiles)
+        profiles = json.loads(settingsDict["coordinate-profile"])
+        profile_action_list =[]
+        for profile in profiles:
+            tmp_profile = QAction(profile['name'], self)
+            #tmp_profile.setChecked(True)
+            tmp_profile.setCheckable(True)
+            tmp_profile.triggered.connect(partial(self.set_active_profile, profile['name']))
+            profile_action_list.append(tmp_profile)
+        for profile_action in profile_action_list:
+            self.profiles.addAction(profile_action)
+
         #ViewMenu.addAction(profile_name)
 ####### Diploms
         #self.otherMenu = self.menuBarw.addMenu('&Diploms')
@@ -2446,6 +2522,10 @@ class LogForm(QMainWindow):
 
 
         # pass
+    def set_active_profile(self, name):
+        print(name)
+        settingsDict['active-profile'] = name
+        self.update_cordinates()
 
     def menu_add(self, name_menu):
         pass
@@ -2939,8 +3019,7 @@ class LogForm(QMainWindow):
 
             try:
                 if settingsDict['tci'] == "enable":
-                    tci.Tci_sender(settingsDict['tci-server'] + ":" + settingsDict['tci-port']).change_color_spot(call,
-                                                                                                                  freq)
+                    tci_sndr.change_color_spot(call, freq)
             except:
                 print("LogFormInput:_> Can't connect to TCI server (set spot)")
 
@@ -3159,7 +3238,9 @@ class LogForm(QMainWindow):
     def set_call(self, call):
         self.inputCall.setText(str(call))
 
-    def set_mode_tci(self, mode):
+    def set_mode_tci(self, mode_input):
+        mode = str(mode_input).lower()
+        print("mode:", mode)
         if mode == "lsb" or mode == "usb":
             mode_string = 'SSB'
         if mode == "am" or mode == "sam":
@@ -3229,10 +3310,10 @@ class LogForm(QMainWindow):
         return freq_string
 
     def refresh_interface(self):
+        self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
+                         int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.labelMyCall.setText(settingsDict['my-call'])
-        print("country_dict", self.country_dict )
         self.country_dict = self.get_country_dict()
-        print("country_dict OUT", self.country_dict)
         if settingsDict['mode-swl'] == 'enable':
             self.inputRstR.setText("SWL")
             self.inputRstR.setEnabled(False)
@@ -3245,7 +3326,7 @@ class LogForm(QMainWindow):
                 self.freq_input_window.refresh_interface()
         except Exception:
             pass
-        print("setingsDict['cat']:_>", settingsDict['cat'])
+        #print("setingsDict['cat']:_>", settingsDict['cat'])
         if settingsDict['cat'] == "enable":
             try:
                 self.start_cat()
@@ -3476,9 +3557,10 @@ class TelnetCluster(QWidget):
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
         self.setStyleSheet(style)
-        self.labelIonosphereStat = QLabel()
+        self.labelIonosphereStat = QLabel("Ionosphere status")
         self.labelIonosphereStat.setFixedWidth(250)
-        self.labelIonosphereStat.setStyleSheet("font: 10px;")
+        self.labelIonosphereStat.setFixedHeight(10)
+        self.labelIonosphereStat.setStyleSheet("font: 9px;")
         #self.labelIonosphereStat.setText("A=12, K=23, F=21, No storm, no storm")
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
@@ -3496,6 +3578,7 @@ class TelnetCluster(QWidget):
         # self.tableWidget.resizeColumnsToContents()
         # self.tableWidget.move(0, 0)
         self.layout = QVBoxLayout(self)
+        self.layout.setSpacing(3)
         self.layout.addWidget(self.labelIonosphereStat)
         self.layout.addWidget(self.tableWidget)
         self.setLayout(self.layout)
@@ -3610,6 +3693,10 @@ class TelnetCluster(QWidget):
             QWidget.changeEvent(self, event)
 
     def refresh_interface(self):
+        self.setGeometry(int(settingsDict['telnet-cluster-window-left']),
+                         int(settingsDict['telnet-cluster-window-top']),
+                         int(settingsDict['telnet-cluster-window-width']),
+                         int(settingsDict['telnet-cluster-window-height']))
 
         self.update_color_schemes()
 
@@ -3679,6 +3766,11 @@ class InternetSearch(QWidget):
         self.labelImage.setPixmap(pixmap)
 
     def refresh_interface(self):
+        self.setGeometry(int(settingsDict['search-internet-left']),
+                         int(settingsDict['search-internet-top']),
+                         int(settingsDict['search-internet-width']),
+                         int(settingsDict['search-internet-height']))
+
         self.update_color_schemes()
 
     def update_color_schemes(self):
@@ -3734,7 +3826,7 @@ class hello_window(QWidget):
 
     def ok_button_push(self):
         if self.call_input.text().strip() != "" and len(self.call_input.text().strip()) >= 3:
-            db_name = 'linuxlog'
+            db_name = settingsDict['db-name']
             db = Db(settingsDict)
             answer = db.check_database(db_name)
             print ("Answer:", answer)
@@ -3748,14 +3840,33 @@ class hello_window(QWidget):
             else:
                 if settingsDict['db-name'] == '':
                     settingsDict['db-name'] = db_name
+                    settingsDict['my-call'] = self.call_input.text().strip().upper()
+                    connect = Db(settingsDict).get_all_records(1)
+                    print("Connect:", connect)
                 table = Db(settingsDict).create_table(
                         self.call_input.text().strip().upper(),
                         self.table_columns
                     )
+            #print("Table:", table)
+            #table=1
             if table != 0:
-
-                Messages("DB ERROR", "Can't create table for " + self.call_input.text().strip().upper() +"\n" + table)
-                print ("Error create table")
+                settingsDict['my-call'] = self.call_input.text().strip().upper()
+                try:
+                    connect = Db(settingsDict).get_all_records(2)
+                    print("Connect:", connect)
+                    settings_file.save_all_settings(self, settingsDict)
+                    hello_window.close()
+                    subprocess.call(["python3", "main.py"])
+                    exit(0)
+                except BaseException:
+                    try:
+                        table = Db(settingsDict).create_table(
+                            self.call_input.text().strip().upper(),
+                            self.table_columns
+                        )
+                    except Exception:
+                        Messages("DB ERROR", "Can't create table for " + str(self.call_input.text().strip().upper()) +"\n" + str(table))
+                #print ("Error create table")
             else:
                 settingsDict['my-call'] = self.call_input.text().strip().upper()
                 settings_file.save_all_settings(self, settingsDict)

@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QLineEdit, QWidget, QLabel, QPushButton, \
+    QVBoxLayout, QApplication
+from PyQt5 import QtCore
 
 class std:
     def __init__(self):
@@ -148,3 +150,40 @@ class std:
             time_string += digit_new
         #print("time_string", time_string)
         return time_string
+
+class wnd_what(QWidget):
+    ok = QtCore.pyqtSignal(str)
+    def __init__(self, header_text):
+        super(wnd_what, self).__init__()
+        self.header_text = header_text
+        self.initUI()
+
+    def initUI(self):
+        desktop = QApplication.desktop()
+        width_coordinate = (desktop.width() / 2 - 75)
+        height_coordinate = (desktop.height() / 2) - 40
+        self.setGeometry(round(width_coordinate), round(height_coordinate), 300, 80)
+
+        self.setFixedWidth(170)
+        self.setFixedHeight(90)
+        self.label = QLabel(str(self.header_text))
+        self.input_line = QLineEdit()
+        self.input_line.setFixedWidth(150)
+        self.input_line.setFixedHeight(25)
+        self.button_ok = QPushButton("Save")
+        self.button_ok.setFixedWidth(50)
+        self.button_ok.setFixedHeight(20)
+        self.button_ok.clicked.connect(self.out_data)
+        self.v_box = QVBoxLayout()
+        #self.v_box.alignmentRect()
+        self.v_box.totalHeightForWidth(100)
+        self.v_box.addWidget(self.label)
+        self.v_box.addWidget(self.input_line)
+        self.v_box.addWidget(self.button_ok)
+        self.setLayout(self.v_box)
+        self.show()
+    def out_data(self):
+        if self.input_line.text().strip() != '':
+            self.ok.emit(self.input_line.text().strip())
+            self.close()
+            return self.input_line.text().strip()
