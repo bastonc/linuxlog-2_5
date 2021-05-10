@@ -2399,6 +2399,12 @@ class LogForm(QMainWindow):
     def change_profile(self, text):
         print(text)
 
+    def tx_tci(self, flag):
+        print("FLag", flag)
+        if flag == "restart":
+            print("FLag", flag)
+            tci_sndr.update_tx_tci()
+
     def sendMesageToTCI(self, message):
         tci_sndr.send_command(message)
 
@@ -2464,8 +2470,10 @@ class LogForm(QMainWindow):
         #
         window_repeat_qso_action = QAction('Repeats window', self)
         window_repeat_qso_action.triggered.connect(self.stat_repeat_qso)
-        profile_name = QAction("Save profile as", self)
+        window_cw_module = QAction("CW Machine", self)
+        window_cw_module.triggered.connect(self.cw_machine_gui)
 
+        profile_name = QAction("Save profile as", self)
         profile_name.triggered.connect(self.save_coordinate_to_new_profile)
         profile_save = QAction("Save profile", self)
         profile_save.triggered.connect(self.save_coordinate_to_profile)
@@ -2487,6 +2495,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
+        WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
@@ -2579,6 +2588,21 @@ class LogForm(QMainWindow):
     def searchWindow(self):
 
         logSearch.hide()
+
+    def cw_machine_gui(self):
+        self.cw_machine = CW(self,settingsDict)
+        self.cw_machine.show()
+
+    def get_call(self):
+        return self.inputCall.text().strip()
+    def get_rst_s(self):
+        return self.inputRstS.text().strip()
+    def get_rst_r(self):
+        return self.inputRstR.text().strip()
+    def get_name(self):
+        return self.inputName.text().strip()
+    def get_qth(self):
+        return self.inputQth.text().strip()
 
     def initUI(self):
         font = QFont(settingsDict['font-app'], 10, QFont.Normal)
@@ -3125,7 +3149,14 @@ class LogForm(QMainWindow):
         telnetCluster.close()
 
         try:
+            if self.cw_machine.isEnabled():
+                self.cw_machine.close()
+        except Exception:
+            pass
+
+        try:
             if self.menu.isEnabled():
+                self.menu.before_close_save()
                 self.menu.close()
         except Exception:
             pass
@@ -3383,6 +3414,255 @@ class LogForm(QMainWindow):
                                                              list_string[i]['name_programm'] + ".rules")
                 names_diploms.append(list_string[i]['name_programm'])
         return names_diploms
+
+class CW(QWidget):
+    def __init__(self, parent_window, settings_dict):
+        super(CW, self).__init__()
+        self.parent_window = parent_window
+        self.settings_dict = settings_dict
+        self.initUI()
+
+    def initUI(self):
+        if settingsDict['cw-top'] == "":
+            desktop = QApplication.desktop()
+            # self.setGeometry(100,100,210,100)
+            width_coordinate = (desktop.width() / 2) - 100
+            height_coordinate = (desktop.height() / 2) - 100
+            # self.setWindowModified(False)
+            #self.setFixedHeight(270)
+            #self.setFixedWidth(320)
+            width = 400
+            height = 220
+        else:
+            width_coordinate = self.settings_dict['cw-left']
+            height_coordinate = self.settings_dict['cw-top']
+            width = self.settings_dict['cw-width']
+            height = self.settings_dict['cw-height']
+        self.style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
+            'color'] + ";"
+        self.style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
+            'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
+
+        self.setGeometry(int(width_coordinate), int(height_coordinate), int(width), int(height))
+        self.setStyleSheet(self.style)
+        self.cq_button_1 = QPushButton("CQ")
+        #self.cq_button_1.setStyleSheet(self.parent_window.)
+        self.cq_button_1.setFixedWidth(30)
+        self.cq_button_1.setFixedHeight(30)
+        self.cq_button_1.clicked.connect(self.send_cw)
+        self.cq_button_1.setStyleSheet(self.style)
+        self.cq_line_edit_1 = QLineEdit()
+        self.cq_line_edit_1.setStyleSheet(self.style_table)
+        self.cq_line_edit_1.setFixedHeight(30)
+        self.cq_line_edit_1.setText(settingsDict['cw-cq-string'])
+        self.cq_line = QHBoxLayout()
+        self.cq_line.addWidget(self.cq_button_1)
+        self.cq_line.addWidget(self.cq_line_edit_1)
+
+        self.answer_button_1 = QPushButton("1")
+        # self.cq_button_1.setStyleSheet(self.parent_window.)
+        self.answer_button_1.setFixedWidth(30)
+        self.answer_button_1.setFixedHeight(30)
+        self.answer_button_1.setStyleSheet(self.style)
+        self.answer_button_1.clicked.connect(self.send_cw)
+        self.answer_line_edit_1 = QLineEdit()
+        self.answer_line_edit_1.setStyleSheet(self.style_table)
+        self.answer_line_edit_1.setFixedHeight(30)
+        self.answer_line_edit_1.setText(settingsDict['cw-answer-string'])
+        self.answer_line = QHBoxLayout()
+        self.answer_line.addWidget(self.answer_button_1)
+        self.answer_line.addWidget(self.answer_line_edit_1)
+
+        self.final_button_1 = QPushButton("2")
+        # self.cq_button_1.setStyleSheet(self.parent_window.)
+        self.final_button_1.setFixedWidth(30)
+        self.final_button_1.setFixedHeight(30)
+        self.final_button_1.setStyleSheet(self.style)
+        self.final_button_1.clicked.connect(self.send_cw)
+        self.final_line_edit_1 = QLineEdit()
+        self.final_line_edit_1.setStyleSheet(self.style_table)
+        self.final_line_edit_1.setFixedHeight(30)
+        self.final_line_edit_1.setText(settingsDict['cw-final-string'])
+        self.final_line = QHBoxLayout()
+        self.final_line.addWidget(self.final_button_1)
+        self.final_line.addWidget(self.final_line_edit_1)
+
+        self.wpm_linedit=QLineEdit()
+        self.wpm_linedit.setFixedHeight(20)
+        self.wpm_linedit.setFixedWidth(30)
+        self.wpm_linedit.setStyleSheet(self.style_table)
+        self.wpm_linedit.setText(self.settings_dict['wpm'])
+        self.wpm_button = QPushButton("Set")
+        self.wpm_button.setFixedWidth(30)
+        self.wpm_button.setFixedHeight(20)
+        self.wpm_button.setStyleSheet(self.style)
+        self.wpm_button.clicked.connect(self.change_status)
+        self.wpm_label=QLabel("WPM")
+        self.wpm_label.setFixedWidth(30)
+        self.wpm_label.setStyleSheet(self.style)
+        self.wpm_lay=QHBoxLayout()
+        self.wpm_lay.setAlignment(Qt.AlignLeft)
+        self.wpm_lay.addWidget(self.wpm_label)
+        self.wpm_lay.addWidget(self.wpm_linedit)
+        self.wpm_lay.addWidget(self.wpm_button)
+
+        self.user_button_1 = QPushButton("3")
+        self.user_button_1.setFixedWidth(30)
+        self.user_button_1.setFixedHeight(30)
+        self.user_button_1.setStyleSheet(self.style)
+        self.user_button_1.clicked.connect(self.send_cw)
+        self.user_line_edit_1 = QLineEdit()
+        self.user_line_edit_1.setStyleSheet(self.style_table)
+        self.user_line_edit_1.setFixedHeight(30)
+        self.user_line_edit_1.setText(settingsDict['cw-user-string1'])
+        self.user_line_1 = QHBoxLayout()
+        self.user_line_1.addWidget(self.user_button_1)
+        self.user_line_1.addWidget(self.user_line_edit_1)
+
+
+        self.user_button_2 = QPushButton("4")
+        self.user_button_2.setFixedWidth(30)
+        self.user_button_2.setFixedHeight(30)
+        self.user_button_2.setStyleSheet(self.style)
+        self.user_button_2.clicked.connect(self.send_cw)
+        self.user_line_edit_2 = QLineEdit()
+        self.user_line_edit_2.setStyleSheet(self.style_table)
+        self.user_line_edit_2.setFixedHeight(30)
+        self.user_line_edit_2.setText(settingsDict['cw-user-string2'])
+        self.user_line_2 = QHBoxLayout()
+        self.user_line_2.addWidget(self.user_button_2)
+        self.user_line_2.addWidget(self.user_line_edit_2)
+
+
+        self.status_label = QLabel()
+        self.set_status(self.wpm_linedit.text().strip())
+
+        self.status_lay = QHBoxLayout()
+        self.status_lay.setAlignment(Qt.AlignRight)
+        self.status_lay.addWidget(self.status_label)
+
+        self.comand_lay=QHBoxLayout()
+        self.comand_lay.addLayout(self.wpm_lay)
+        self.comand_lay.addLayout(self.status_lay)
+        self.v_lay = QVBoxLayout()
+        self.v_lay.addLayout(self.comand_lay)
+        self.v_lay.addLayout(self.cq_line)
+        self.v_lay.addLayout(self.answer_line)
+        self.v_lay.addLayout(self.final_line)
+        self.v_lay.addLayout(self.user_line_1)
+        self.v_lay.addLayout(self.user_line_2)
+
+        self.setLayout(self.v_lay)
+
+    def reset(self):
+        self.cq_button_1.setStyleSheet(self.style)
+        self.answer_button_1.setStyleSheet(self.style)
+        self.final_button_1.setStyleSheet(self.style)
+        self.user_button_1.setStyleSheet(self.style)
+        self.user_button_2.setStyleSheet(self.style)
+
+    def get_cw_macros_string(self, text):
+        string_list = text.split("%")
+        output_string = ""
+        for elem in string_list:
+            if elem == "OPERATOR":
+                output_string = output_string + self.settings_dict['my-call']
+            elif elem == "CALL":
+                output_string = output_string + self.parent_window.get_call()
+            elif elem == "NAME":
+                output_string = output_string + self.parent_window.get_name()
+            elif elem == "RST_S":
+                output_string = output_string + self.parent_window.get_rst_s()
+            elif elem == "RST_R":
+                output_string = output_string + self.parent_window.get_rst_r()
+            elif elem == "QTH":
+                output_string = output_string + self.parent_window.get_qth()
+            elif elem == "MY-NAME":
+                output_string = output_string + self.settings_dict['my-name']
+            elif elem == "MY-QTH":
+                output_string = output_string + self.settings_dict['my-qth']
+
+            else:
+                output_string = output_string + elem
+        return output_string
+
+
+        '''key = ""
+        m = 0
+        for i in range(len(text)):
+            if text[i] == "%":
+
+                if m == 0:
+                    m = 1
+                elif m == 1:
+                    m = 0
+            else:
+                if m == 1:
+                    key = key + text[i]
+
+                if m == 0 and key != "":
+                    key_list.append(key)
+                    key = ""
+        return key_list
+        '''
+
+    def send_cw(self):
+
+        button = self.sender()
+        button.setStyleSheet("background: #883333;")
+
+        if button.text() == "CQ":
+            print("send_CQ_cw")
+            string = self.cq_line_edit_1.text()
+            string_tci = self.get_cw_macros_string(string)
+            print(string_tci)
+            tci_sndr.send_command("cw_macros:0,"+string_tci+";")
+
+        if button.text() == "1":
+            print("send_1_cw")
+            string = self.answer_line_edit_1.text()
+            string_tci = self.get_cw_macros_string(string)
+            print(string_tci)
+        if button.text() == "2":
+            print("send_2_cw")
+            string = self.final_line_edit_1.text()
+            string_tci = self.get_cw_macros_string(string)
+            print(string_tci)
+        if button.text() == "3":
+            print("send_3_cw")
+            string = self.user_line_edit_1.text()
+            string_tci = self.get_cw_macros_string(string)
+            print(string_tci)
+        if button.text() == "4":
+            print("send_4_cw")
+            string = self.user_line_edit_2.text()
+            string_tci = self.get_cw_macros_string(string)
+            print(string_tci)
+
+    def before_close_save(self):
+        self.settings_dict['cw-cq-string'] = self.cq_line_edit_1.text().strip()
+        self.settings_dict['cw-answer-string'] = self.answer_line_edit_1.text().strip()
+        self.settings_dict['cw-final-string'] = self.final_line_edit_1.text().strip()
+        self.settings_dict['cw-user-string1'] = self.user_line_edit_1.text().strip()
+        self.settings_dict['cw-user-string2'] = self.user_line_edit_2.text().strip()
+        self.settings_dict['cw-left'] = str(self.geometry().left())
+        self.settings_dict['cw-top'] = str(self.geometry().top())
+        self.settings_dict['cw-width'] = str(self.geometry().width())
+        self.settings_dict['cw-height'] = str(self.geometry().height())
+        self.settings_dict['cw'] = str(self.isVisible())
+        settings_file.save_all_settings(self, self.settings_dict)
+
+    def closeEvent(self, event):
+        self.before_close_save()
+        self.close()
+
+    def change_status(self):
+        self.settings_dict['wpm'] = self.wpm_linedit.text().strip()
+        self.set_status(self.wpm_linedit.text().strip())
+        settings_file.save_all_settings(self,self.settings_dict)
+
+    def set_status(self, text):
+        self.status_label.setText("WPM set: " + text)
 
 class clusterThread(QThread):
     reciev_spot_signal = pyqtSignal()
@@ -4305,7 +4585,8 @@ if __name__ == '__main__':
         }
         app_env = AppEnv(env_dict)
 
-
+        if settingsDict['cw'] == "True":
+            logForm.cw_machine_gui()
         if settingsDict['log-window'] == 'True':
             pass
             #logWindow.show()

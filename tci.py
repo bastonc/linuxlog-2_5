@@ -4,6 +4,7 @@
 import websocket
 import time
 import std
+import traceback
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtCore
@@ -24,11 +25,18 @@ class tci_connect:
         self.tci_reciever = Tci_reciever(host + ":" + port,
                                          log_form=self.log_form, settingsDict=self.settingsDict)
 
+        #self.tci_reciever.tx_flag.connect(self.switch_tx_rx)
         self.tci_reciever.set_flag("run")
+
         self.tci_reciever.start()
         #print(self.settingsDict['tci-server'],
         #      self.settingsDict['tci-port'])
         #print("Tci start:", self.tci_reciever.currentThreadId())
+
+    @QtCore.pyqtSlot(str)
+    def switch_tx_rx(self, text):
+        print("status")
+
 
     def stop_tci(self):
         try:
@@ -63,6 +71,7 @@ class Tci_reciever(QThread):
             try:
 
                 self.ws.connect(self.uri)
+                self.log_form.tx_tci("restart")
                 self.log_form.set_tci_stat('•TCI')
 
                 break
@@ -89,6 +98,7 @@ class Tci_reciever(QThread):
                         values = tci_string[1].split(",")
                         #print("TRX:_>", values[1])
                         if values[1] == 'true;':
+                            self.tx_flag
                             self.tx_flag.emit('Enable')
                             self.tx = 'Enable'
                         elif values[1] == 'false;':
@@ -104,17 +114,23 @@ class Tci_reciever(QThread):
                     # reciev protocol
                             #print("Частота:", values[2])
                     if tci_string[0] == 'protocol':
+                        self.version_tci = tci_string[1].split(",")[1].replace(";","")
+
                         values = tci_string[1].replace(',', ' ')
                         values = values.replace(";", "")
+
+                        print("VErsion protocol:", self.version_tci)
                         self.log_form.set_tci_stat('•TCI: '+ values)
 
                     # reciev mode
                     if tci_string[0] == 'modulation':
                          values = tci_string[1].split(",")
                          if values[0] == '0':
-                             #print("values[1].replace(';', '')",values[2].replace(';', ''))
-                             self.log_form.set_mode_tci(values[2].replace(';', ''))
-
+                            if self.version_tci == "1.4":
+                                self.log_form.set_mode_tci(values[1].replace(';', ''))
+                            if self.version_tci == '1.5':
+                                self.log_form.set_mode_tci(values[2].replace(';', ''))
+                            print("values", values)
                     #if tci_string[0] == 'ready':
                     #     print("server: ready;")
                     #     self.log_form.sendMesageToTCI("ready;")
@@ -147,6 +163,7 @@ class Tci_reciever(QThread):
                     self.ws = websocket.WebSocket()
                     self.ws.connect(self.uri)
                     self.log_form.set_tci_stat("•TCI")
+                    self.log_form.tx_tci("restart")
 
                 except:
                     time.sleep(2)
@@ -179,11 +196,19 @@ class Tci_sender (QtCore.QObject):
 
 
 
-
+    def update_tx_tci(self):
+        try:
+            self.ws.connect(self.uri)
+        except Exception:
+            result = traceback.format_exc()
+            print (result)
 
     def send_command(self, string_command):
         if self.tx_flag != "Enable":
-            self.ws.send(string_command)
+            try:
+                self.ws.send(string_command)
+            except Exception:
+                pass
 
     def set_freq(self, freq):
         print("set_freq:", freq)
@@ -205,6 +230,8 @@ class Tci_sender (QtCore.QObject):
                 string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
                 self.ws.send(string_command)
             except BaseException:
+                result = traceback.format_exc()
+                print("Cant set spot. Connect object:", result)
                 pass
 
     def del_spot(self, call):
