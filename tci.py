@@ -5,7 +5,7 @@ import websocket
 import time
 import std
 import traceback
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread,  pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtCore
 import main
@@ -19,13 +19,15 @@ class tci_connect:
         self.settingsDisct = settingsDict
 
 
+    def get_mode(self):
+        return self.log_form.get_mode()
 
     def start_tci(self, host, port):
 
         self.tci_reciever = Tci_reciever(host + ":" + port,
                                          log_form=self.log_form, settingsDict=self.settingsDict)
 
-        #self.tci_reciever.tx_flag.connect(self.switch_tx_rx)
+
         self.tci_reciever.set_flag("run")
 
         self.tci_reciever.start()
@@ -33,9 +35,7 @@ class tci_connect:
         #      self.settingsDict['tci-port'])
         #print("Tci start:", self.tci_reciever.currentThreadId())
 
-    @QtCore.pyqtSlot(str)
-    def switch_tx_rx(self, text):
-        print("status")
+
 
 
     def stop_tci(self):
@@ -59,11 +59,14 @@ class Tci_reciever(QThread):
 
         self.ws = websocket.WebSocket()
         self.settingsDict = settingsDict
+        self.mode = self.settingsDict['mode']
 
     def set_flag(self, flag):
         #print("set_flag:", flag)
         self.flag = flag
 
+    def get_mode(self):
+        return self.mode
 
     def run(self):
 
@@ -98,12 +101,13 @@ class Tci_reciever(QThread):
                         values = tci_string[1].split(",")
                         #print("TRX:_>", values[1])
                         if values[1] == 'true;':
-                            self.tx_flag
-                            self.tx_flag.emit('Enable')
-                            self.tx = 'Enable'
+                            print(values[1])
+                            self.log_form.trx_enable('tx')
+
                         elif values[1] == 'false;':
-                            self.tx = 'Disable'
-                            self.tx_flag.emit('Disable')
+                            print(values[1])
+                            self.log_form.trx_enable('rx')
+
 
                     if tci_string[0] == 'vfo':
                         values = tci_string[1].split(",")
@@ -119,7 +123,7 @@ class Tci_reciever(QThread):
                         values = tci_string[1].replace(',', ' ')
                         values = values.replace(";", "")
 
-                        print("VErsion protocol:", self.version_tci)
+                        #print("Version protocol:", self.version_tci)
                         self.log_form.set_tci_stat('•TCI: '+ values)
 
                     # reciev mode
@@ -128,9 +132,12 @@ class Tci_reciever(QThread):
                          if values[0] == '0':
                             if self.version_tci == "1.4":
                                 self.log_form.set_mode_tci(values[1].replace(';', ''))
+                                self.mode = values[1].replace(';', '')
                             if self.version_tci == '1.5':
                                 self.log_form.set_mode_tci(values[2].replace(';', ''))
-                            print("values", values)
+                                self.mode = values[2].replace(';', '')
+                            print(">", tci_string)
+
                     #if tci_string[0] == 'ready':
                     #     print("server: ready;")
                     #     self.log_form.sendMesageToTCI("ready;")

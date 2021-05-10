@@ -1174,11 +1174,11 @@ class Log_Window_2(QWidget):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
-                settingsDict['log-window'] = 'false'
+                settingsDict['log-window'] = 'False'
                 # print("log-window: changeEvent:_>", settingsDict['log-window'])
                 # telnetCluster.showMinimized()
             elif self.isVisible():
-                settingsDict['log-window'] = 'true'
+                settingsDict['log-window'] = 'True'
                 # print("log-window: changeEvent:_>", settingsDict['log-window'])
             QWidget.changeEvent(self, event)
 
@@ -1495,11 +1495,11 @@ class LogSearch(QWidget):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
-                settingsDict['log-search-window'] = 'false'
+                settingsDict['log-search-window'] = 'False'
                 # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
                 # telnetCluster.showMinimized()
             elif self.isVisible():
-                settingsDict['log-search-window'] = 'true'
+                settingsDict['log-search-window'] = 'True'
             # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
             QWidget.changeEvent(self, event)
 
@@ -2300,7 +2300,7 @@ class LogForm(QMainWindow):
         self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
         self.initUI()
         self.country_dict = self.get_country_dict()
-
+        self.mode = settingsDict['mode']
 
         # print("self.Diploms in logForm init:_>", self.diploms)
 
@@ -2383,6 +2383,23 @@ class LogForm(QMainWindow):
         self.profile_name.triggered.connect(partial(self.set_active_profile, settingsDict['active-profile']))
         self.profiles.addAction(self.profile_name)
 
+    def trx_enable(self, parameter):
+        if parameter == 'rx':
+            try:
+                self.cw_machine.reset()
+
+            except:
+                pass
+            print("RX")
+
+        if parameter == 'tx':
+            try:
+                self.cw_machine.set_tx_stat()
+            except:
+                pass
+
+            print ("TX")
+
     def update_cordinates(self):
         json_list = json.loads(settingsDict['coordinate-profile'])
         for elem in json_list:
@@ -2422,7 +2439,6 @@ class LogForm(QMainWindow):
             self.inputName.setText('')
             self.inputQth.setText('')
             #print ("Found_list:", found_list)
-
 
     def get_country_dict(self):
 
@@ -2495,7 +2511,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        #WindowMenu.addAction(window_cw_module)
+        WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
@@ -2531,6 +2547,7 @@ class LogForm(QMainWindow):
 
 
         # pass
+
     def set_active_profile(self, name):
         print(name)
         settingsDict['active-profile'] = name
@@ -2603,7 +2620,9 @@ class LogForm(QMainWindow):
         return self.inputName.text().strip()
     def get_qth(self):
         return self.inputQth.text().strip()
-
+    def get_mode(self):
+        mode = self.mode
+        return mode
     def initUI(self):
         font = QFont(settingsDict['font-app'], 10, QFont.Normal)
 
@@ -3282,10 +3301,18 @@ class LogForm(QMainWindow):
             mode_string = 'CW'
         if mode == "nfm" or mode == "wfm":
             mode_string = 'FM'
-        if mode == "digl" or mode == "digu" or mode == "drm":
+        if mode == "digl" or mode == "digu" or mode == "drm" or mode == "wspr" or mode == "ft8" or mode == "ft4" or \
+                mode == "jt65" or mode == "jt9" or mode == "rtty" or mode == "bpsk":
             mode_string = 'DIGI'
+
         indexMode = self.comboMode.findText(mode_string)
         self.comboMode.setCurrentIndex(indexMode)
+        self.mode = mode
+        try:
+            self.cw_machine.set_mode()
+        except Exception:
+            pass
+
 
     def set_tci_stat(self, values, color="#57BD79"):
         self.labelStatusCat.setStyleSheet("color: " + color + "; font-weight: bold;")
@@ -3413,6 +3440,7 @@ class LogForm(QMainWindow):
                 list_string[i]['name_programm'] = ext.diplom(list_string[i]['name_programm'] + ".adi",
                                                              list_string[i]['name_programm'] + ".rules")
                 names_diploms.append(list_string[i]['name_programm'])
+
         return names_diploms
 
 class CW(QWidget):
@@ -3420,7 +3448,10 @@ class CW(QWidget):
         super(CW, self).__init__()
         self.parent_window = parent_window
         self.settings_dict = settings_dict
+        self.mode = self.parent_window.get_mode()
         self.initUI()
+
+
 
     def initUI(self):
         if settingsDict['cw-top'] == "":
@@ -3495,15 +3526,17 @@ class CW(QWidget):
         self.wpm_button = QPushButton("Set")
         self.wpm_button.setFixedWidth(30)
         self.wpm_button.setFixedHeight(20)
-        self.wpm_button.setStyleSheet(self.style)
+        self.wpm_button.setStyleSheet(self.style + " font-size: 10px;")
         self.wpm_button.clicked.connect(self.change_status)
         self.wpm_label=QLabel("WPM")
         self.wpm_label.setFixedWidth(30)
-        self.wpm_label.setStyleSheet(self.style)
+        self.wpm_label.setStyleSheet(self.style + " font-size: 10px;")
         self.wpm_lay=QHBoxLayout()
         self.wpm_lay.setAlignment(Qt.AlignLeft)
         self.wpm_lay.addWidget(self.wpm_label)
+        self.wpm_lay.addSpacing(7)
         self.wpm_lay.addWidget(self.wpm_linedit)
+        self.wpm_lay.addSpacing(5)
         self.wpm_lay.addWidget(self.wpm_button)
 
         self.user_button_1 = QPushButton("3")
@@ -3535,14 +3568,34 @@ class CW(QWidget):
 
 
         self.status_label = QLabel()
+        self.status_label.setFixedHeight(10)
+        self.status_label.setStyleSheet(self.style + " font-size: 10px;")
         self.set_status(self.wpm_linedit.text().strip())
-
         self.status_lay = QHBoxLayout()
         self.status_lay.setAlignment(Qt.AlignRight)
+        self.status_lay.addSpacing(15)
         self.status_lay.addWidget(self.status_label)
 
+        self.stop_button = QPushButton("STOP TX")
+        self.stop_button.setStyleSheet(self.style + " font-size: 10px;")
+        #self.stop_button.siz
+        self.stop_button.setFixedHeight(30)
+
+        self.stop_button.clicked.connect(self.send_cw)
+        self.mode_label = QLabel()
+        self.mode_label.setStyleSheet(self.style + " font-size: 10px;")
+
+        self.stop_lay=QHBoxLayout()
+
+        self.stop_lay.addWidget(self.mode_label)
+        self.stop_lay.addSpacing(20)
+        self.stop_lay.addWidget(self.stop_button)
+
+
         self.comand_lay=QHBoxLayout()
+        self.comand_lay.setSpacing(0)
         self.comand_lay.addLayout(self.wpm_lay)
+        self.comand_lay.addLayout(self.stop_lay)
         self.comand_lay.addLayout(self.status_lay)
         self.v_lay = QVBoxLayout()
         self.v_lay.addLayout(self.comand_lay)
@@ -3553,13 +3606,27 @@ class CW(QWidget):
         self.v_lay.addLayout(self.user_line_2)
 
         self.setLayout(self.v_lay)
+        self.set_mode()
+    def set_mode(self):
+        self.mode = self.parent_window.get_mode()
+        if self.mode == "cw":
+            self.mode_label.setStyleSheet(self.style + " font-size: 10px; font-weight: bold; color: #337733;")
+        else:
+            self.mode_label.setStyleSheet(self.style + " font-size: 10px; color: #774444;")
+        self.mode_label.setText("Mode: " + str(self.mode).upper())
+    def set_wpm_speed(self, wpm):
+        self.wpm_speed = wpm
+    def set_tx_stat(self):
+        self.stop_button.setStyleSheet(self.style + " font-size: 12px; background: #883333; color: #ffffff; font-color: bold;")
+
 
     def reset(self):
-        self.cq_button_1.setStyleSheet(self.style)
-        self.answer_button_1.setStyleSheet(self.style)
-        self.final_button_1.setStyleSheet(self.style)
-        self.user_button_1.setStyleSheet(self.style)
-        self.user_button_2.setStyleSheet(self.style)
+        self.cq_button_1.setStyleSheet(self.style + " font-size: 12px;")
+        self.answer_button_1.setStyleSheet(self.style + " font-size: 12px;")
+        self.final_button_1.setStyleSheet(self.style + " font-size: 12px;")
+        self.user_button_1.setStyleSheet(self.style + " font-size: 12px;")
+        self.user_button_2.setStyleSheet(self.style + " font-size: 12px;")
+        self.stop_button.setStyleSheet(self.style + " font-size: 12px;")
 
     def get_cw_macros_string(self, text):
         string_list = text.split("%")
@@ -3609,35 +3676,52 @@ class CW(QWidget):
     def send_cw(self):
 
         button = self.sender()
-        button.setStyleSheet("background: #883333;")
 
-        if button.text() == "CQ":
-            print("send_CQ_cw")
-            string = self.cq_line_edit_1.text()
-            string_tci = self.get_cw_macros_string(string)
-            print(string_tci)
-            tci_sndr.send_command("cw_macros:0,"+string_tci+";")
+        if self.mode == "cw":
+            if button.text() == "CQ":
+                button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
+                print("send_CQ_cw")
+                string = self.cq_line_edit_1.text()
+                string_tci = self.get_cw_macros_string(string)
+                print(string_tci)
+                tci_sndr.send_command("cw_macros:0,"+string_tci+";")
 
-        if button.text() == "1":
-            print("send_1_cw")
-            string = self.answer_line_edit_1.text()
-            string_tci = self.get_cw_macros_string(string)
-            print(string_tci)
-        if button.text() == "2":
-            print("send_2_cw")
-            string = self.final_line_edit_1.text()
-            string_tci = self.get_cw_macros_string(string)
-            print(string_tci)
-        if button.text() == "3":
-            print("send_3_cw")
-            string = self.user_line_edit_1.text()
-            string_tci = self.get_cw_macros_string(string)
-            print(string_tci)
-        if button.text() == "4":
-            print("send_4_cw")
-            string = self.user_line_edit_2.text()
-            string_tci = self.get_cw_macros_string(string)
-            print(string_tci)
+
+
+            if button.text() == "1":
+                button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
+                print("send_1_cw")
+                string = self.answer_line_edit_1.text()
+                string_tci = self.get_cw_macros_string(string)
+                print(string_tci)
+                tci_sndr.send_command("cw_macros:0," + string_tci + ";")
+            if button.text() == "2":
+                button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
+                print("send_2_cw")
+                string = self.final_line_edit_1.text()
+                string_tci = self.get_cw_macros_string(string)
+                print(string_tci)
+                tci_sndr.send_command("cw_macros:0," + string_tci + ";")
+            if button.text() == "3":
+                button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
+                print("send_3_cw")
+                string = self.user_line_edit_1.text()
+                string_tci = self.get_cw_macros_string(string)
+                print(string_tci)
+                tci_sndr.send_command("cw_macros:0," + string_tci + ";")
+            if button.text() == "4":
+                button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
+                print("send_4_cw")
+                string = self.user_line_edit_2.text()
+                string_tci = self.get_cw_macros_string(string)
+                print(string_tci)
+                tci_sndr.send_command("cw_macros:0," + string_tci + ";")
+            if button.text() == "STOP TX":
+                button.setStyleSheet(self.style)
+                tci_sndr.send_command("cw_macros_stop;")
+        else:
+            pass
+            #self.set_mode(self.mode)
 
     def before_close_save(self):
         self.settings_dict['cw-cq-string'] = self.cq_line_edit_1.text().strip()
@@ -3658,11 +3742,14 @@ class CW(QWidget):
 
     def change_status(self):
         self.settings_dict['wpm'] = self.wpm_linedit.text().strip()
+        tci_sndr.send_command("CW_MACROS_SPEED:"+ self.settings_dict['wpm']+";")
         self.set_status(self.wpm_linedit.text().strip())
         settings_file.save_all_settings(self,self.settings_dict)
 
     def set_status(self, text):
         self.status_label.setText("WPM set: " + text)
+        self.wpm_speed = text
+
 
 class clusterThread(QThread):
     reciev_spot_signal = pyqtSignal()
@@ -3963,11 +4050,11 @@ class TelnetCluster(QWidget):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
-                settingsDict['telnet-cluster-window'] = 'false'
+                settingsDict['telnet-cluster-window'] = 'False'
                 print("telnet-cluster-window: changeEvent:_>", settingsDict['telnet-cluster-window'])
                 # telnetCluster.showMinimized()
             elif self.isVisible():
-                settingsDict['telnet-cluster-window'] = 'true'
+                settingsDict['telnet-cluster-window'] = 'True'
                 print("telnet-cluster-window: changeEvent:_>", settingsDict['telnet-cluster-window'])
 
             QWidget.changeEvent(self, event)
