@@ -2495,7 +2495,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        WindowMenu.addAction(window_cw_module)
+        #WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
