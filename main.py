@@ -1205,7 +1205,8 @@ class Log_Window_2(QWidget):
         #self.header_label
         #self.header_label.show()
         self.fill_flag = 0
-
+        self.allRecords.terminate()
+        print("fill_complite signal", self.allRecords.isRunning())
         #self.tableWidget_qso.hide()
         #self.tableWidget_qso.show()
         #logForm.counter_qso = db.get_max_id
@@ -2515,24 +2516,7 @@ class LogForm(QMainWindow):
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
-        profiles = json.loads(settingsDict["coordinate-profile"])
-        profile_action_list =[]
-        for profile in profiles:
-            tmp_profile = QAction(profile['name'], self)
-            #tmp_profile.setChecked(True)
-            tmp_profile.setCheckable(True)
-            tmp_profile.triggered.connect(partial(self.set_active_profile, profile['name']))
-            profile_action_list.append(tmp_profile)
-        for profile_action in profile_action_list:
-            self.profiles.addAction(profile_action)
-
-        #ViewMenu.addAction(profile_name)
-####### Diploms
-        #self.otherMenu = self.menuBarw.addMenu('&Diploms')
-        #window_form_diplom = QAction('New diploma', self)
-        #window_form_diplom.triggered.connect(self.new_diplom)
-        #self.otherMenu.addAction(window_form_diplom)
-        #
+        self.profile_update_menu()
         aboutAction = QAction('&About', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         aboutAction.triggered.connect(self.about_window)
@@ -2544,6 +2528,35 @@ class LogForm(QMainWindow):
                 diplom_data = self.diploms[i].get_data()
                 # print("self.diploms:_>", diplom_data[0]['name'])
                 self.menu_add(diplom_data[0]['name'])
+
+    def profile_update_menu(self):
+        profiles = json.loads(settingsDict["coordinate-profile"])
+        profile_action_list =[]
+        self.profiles.clear()
+        for profile in profiles:
+            tmp_profile = QAction(profile['name'], self)
+            #tmp_profile.setChecked(True)
+            tmp_profile.setCheckable(True)
+            if profile['name'] == settingsDict['active-profile']:
+                tmp_profile.setChecked(True)
+            else:
+                tmp_profile.setChecked(False)
+            tmp_profile.triggered.connect(partial(self.set_active_profile, profile['name']))
+            profile_action_list.append(tmp_profile)
+        for profile_action in profile_action_list:
+            #print("profile_action:", profile_action)
+
+            self.profiles.addAction(profile_action)
+
+
+
+        #ViewMenu.addAction(profile_name)
+####### Diploms
+        #self.otherMenu = self.menuBarw.addMenu('&Diploms')
+        #window_form_diplom = QAction('New diploma', self)
+        #window_form_diplom.triggered.connect(self.new_diplom)
+        #self.otherMenu.addAction(window_form_diplom)
+        #
 
 
         # pass
@@ -3372,6 +3385,7 @@ class LogForm(QMainWindow):
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.labelMyCall.setText(settingsDict['my-call'])
         self.country_dict = self.get_country_dict()
+        self.profile_update_menu()
         if settingsDict['mode-swl'] == 'enable':
             self.inputRstR.setText("SWL")
             self.inputRstR.setEnabled(False)
@@ -3749,7 +3763,6 @@ class CW(QWidget):
     def set_status(self, text):
         self.status_label.setText("WPM set: " + text)
         self.wpm_speed = text
-
 
 class clusterThread(QThread):
     reciev_spot_signal = pyqtSignal()

@@ -237,8 +237,8 @@ class Tci_sender (QtCore.QObject):
                 string_command = "SPOT:"+str(call)+", ,"+str(freq)+","+color+", ;"
                 self.ws.send(string_command)
             except BaseException:
-                result = traceback.format_exc()
-                print("Cant set spot. Connect object:", result)
+                #result = traceback.format_exc()
+                #print("Cant set spot. Connect object:", result)
                 pass
 
     def del_spot(self, call):
