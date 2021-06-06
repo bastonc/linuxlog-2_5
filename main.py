@@ -564,6 +564,7 @@ class Log_Window_2(QWidget):
                 else:
                     start_id = 0;
         step = 100
+        print("start_id", start_id)
         page = db.getRange(start_id, step)
         if page != []:
             page_count = len(page)
@@ -1193,8 +1194,6 @@ class Log_Window_2(QWidget):
             #self.allRecords.qsos_counter.connect(self.counter_qso)
             self.allRecords.start()
 
-
-
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
         # print("All_records", len(All_records))
@@ -1215,7 +1214,6 @@ class Log_Window_2(QWidget):
     def counter_qso(self, val):
         logForm.counter_qso = val
         #print("Slot counter QSO", logForm.counter_qso )
-
 
     def get_all_record(self):
         Db(settingsDict).get_all_records()
@@ -1394,8 +1392,6 @@ class Log_Window_2(QWidget):
         self.store_change_record(row_arg=0)
         self.clublog_thread.exec()
         self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
-
-
 
     @QtCore.pyqtSlot(object)
     def clublog_sent_no(self, response):
@@ -4300,7 +4296,7 @@ class Db:
     def getRange(self, start_id, step):
         db_conn = self.connect()
         query = db_conn.cursor()
-        query.execute("SELECT * FROM " + settingsDict['my-call'] + " WHERE `id`>" + str(start_id) + " ORDER BY QSO_DATE DESC LIMIT " + str(step))
+        query.execute("SELECT * FROM " + settingsDict['my-call'] + " WHERE `id`<" + str(start_id) + " ORDER BY id DESC LIMIT " + str(step))
         answer_db = query.fetchall()
         return answer_db
 
