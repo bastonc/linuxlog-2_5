@@ -47,19 +47,24 @@ class internetWorker(QThread):
     def get_image_from_server(self):
         '''
         метод загружает изображение с qrz.com
-        принимает callsign - позывной
+        принимает self.callsign - как позывной
         '''
-        url_found = "https://www.qrz.com/lookup"
+        url_found = self.settings['qrz-com']
+
         # print(self.callsign)
         parameter_request = "tquery=" + self.callsign + "&mode: callsign"
         parameter_to_byte = bytearray(parameter_request, "utf-8")
         data_dictionary = {}
         try:
             response = urllib.request.urlopen(url_found, parameter_to_byte)
+            #print("request status:", response.code)
             html = response.read().decode("utf-8")
             soup = BeautifulSoup(html, 'html.parser')
             img = soup.find(id="mypic")
             file_name = self.callsign.replace("/", "_")
+            if img['src'].split('/')[-1] == self.settings['qrz-none']:
+                img = None
+            print("file name:", file_name, img['src'].split('/')[-1])
         except Exception:
             print("get_image_from_server: Don't connection")
             img = None
@@ -68,12 +73,53 @@ class internetWorker(QThread):
             if img != None:
                 urllib.request.urlretrieve(img['src'], "image/" + file_name + ".jpg")
                 data_dictionary.update({'img': "image/" + file_name + ".jpg"})
+            else:
+                dict_qrz_ru = self.search_qrz_ru()
+                data_dictionary.update({'name': dict_qrz_ru['name'], 'qth': dict_qrz_ru['qth'], 'loc': dict_qrz_ru['loc']})
+
         # print(data_dictionary)
         except Exception:
             print("Exception:", Exception)
 
         return data_dictionary
 
+    def get_id_qrz_ru(self):
+        response = urllib.request.urlopen("http://api.qrz.ru/login", "u=<username>&p=<password>&agent=LinuxLog")
+        print("QRZ_RU status:", response.code)
+        html = response.read().decode("utf-8")
+        "http: // api.qrz.ru / login?u = < username > & p = < password > & agent = < agent >"
+        soup = BeautifulSoup(html, 'xml')
+        id_qrz = soup.session_id
+        return id_qrz
+
+    def search_qrz_ru(self):
+
+        self.id_rqz_ru = self.get_id_qrz_ru()
+
+        out_dict={}
+        url_found_qrz_ru = self.settings['qrz-ru']
+        parameter_request = "id=" + self.id_rqz_ru + "&callsign=" + self.callsign.replace("/", "_")
+        parameter_to_byte = bytearray(parameter_request, "utf-8")
+
+        response = urllib.request.urlopen(url_found_qrz_ru, parameter_to_byte)
+        print("QRZ_RU status:", response.code)
+        html = response.read().decode("utf-8")
+        #print("QRZ_RU html:", html)
+        soup = BeautifulSoup(html, 'html.parser')
+        info_block = soup.find(id="infoBlock")
+        name_clear = info_block.b.text.split(" ")[0]
+        print("QRZ_RU html:", name_clear)
+        content_div_dirty = info_block.div.text.split(" ")
+        content_div=[]
+        for content_elem in content_div_dirty:
+            if content_elem !='':
+                content_div.append(content_elem)
+
+        print("QRZ_RU QTH:", content_div)
+        qth_clear = content_div[3].replace(',','')
+        loc_clear = content_div[6].replace("#", '').replace("\n", '')
+        out_dict.update({'name': name_clear, 'qth': qth_clear, 'loc': loc_clear})
+        return out_dict
 
 class Eqsl_send(QtCore.QObject):
     error_message = QtCore.pyqtSignal(str)

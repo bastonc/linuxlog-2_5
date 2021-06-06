@@ -326,8 +326,6 @@ class Fill_table(QThread):
         self.all_collumn = all_column
         self.window = window
         self.all_record = all_record
-
-
         self.settingsDict = settingsDict
 
     def run(self):
@@ -418,8 +416,9 @@ class Fill_table(QThread):
                     if self.allRecord[row]['EQSL_QSL_SENT'] == 'Y':
                         self.window.tableWidget_qso.item(row, col).setBackground(
                             QColor(self.settingsDict['eqsl-sent-color']))
-
+                #sleep(0.001)
            self.window.load_bar.setValue(round(row * 100 / self.allRows))
+           #sleep(0.001)
         self.fill_complite.emit()
 
 
@@ -453,6 +452,11 @@ class Log_Window_2(QWidget):
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
+        self.allRecords = Fill_table(all_column=self.allCollumn,
+                                     window=self,
+                                     all_record=All_records,
+                                     settingsDict=settingsDict)
+        self.allRecords.fill_complite.connect(self.fill_complited)
         self.initUI()
 
     def initUI(self):
@@ -1185,11 +1189,7 @@ class Log_Window_2(QWidget):
     def refresh_data(self):
         if self.fill_flag == 0:
             self.fill_flag = 1
-            self.allRecords = Fill_table(all_column=self.allCollumn,
-                                         window=self,
-                                         all_record=All_records,
-                                         settingsDict=settingsDict)
-            self.allRecords.fill_complite.connect(self.fill_complited)
+
             #self.allRecords.qsos_counter.connect(self.counter_qso)
             self.allRecords.start()
 
@@ -1282,7 +1282,7 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.item(row, col).setForeground(QColor(settingsDict["color-table"]))
 
         self.setStyleSheet(style)
-        self.refresh_data()
+        #self.refresh_data()
 
     def addRecord(self, recordObject):
         # <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
@@ -2490,16 +2490,16 @@ class LogForm(QMainWindow):
         window_cw_module = QAction("CW Machine", self)
         window_cw_module.triggered.connect(self.cw_machine_gui)
 
-        profile_name = QAction("Save profile as", self)
-        profile_name.triggered.connect(self.save_coordinate_to_new_profile)
-        profile_save = QAction("Save profile", self)
-        profile_save.triggered.connect(self.save_coordinate_to_profile)
+        self.profile_name = QAction("Save profile as", self)
+        self.profile_name.triggered.connect(self.save_coordinate_to_new_profile)
+        self.profile_save = QAction("Save profile", self)
+        self.profile_save.triggered.connect(self.save_coordinate_to_profile)
         self.profiles = QMenu("Profiles")
         self.profiles.setStyleSheet("QWidget{font: 10px; background-color: "+settingsDict['background-color'] + "; color: " + settingsDict['color']+";}")
 
         #self.profiles.addSection()
-        self.profiles.addAction(profile_name)
-        self.profiles.addAction(profile_save)
+        self.profiles.addAction(self.profile_name)
+        self.profiles.addAction(self.profile_save)
         self.profiles.addSeparator()
         self.profiles.addSeparator()
         #self.profiles.addAction()
@@ -2512,7 +2512,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        WindowMenu.addAction(window_cw_module)
+        #WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
@@ -2531,8 +2531,12 @@ class LogForm(QMainWindow):
 
     def profile_update_menu(self):
         profiles = json.loads(settingsDict["coordinate-profile"])
-        profile_action_list =[]
+        profile_action_list = []
         self.profiles.clear()
+        self.profiles.addAction(self.profile_name)
+        self.profiles.addAction(self.profile_save)
+        self.profiles.addSeparator()
+        self.profiles.addSeparator()
         for profile in profiles:
             tmp_profile = QAction(profile['name'], self)
             #tmp_profile.setChecked(True)
@@ -2563,7 +2567,11 @@ class LogForm(QMainWindow):
 
     def set_active_profile(self, name):
         print(name)
-        settingsDict['active-profile'] = name
+        self.settingsDict=settingsDict
+        self.settingsDict['active-profile'] = name
+        #self.update_settings(self.settingsDict)
+        print("settingsDict['active-profile']: ", settingsDict['active-profile'])
+        Settings_file.update_file_to_disk(self)
         self.update_cordinates()
 
     def menu_add(self, name_menu):
