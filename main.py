@@ -2473,6 +2473,8 @@ class LogForm(QMainWindow):
         logSettingsAction = QAction('&Settings', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         logSettingsAction.triggered.connect(self.logSettings)
+
+
         #
         window_cluster_action = QAction('Cluster window', self)
         # windowAction.setStatusTip('Name, Call and other of station')
@@ -2502,13 +2504,15 @@ class LogForm(QMainWindow):
         self.menuBarw = self.menuBar()
         self.menuBarw.setStyleSheet("QWidget{font: 12px;}")
         #  settings_menu = menuBar.addMenu('Settings')
-        self.menuBarw.addAction(logSettingsAction)
+        settingsMenu = self.menuBarw.addMenu("Menu")
+        settingsMenu.addAction(logSettingsAction)
+
         WindowMenu = self.menuBarw.addMenu('&Window')
         # WindowMenu.triggered.connect(self.logSettings)
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        #WindowMenu.addAction(window_cw_module)
+        WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
@@ -2516,8 +2520,8 @@ class LogForm(QMainWindow):
         aboutAction = QAction('&About', self)
         # logSettingsAction.setStatusTip('Name, Call and other of station')
         aboutAction.triggered.connect(self.about_window)
-        self.menuBarw.addAction(aboutAction)
-
+        #self.menuBarw.addAction(aboutAction)
+        settingsMenu.addAction(aboutAction)
         if self.diploms != []:
 
             for i in range(len(self.diploms)):
