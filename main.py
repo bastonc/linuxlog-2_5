@@ -2512,7 +2512,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        WindowMenu.addAction(window_cw_module)
+        #WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
         ViewMenu.addMenu(self.profiles)
@@ -2566,11 +2566,11 @@ class LogForm(QMainWindow):
         # pass
 
     def set_active_profile(self, name):
-        print(name)
+       # print(name)
         self.settingsDict=settingsDict
         self.settingsDict['active-profile'] = name
         #self.update_settings(self.settingsDict)
-        print("settingsDict['active-profile']: ", settingsDict['active-profile'])
+        #print("settingsDict['active-profile']: ", settingsDict['active-profile'])
         Settings_file.update_file_to_disk(self)
         self.update_cordinates()
 
@@ -3255,21 +3255,21 @@ class LogForm(QMainWindow):
     def stat_cluster(self):
 
         if telnetCluster.isHidden():
-            print('statTelnet')
+            #print('statTelnet')
             telnetCluster.show()
         elif telnetCluster.isEnabled():
             telnetCluster.hide()
 
     def stat_internet_search(self):
         if internetSearch.isHidden():
-            print('internet_search')
+           # print('internet_search')
             internetSearch.show()
         elif internetSearch.isEnabled():
             internetSearch.hide()
 
     def stat_repeat_qso(self):
         if logSearch.isHidden():
-            print('internet_search')
+            #print('internet_search')
             logSearch.show()
         elif logSearch.isEnabled():
             logSearch.hide()
@@ -3311,7 +3311,7 @@ class LogForm(QMainWindow):
 
     def set_mode_tci(self, mode_input):
         mode = str(mode_input).lower()
-        print("mode:", mode)
+        #print("mode:", mode)
         if mode == "lsb" or mode == "usb":
             mode_string = 'SSB'
         if mode == "am" or mode == "sam":
@@ -3702,24 +3702,24 @@ class CW(QWidget):
         if self.mode == "cw":
             if button.text() == "CQ":
                 button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
-                print("send_CQ_cw")
+                #print("send_CQ_cw")
                 string = self.cq_line_edit_1.text()
                 string_tci = self.get_cw_macros_string(string)
-                print(string_tci)
+                #print(string_tci)
                 tci_sndr.send_command("cw_macros:0,"+string_tci+";")
 
 
 
             if button.text() == "1":
                 button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
-                print("send_1_cw")
+                #print("send_1_cw")
                 string = self.answer_line_edit_1.text()
                 string_tci = self.get_cw_macros_string(string)
                 print(string_tci)
                 tci_sndr.send_command("cw_macros:0," + string_tci + ";")
             if button.text() == "2":
                 button.setStyleSheet(self.style + " font-size: 12px; background: #337733; color: #ffffff; font-color: bold;")
-                print("send_2_cw")
+                #print("send_2_cw")
                 string = self.final_line_edit_1.text()
                 string_tci = self.get_cw_macros_string(string)
                 print(string_tci)
