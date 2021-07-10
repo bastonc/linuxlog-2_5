@@ -4766,7 +4766,7 @@ if __name__ == '__main__':
 
 
 
-    APP_VERSION = '2.2'
+    APP_VERSION = '2.3'
     settingsDict = {}
     table_columns = [
         ["CALL", "VARCHAR(50)"],
