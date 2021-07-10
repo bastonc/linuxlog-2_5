@@ -471,6 +471,7 @@ class Log_Window_2(QWidget):
                          int(settingsDict['log-window-height']))
         self.setWindowTitle('LinuxLog | All QSO')
         self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
@@ -550,6 +551,41 @@ class Log_Window_2(QWidget):
         # self.show()
 
         self.refresh_data()
+
+    def mouseDoubleClickEvent(self, event):
+        #self.overrideWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowTitle("LinuxLog")
+        #self.setWindowFlag(True)
+
+        print("double click")
+    def mousePressEvent(self, event):
+
+        if event.button() == 1:
+            self.offset = event.pos()
+            self.flag_button = "right"
+        if event.button() == 2:
+            self.resize_wnd = event.pos()
+            self.flag_button = "left"
+            self.x = self.width()
+            self.y = self.height()
+
+        print(event.button())
+
+    def mouseMoveEvent(self, event):
+        if self.flag_button == "right":
+            x = event.globalX()
+            y = event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x - x_w, y - y_w)
+        if self.flag_button == "left":
+            #x = self.width()
+            #y = self.height()
+            x_r = self.resize_wnd.x() - event.pos().x()
+            y_r = self.resize_wnd.y() - event.pos().y()
+            print(event.globalY(), x_r, self.resize_wnd.x())
+            self.resize(self.x - x_r, self.y - y_r)
+
 
     def append_qso(self):
         self.append_record()
@@ -1466,6 +1502,8 @@ class LogSearch(QWidget):
                          int(settingsDict['log-search-window-width']), int(settingsDict['log-search-window-height']))
         self.setWindowTitle('LinuxLog | Search')
         self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
         self.setWindowOpacity(float(settingsDict['logSearch-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + "; font: 12px;"
@@ -1487,6 +1525,34 @@ class LogSearch(QWidget):
         self.layout.addWidget(self.tableWidget)
         self.setLayout(self.layout)
         # self.show()
+
+    def mousePressEvent(self, event):
+
+        if event.button() == 1:
+            self.offset = event.pos()
+            self.flag_button = "right"
+        if event.button() == 2:
+            self.resize_wnd = event.pos()
+            self.flag_button = "left"
+            self.x = self.width()
+            self.y = self.height()
+
+        print(event.button())
+
+    def mouseMoveEvent(self, event):
+        if self.flag_button == "right":
+            x = event.globalX()
+            y = event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x - x_w, y - y_w)
+        if self.flag_button == "left":
+            #x = self.width()
+            #y = self.height()
+            x_r = self.resize_wnd.x() - event.pos().x()
+            y_r = self.resize_wnd.y() - event.pos().y()
+            print(event.globalY(), x_r, self.resize_wnd.x())
+            self.resize(self.x - x_r, self.y - y_r)
 
     def changeEvent(self, event):
 
@@ -2501,11 +2567,15 @@ class LogForm(QMainWindow):
         self.profiles.addSeparator()
         self.profiles.addSeparator()
         #self.profiles.addAction()
+        exit_menu = QAction("Exit", self)
+        exit_menu.triggered.connect(self.close)
         self.menuBarw = self.menuBar()
+
         self.menuBarw.setStyleSheet("QWidget{font: 12px;}")
         #  settings_menu = menuBar.addMenu('Settings')
         settingsMenu = self.menuBarw.addMenu("Menu")
         settingsMenu.addAction(logSettingsAction)
+        settingsMenu.addAction(exit_menu)
 
         WindowMenu = self.menuBarw.addMenu('&Window')
         # WindowMenu.triggered.connect(self.logSettings)
@@ -2515,19 +2585,34 @@ class LogForm(QMainWindow):
         #WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
+
         ViewMenu.addMenu(self.profiles)
         self.profile_update_menu()
         aboutAction = QAction('&About', self)
-        # logSettingsAction.setStatusTip('Name, Call and other of station')
+
         aboutAction.triggered.connect(self.about_window)
-        #self.menuBarw.addAction(aboutAction)
+
         settingsMenu.addAction(aboutAction)
+
         if self.diploms != []:
 
             for i in range(len(self.diploms)):
                 diplom_data = self.diploms[i].get_data()
                 # print("self.diploms:_>", diplom_data[0]['name'])
                 self.menu_add(diplom_data[0]['name'])
+
+
+        minimizeMenu = QAction("🗕", self)
+        minimizeMenu.triggered.connect(self.showMinimized)
+        closeMenu = QAction("✘", self)
+        closeMenu.triggered.connect(self.close)
+
+        tabMenu = QAction("𝑳𝓲𝓷𝓾𝔁𝑳𝓸𝓰", self)
+        tabMenu.setDisabled(True)
+
+        self.menuBarw.addAction(tabMenu)
+        self.menuBarw.addAction(minimizeMenu)
+        self.menuBarw.addAction(closeMenu)
 
     def profile_update_menu(self):
         profiles = json.loads(settingsDict["coordinate-profile"])
@@ -2644,6 +2729,7 @@ class LogForm(QMainWindow):
     def get_mode(self):
         mode = self.mode
         return mode
+
     def initUI(self):
         font = QFont(settingsDict['font-app'], 10, QFont.Normal)
 
@@ -2655,6 +2741,8 @@ class LogForm(QMainWindow):
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
         self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
         self.setStyleSheet(style)
@@ -2874,6 +2962,34 @@ class LogForm(QMainWindow):
         # run time in Thread
         self.run_time = realTime(logformwindow=self)  # run time in Thread
         self.run_time.start()
+
+    def mousePressEvent(self, event):
+
+        if event.button() == 1:
+            self.offset = event.pos()
+            self.flag_button = "right"
+        if event.button() == 2:
+            self.resize_wnd = event.pos()
+            self.flag_button = "left"
+            self.x = self.width()
+            self.y = self.height()
+
+        print(event.button())
+
+    def mouseMoveEvent(self, event):
+        if self.flag_button == "right":
+            x = event.globalX()
+            y = event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x - x_w, y - y_w)
+        if self.flag_button == "left":
+            #x = self.width()
+            #y = self.height()
+            x_r = self.resize_wnd.x() - event.pos().x()
+            y_r = self.resize_wnd.y() - event.pos().y()
+            print(event.globalY(), x_r, self.resize_wnd.x())
+            self.resize(self.x - x_r, self.y - y_r)
 
     def full_clear_form(self):
         self.inputCall.clear()
@@ -3115,10 +3231,14 @@ class LogForm(QMainWindow):
     def changeEvent(self, event):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
+            #print("---->",event.value())
             if self.isMinimized():
+                print("Minimized")
                 if settingsDict['search-internet-window'] == 'True':
+
                     internetSearch.showMinimized()
-                    settingsDict['search-internet-window'] = 'True'
+                    #internetSearch.showNormal()
+                    #settingsDict['search-internet-window'] = 'True'
                 if settingsDict['log-search-window'] == 'True':
                     logSearch.showMinimized()
                     settingsDict['log-search-window'] = 'True'
@@ -3128,6 +3248,21 @@ class LogForm(QMainWindow):
                 if settingsDict['telnet-cluster-window'] == 'True':
                     telnetCluster.showMinimized()
                     settingsDict['telnet-cluster-window'] = 'True'
+            else:
+
+                if settingsDict['search-internet-window'] == 'True':
+                    internetSearch.showNormal()
+                    settingsDict['search-internet-window'] = 'True'
+                if settingsDict['log-search-window'] == 'True':
+                    logSearch.showNormal()
+                    settingsDict['log-search-window'] = 'True'
+                if settingsDict['log-window'] == 'True':
+                    logWindow.showNormal()
+                    settingsDict['log-window'] = 'True'
+                if settingsDict['telnet-cluster-window'] == 'True':
+                    telnetCluster.showNormal()
+                    settingsDict['telnet-cluster-window'] = 'True'
+
             QWidget.changeEvent(self, event)
 
     def showEvent(self, event):
@@ -3941,6 +4076,8 @@ class TelnetCluster(QWidget):
                          int(settingsDict['telnet-cluster-window-height']))
         self.setWindowTitle('Telnet cluster')
         self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
         self.setWindowOpacity(float(settingsDict['clusterWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
@@ -3974,6 +4111,34 @@ class TelnetCluster(QWidget):
         # logForm.test('test')
 
         self.start_cluster()
+
+    def mousePressEvent(self, event):
+
+        if event.button() == 1:
+            self.offset = event.pos()
+            self.flag_button = "right"
+        if event.button() == 2:
+            self.resize_wnd = event.pos()
+            self.flag_button = "left"
+            self.x = self.width()
+            self.y = self.height()
+
+        print(event.button())
+
+    def mouseMoveEvent(self, event):
+        if self.flag_button == "right":
+            x = event.globalX()
+            y = event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x - x_w, y - y_w)
+        if self.flag_button == "left":
+            #x = self.width()
+            #y = self.height()
+            x_r = self.resize_wnd.x() - event.pos().x()
+            y_r = self.resize_wnd.y() - event.pos().y()
+            print(event.globalY(), x_r, self.resize_wnd.x())
+            self.resize(self.x - x_r, self.y - y_r)
 
     @QtCore.pyqtSlot()
     def input_spot(self):
@@ -4128,22 +4293,51 @@ class InternetSearch(QWidget):
         self.setWindowTitle('Telnet cluster')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('Image from internet')
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['searchInetWindow-opacity']))
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";}"
         self.setStyleSheet(style)
         # self.show()
 
+    def mousePressEvent(self, event):
+
+        if event.button() == 1:
+            self.offset = event.pos()
+            self.flag_button = "right"
+        if event.button() == 2:
+            self.resize_wnd = event.pos()
+            self.flag_button = "left"
+            self.x = self.width()
+            self.y = self.height()
+
+        print(event.button())
+
+    def mouseMoveEvent(self, event):
+        if self.flag_button == "right":
+            x = event.globalX()
+            y = event.globalY()
+            x_w = self.offset.x()
+            y_w = self.offset.y()
+            self.move(x - x_w, y - y_w)
+        if self.flag_button == "left":
+            #x = self.width()
+            #y = self.height()
+            x_r = self.resize_wnd.x() - event.pos().x()
+            y_r = self.resize_wnd.y() - event.pos().y()
+            print(event.globalY(), x_r, self.resize_wnd.x())
+            self.resize(self.x - x_r, self.y - y_r)
+
     def changeEvent(self, event):
 
-        if event.type() == QtCore.QEvent.WindowStateChange:
-            if self.isMinimized():
-                settingsDict['search-internet-window'] = 'False'
-                print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
+        #if event.type() == QtCore.QEvent.WindowStateChange:
+         #   if self.isMinimized():
+                #settingsDict['search-internet-window'] = 'False'
+         #       print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
                 # telnetCluster.showMinimized()
-            elif self.isVisible():
-                settingsDict['search-internet-window'] = 'True'
-                print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
+         #   elif self.isVisible():
+                #settingsDict['search-internet-window'] = 'True'
+         #       print("search-internet-window: changeEvent:_>", settingsDict['search-internet-window'])
 
             QWidget.changeEvent(self, event)
 

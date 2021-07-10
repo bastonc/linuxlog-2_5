@@ -92,7 +92,7 @@ class Tci_reciever(QThread):
                 #print("Connect to ")
                 reciever = self.ws.recv()
                 if reciever != old_reciever:
-                    print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                    #print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
                     # reciev vfo (freq)
 
@@ -101,18 +101,18 @@ class Tci_reciever(QThread):
                         values = tci_string[1].split(",")
                         #print("TRX:_>", values[1])
                         if values[1] == 'true;':
-                            print(values[1])
+                            #print(values[1])
                             self.log_form.trx_enable('tx')
 
                         elif values[1] == 'false;':
-                            print(values[1])
+                            #print(values[1])
                             self.log_form.trx_enable('rx')
 
 
                     if tci_string[0] == 'vfo':
                         values = tci_string[1].split(",")
                         if values[1] == '0' and values[0] == '0':
-                            print("set freq:")
+                            #print("set freq:")
                             self.log_form.set_freq(values[2].replace(';', ''))
 
                     # reciev protocol
@@ -134,8 +134,8 @@ class Tci_reciever(QThread):
                                 self.log_form.set_mode_tci(values[1].replace(';', ''))
                                 self.mode = values[1].replace(';', '')
                             if self.version_tci == '1.5':
-                                self.log_form.set_mode_tci(values[2].replace(';', ''))
-                                self.mode = values[2].replace(';', '')
+                                self.log_form.set_mode_tci(values[1].replace(';', ''))
+                                self.mode = values[1].replace(';', '')
                             print(">", tci_string)
 
                     #if tci_string[0] == 'ready':
