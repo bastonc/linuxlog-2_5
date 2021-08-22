@@ -3,6 +3,9 @@
 
 
 import sys
+
+import PyQt5.QtCore
+
 import parse
 import re
 import os
@@ -259,13 +262,15 @@ class Filter(QObject):
         if event.type() == QEvent.FocusOut:
 
             textCall = logForm.inputCall.text()
-            print(textCall)
-            foundList = Db(settingsDict).search_qso_in_base(textCall)
-            print(foundList)
-            #self.searchInBase(textCall)
+            #print(textCall)
 
+            foundList = Db(settingsDict).search_qso_in_base(textCall)
+            #print(foundList)
+            #self.searchInBase(textCall)
             logSearch.overlap(foundList)
             logForm.set_data_qso(foundList)
+
+
 
             freq = logForm.get_freq()
 
@@ -321,12 +326,19 @@ class Fill_table(QThread):
     fill_complite = QtCore.pyqtSignal()
     qsos_counter = QtCore.pyqtSignal(int)
 
-    def __init__(self, all_column, window, all_record, settingsDict, parent=None):
+    def __init__(self, all_column, window, settingsDict, parent=None):
         super().__init__()
+        #
         self.all_collumn = all_column
         self.window = window
-        self.all_record = all_record
+        #self.all_record = all_record
         self.settingsDict = settingsDict
+
+    def __new__(self, all_column, window, settingsDict):
+        if not hasattr(self, 'instance'):
+            self.instance = super(Fill_table, self).__new__(self)
+        return self.instance
+
 
     def run(self):
 
@@ -443,22 +455,23 @@ class Log_Window_2(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.filename = "log.adi"
-        if os.path.isfile(self.filename):
-            pass
-        else:
-            with open(self.filename, "w") as file:
-                file.write(Adi_file(app_version=APP_VERSION, settingsDict=settingsDict).get_header())
+        #self.filename = "log.adi"
+        #if os.path.isfile(self.filename):
+        #    pass
+        #else:
+        #    with open(self.filename, "w") as file:
+       #         file.write(Adi_file(app_version=APP_VERSION, settingsDict=settingsDict).get_header())
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
         self.allRecords = Fill_table(all_column=self.allCollumn,
                                      window=self,
-                                     all_record=All_records,
+
                                      settingsDict=settingsDict)
         self.allRecords.fill_complite.connect(self.fill_complited)
+        #self.allRecords.start()
         self.initUI()
-
+        #all_record = All_records,
     def initUI(self):
         '''
             Design of log window
@@ -896,7 +909,7 @@ class Log_Window_2(QWidget):
         self.collumns_index = std.std.get_index_column(self, self.tableWidget_qso)
         print("send_eqsl_for_call:_>", self.collumns_index)
         record_id = self.tableWidget_qso.item(row, self.collumns_index['id']).text()
-        time_formated = std.std.std_time(self, self.tableWidget_qso.item(row, self.collumns_index['TIME_ON']).text().replace(":", ""))
+        time_formated = std.std.std_time(self, self.tableWidget_qso.item(row, self.collumns_index['TIME_ON']).text())
 
         qso_data = db.get_record_by_id(record_id)
         date = str(qso_data[0]['QSO_DATE']).replace("-", "")
@@ -1241,7 +1254,7 @@ class Log_Window_2(QWidget):
         #self.header_label.show()
         self.fill_flag = 0
         self.allRecords.terminate()
-        print("fill_complite signal", self.allRecords.isRunning())
+        #print("fill_complite signal", self.allRecords.isRunning())
         #self.tableWidget_qso.hide()
         #self.tableWidget_qso.show()
         #logForm.counter_qso = db.get_max_id
@@ -1251,9 +1264,6 @@ class Log_Window_2(QWidget):
         logForm.counter_qso = val
         #print("Slot counter QSO", logForm.counter_qso )
 
-    def get_all_record(self):
-        Db(settingsDict).get_all_records()
-        return All_records
 
     def protectionItem(self, text, flags):
         tableWidgetItem = QTableWidgetItem(text)
@@ -1358,21 +1368,7 @@ class Log_Window_2(QWidget):
                          "<CLUBLOG_QSO_UPLOAD_STATUS:" + str(
             len(recordObject['CLUBLOG_QSO_UPLOAD_STATUS'])) + ">" + str(
         recordObject['CLUBLOG_QSO_UPLOAD_STATUS']) + "<EOR>\n"
-        #print(stringToAdiFile)
-        #recordObject['string_in_file'] = Adi_file(APP_VERSION, settingsDict).get_last_string() + 1
 
-        #file = open(self.filename, 'a')
-        #resultWrite = file.write(stringToAdiFile)
-        # print(resultWrite)
-        #if resultWrite > 0:
-         #   file.close()
-        #else:
-         #   print("QSO not write in logfile")
-          #  file.close()
-        #####
-
-        #All_records.append(recordObject)
-        #all_rows = len(All_records)
 
         # record to table
         allCols = len(self.allCollumn)
@@ -1525,6 +1521,10 @@ class LogSearch(QWidget):
         self.layout.addWidget(self.tableWidget)
         self.setLayout(self.layout)
         # self.show()
+
+    def clear_table(self):
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
 
     def mousePressEvent(self, event):
 
@@ -2364,7 +2364,7 @@ class LogForm(QMainWindow):
         self.initUI()
         self.country_dict = self.get_country_dict()
         self.mode = settingsDict['mode']
-
+        self.db = Db(settingsDict)
         # print("self.Diploms in logForm init:_>", self.diploms)
 
     def get_coordinate_windows(self):
@@ -2582,7 +2582,7 @@ class LogForm(QMainWindow):
         WindowMenu.addAction(window_cluster_action)
         WindowMenu.addAction(window_inet_search_action)
         WindowMenu.addAction(window_repeat_qso_action)
-        #WindowMenu.addAction(window_cw_module)
+        WindowMenu.addAction(window_cw_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
 
@@ -3096,6 +3096,16 @@ class LogForm(QMainWindow):
 
         if len(text) < 2:
             self.set_country_label("")
+        if len(text) >= 4:
+
+            foundList = self.db.search_like_qsos(text)
+            print("Like QSO's:",foundList)
+            # self.searchInBase(textCall)
+            #logSearch.overlap(foundList)
+            logForm.set_data_qso(foundList)
+        if len(text)==0:
+            logSearch.clear_table()
+
 
     def get_country(self, call_dark):
 
@@ -3161,10 +3171,6 @@ class LogForm(QMainWindow):
             self.EQSL_QSL_SENT = 'N'
             self.CLUBLOG_QSO_UPLOAD_STATUS = "N"
 
-            all_records = logWindow.get_all_record()  # print("'QSO_DATE':'20190703', 'TIME_ON':'124600', 'FREQ':"+freq+" 'CALL':"+cal+"'MODE'"+mode+" 'RST_RCVD':"+rstR+" 'RST_SENT':"+rstS+", 'NAME':"+name+", 'QTH':"+qth+"'OPERATOR':"+operator+"'BAND':"+band+"'COMMENT':"+comment)
-            #record_number = self.counter_qso + 1
-
-            #print("record_number in logFrom:", record_number)
             datenow = datetime.datetime.now()
             date = datenow.strftime("%Y%m%d")
             time = str(strftime("%H%M%S", gmtime()))
@@ -3930,11 +3936,11 @@ class clusterThread(QThread):
 
 
         lastRow = 0
-        message = (call + "\n").encode('ascii')
+        message = (call+"\n").encode('ascii')
         telnetObj.read_until(b": ")
         telnetObj.write(message)
-        message2 = (call + "\n").encode('ascii')
-        telnetObj.write(message2)
+        #message2 = (call).encode('ascii')
+        #telnetObj.write(message2)
         splitString = []
         cleanList = []
         i = 0
@@ -3946,7 +3952,7 @@ class clusterThread(QThread):
                 if output_data != '':
                     lastRow = self.telnetCluster.tableWidget.rowCount()
                     self.form_window.set_telnet_stat()
-                    # print (output_data)
+                    #print(output_data)
                     if output_data[0:2].decode(settingsDict['encodeStandart']) == "DX":
                         splitString = output_data.decode(settingsDict['encodeStandart']).split(' ')
                         count_chars = len(splitString)
@@ -4481,7 +4487,34 @@ class settings_file:
             f.writelines(old_data)
         #print("Save_and_Exit_button: ", old_data)
 
-class Db:
+class foundThread(QThread):
+    result = QtCore.pyqtSignal(object)
+
+
+
+    def __init__(self, connection, form_window, sql_query):
+        super().__init__()
+        #self.context_env = context_env
+        self.form_window = form_window
+        self.sql_query = sql_query
+        self.connection = connection
+
+    def __new__(self, connection, form_window, sql_query):
+        if not hasattr(self, 'instance'):
+            self.instance = super(foundThread, self).__new__(self)
+        return self.instance
+
+    def run(self):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(self.sql_query)
+        records_dict = cursor.fetchall()
+        #print("Type from thread", records_dict)
+        self.result.emit(records_dict)
+
+
+class Db(QObject):
     def __init__(self, settingsDict, db_name='', db_charset='utf8mb4'):
         super().__init__()
         self.db_host = settingsDict['db-host']
@@ -4651,11 +4684,19 @@ class Db:
 
         return last_id
 
-
+    def check_table(self, name_table):
+        db_conn = self.connect()
+        sql_query = "SHOW TABLES LIKE" + name_table + ";"
+        curr = db_conn.cursor()
+        try:
+            result = curr.execute(sql_query)
+        except Exception:
+            result = ()
+        return result
 
     def get_all_records(self, count=0):
         cursor = self.connect().cursor()
-        if count != 0:
+        if count > 0:
             records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC LIMIT " + str(count))
         else:
             records = cursor.execute(
@@ -4670,6 +4711,27 @@ class Db:
         records = cursor.execute("SELECT * FROM " + self.settingsDict["my-call"] + " WHERE `id`=%s", [id])
         records_dict = cursor.fetchall()
         return records_dict
+
+    def search_like_qsos(self, text):
+        db_conn = self.connect()
+        self.record_dict = {}
+        sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
+        self.found_thread = foundThread(connection=db_conn, form_window=logForm, sql_query=sql_query)
+        self.found_thread.result.connect(self.like_qso_return)
+        self.found_thread.start()
+
+        #connection = self.connect()
+        #cursor = connection.cursor()
+        #cursor.execute(sql_query)
+        #records_dict = cursor.fetchall()
+        return self.record_dict
+
+    @QtCore.pyqtSlot(object)
+    def like_qso_return(self, obj):
+        print("I am Object", obj)
+        logSearch.overlap(obj)
+        self.record_dict = obj
+
 
     def search_qso_in_base(self, call):
         connection = self.connect()
@@ -4761,10 +4823,6 @@ class AppEnv:
 
 
 if __name__ == '__main__':
-    # test = Test()
-    # test.test()
-
-
 
     APP_VERSION = '2.3'
     settingsDict = {}
@@ -4801,7 +4859,6 @@ if __name__ == '__main__':
         ["RST_RCVD", "VARCHAR(50)"],
         ["RST_SENT", "VARCHAR(50)"],
     ]
-
     file = open('settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -4810,10 +4867,9 @@ if __name__ == '__main__':
             configstring = configstring.replace("\n", "")
             splitString = configstring.split('=')
             settingsDict.update({splitString[0]: splitString[1]})
-
     file.close()
-    global All_records, qso_counter, db
-    All_records = []
+    #global All_records, qso_counter, db
+    #All_records = []
 
 
 
@@ -4831,22 +4887,20 @@ if __name__ == '__main__':
             db.create_database()
             settingsDict['db-name'] = 'linuxlog'
         else:
-            print("Database is creating")
+            print("Database found")
         try:
-            db = Db(settingsDict=settingsDict)
-
-            db_connect = db.connect()
             try:
-                cursor = db_connect.cursor()
-                cursor.execute("table " + settingsDict['my-call'])
+                db.check_table(settingsDict['my-call'])
+                print("Get table")
             except Exception:
 
                 table = db.create_table(
                     settingsDict['my-call'].upper(),
                     table_columns
                 )
+                print("Create table")
 
-            print("Get DB linuxlog")
+
         except Exception:
             try:
                 db = Db(settingsDict=settingsDict)
@@ -4881,7 +4935,7 @@ if __name__ == '__main__':
             settingsDict=settingsDict)
         about_window = About_window("LinuxLog",
                                     "Version: " + APP_VERSION + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
-        new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
+        #new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
         env_dict = {
             "APP_VERSION": APP_VERSION
         }

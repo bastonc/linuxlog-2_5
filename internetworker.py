@@ -271,8 +271,6 @@ class Eqsl_services(QtCore.QObject):
 
     @QtCore.pyqtSlot(str)
     def show_message(self, string: str):
-        # pass
-
         std.std.message(self.parrent_window, string, "<p style='color: red;'>ERROR</p>")
         if self.input_form_key == 1:
             self.settingsDict['eqsl_user'] = ''

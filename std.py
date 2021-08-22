@@ -145,6 +145,7 @@ class std:
         for digit in time_split:
             if len(digit) < 2:
                 digit_new = "0" + digit
+                #print ("digit new", digit_new)
             else:
                 digit_new = digit
             time_string += digit_new
