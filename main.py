@@ -67,10 +67,12 @@ class Adi_file:
         self.APP_VERSION = app_version
         self.settingsDict = settingsDict
         self.filename = 'log.adi'
+        try:
+            with open(self.filename, 'r') as file:  # read all strings
 
-        with open(self.filename, 'r') as file:  # read all strings
-
-            self.strings_in_file = file.readlines()
+                self.strings_in_file = file.readlines()
+        except Exception:
+            self.strings_in_file = []
 
     def get_last_string(self):
         return len(self.strings_in_file)
@@ -4934,9 +4936,9 @@ if __name__ == '__main__':
         telnetCluster = TelnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
 
-        adi_file = Adi_file(
-            app_version=APP_VERSION,
-            settingsDict=settingsDict)
+        #adi_file = Adi_file(
+        #    app_version=APP_VERSION,
+        #    settingsDict=settingsDict)
         about_window = About_window("LinuxLog",
                                     "Version: " + APP_VERSION + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         #new_diploma = ext.Diplom_form(settingsDict=settingsDict, log_form=logForm, adi_file=adi_file)
