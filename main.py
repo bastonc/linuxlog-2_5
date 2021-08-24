@@ -267,8 +267,10 @@ class Filter(QObject):
             foundList = Db(settingsDict).search_qso_in_base(textCall)
             #print(foundList)
             #self.searchInBase(textCall)
-            logSearch.overlap(foundList)
-            logForm.set_data_qso(foundList)
+            #logSearch.overlap(foundList)
+            print("found_list", foundList)
+            if foundList != ():
+                logForm.set_data_qso(foundList)
 
 
 
@@ -1007,9 +1009,9 @@ class Log_Window_2(QWidget):
         self.call_input.setFixedWidth(100)
         self.call_input.setFixedHeight(30)
         self.call_input.setText(call)
-        call_layer = QHBoxLayout()
-        call_layer.addWidget(self.call_label)
-        call_layer.addWidget(self.call_input)
+        self.call_layer = QHBoxLayout()
+        self.call_layer.addWidget(self.call_label)
+        self.call_layer.addWidget(self.call_input)
         # Date element 2
         self.date_label = QLabel("Date")
         self.date_input = QLineEdit()
@@ -1017,9 +1019,9 @@ class Log_Window_2(QWidget):
         self.date_input.setFixedWidth(100)
         self.date_input.setFixedHeight(30)
         self.date_input.setText(date)
-        date_layer = QHBoxLayout()
-        date_layer.addWidget(self.date_label)
-        date_layer.addWidget(self.date_input)
+        self.date_layer = QHBoxLayout()
+        self.date_layer.addWidget(self.date_label)
+        self.date_layer.addWidget(self.date_input)
         # Time element 3
         self.time_label = QLabel("Time")
         self.time_input = QLineEdit()
@@ -1037,9 +1039,9 @@ class Log_Window_2(QWidget):
         self.freq_input.setFixedWidth(100)
         self.freq_input.setFixedHeight(30)
         self.freq_input.setText(freq)
-        freq_layer = QHBoxLayout()
-        freq_layer.addWidget(self.freq_label)
-        freq_layer.addWidget(self.freq_input)
+        self.freq_layer = QHBoxLayout()
+        self.freq_layer.addWidget(self.freq_label)
+        self.freq_layer.addWidget(self.freq_input)
         # RstR element 5
         self.rstr_label = QLabel("RSt reciev")
         self.rstr_input = QLineEdit()
@@ -1047,9 +1049,9 @@ class Log_Window_2(QWidget):
         self.rstr_input.setFixedWidth(100)
         self.rstr_input.setFixedHeight(30)
         self.rstr_input.setText(rstR)
-        rstr_layer = QHBoxLayout()
-        rstr_layer.addWidget(self.rstr_label)
-        rstr_layer.addWidget(self.rstr_input)
+        self.rstr_layer = QHBoxLayout()
+        self.rstr_layer.addWidget(self.rstr_label)
+        self.rstr_layer.addWidget(self.rstr_input)
         # RstS element 6
         self.rsts_label = QLabel("RSt sent")
         self.rsts_input = QLineEdit()
@@ -1057,9 +1059,9 @@ class Log_Window_2(QWidget):
         self.rsts_input.setFixedWidth(100)
         self.rsts_input.setFixedHeight(30)
         self.rsts_input.setText(rstS)
-        rsts_layer = QHBoxLayout()
-        rsts_layer.addWidget(self.rsts_label)
-        rsts_layer.addWidget(self.rsts_input)
+        self.rsts_layer = QHBoxLayout()
+        self.rsts_layer.addWidget(self.rsts_label)
+        self.rsts_layer.addWidget(self.rsts_input)
         # Name element 7
         self.name_label = QLabel("Name")
         self.name_input = QLineEdit()
@@ -1067,9 +1069,9 @@ class Log_Window_2(QWidget):
         self.name_input.setFixedWidth(100)
         self.name_input.setFixedHeight(30)
         self.name_input.setText(name)
-        name_layer = QHBoxLayout()
-        name_layer.addWidget(self.name_label)
-        name_layer.addWidget(self.name_input)
+        self.name_layer = QHBoxLayout()
+        self.name_layer.addWidget(self.name_label)
+        self.name_layer.addWidget(self.name_input)
         # QTH element 8
         self.qth_label = QLabel("QTH")
         self.qth_input = QLineEdit()
@@ -1077,9 +1079,9 @@ class Log_Window_2(QWidget):
         self.qth_input.setFixedWidth(100)
         self.qth_input.setFixedHeight(30)
         self.qth_input.setText(qth)
-        qth_layer = QHBoxLayout()
-        qth_layer.addWidget(self.qth_label)
-        qth_layer.addWidget(self.qth_input)
+        self.qth_layer = QHBoxLayout()
+        self.qth_layer.addWidget(self.qth_label)
+        self.qth_layer.addWidget(self.qth_input)
         # Mode element 9
         self.mode_label = QLabel("Mode")
         self.mode_input = QLineEdit()
@@ -1087,9 +1089,9 @@ class Log_Window_2(QWidget):
         self.mode_input.setFixedWidth(100)
         self.mode_input.setFixedHeight(30)
         self.mode_input.setText(mode)
-        mode_layer = QHBoxLayout()
-        mode_layer.addWidget(self.mode_label)
-        mode_layer.addWidget(self.mode_input)
+        self.mode_layer = QHBoxLayout()
+        self.mode_layer.addWidget(self.mode_label)
+        self.mode_layer.addWidget(self.mode_input)
         # Band element 10
         self.band_label = QLabel("Band")
         self.band_input = QLineEdit()
@@ -1097,9 +1099,9 @@ class Log_Window_2(QWidget):
         self.band_input.setFixedWidth(100)
         self.band_input.setFixedHeight(30)
         self.band_input.setText(band)
-        band_layer = QHBoxLayout()
-        band_layer.addWidget(self.band_label)
-        band_layer.addWidget(self.band_input)
+        self.band_layer = QHBoxLayout()
+        self.band_layer.addWidget(self.band_label)
+        self.band_layer.addWidget(self.band_input)
         # time_off element 11
         self.timeoff_label = QLabel("Time OFF")
         self.timeoff_input = QLineEdit()
@@ -1155,15 +1157,15 @@ class Log_Window_2(QWidget):
         button_layer.addWidget(self.save_button)
         # Setup all elements
         vertical_box = QVBoxLayout()
-        vertical_box.addLayout(call_layer)
-        vertical_box.addLayout(name_layer)
-        vertical_box.addLayout(qth_layer)
-        vertical_box.addLayout(rstr_layer)
-        vertical_box.addLayout(rsts_layer)
-        vertical_box.addLayout(mode_layer)
-        vertical_box.addLayout(band_layer)
-        vertical_box.addLayout(freq_layer)
-        vertical_box.addLayout(date_layer)
+        vertical_box.addLayout(self.call_layer)
+        vertical_box.addLayout(self.name_layer)
+        vertical_box.addLayout(self.qth_layer)
+        vertical_box.addLayout(self.rstr_layer)
+        vertical_box.addLayout(self.rsts_layer)
+        vertical_box.addLayout(self.mode_layer)
+        vertical_box.addLayout(self.band_layer)
+        vertical_box.addLayout(self.freq_layer)
+        vertical_box.addLayout(self.date_layer)
         vertical_box.addLayout(time_layer)
         vertical_box.addLayout(timeoff_layer)
         vertical_box.addLayout(eslrcvd_layer)
@@ -3080,7 +3082,9 @@ class LogForm(QMainWindow):
 
     def onChanged(self, text):
         '''метод который отрабатывает как только произошло изменение в поле ввода'''
-        self.inputCall.setText(text.upper())
+        if (re.search('[a-zа-я]', text)):
+            print("lowwer")
+            self.inputCall.setText(text.upper())
 
         if re.search('[А-Я]', text):
             string_old = self.inputCall.text()
@@ -3097,12 +3101,12 @@ class LogForm(QMainWindow):
         if len(text) < 2:
             self.set_country_label("")
         if len(text) >= 4:
-
-            foundList = self.db.search_like_qsos(text)
-            print("Like QSO's:",foundList)
+            if (not re.search('[А-Я]', text)and text.isupper() and text.isalnum()):
+                found_List = self.db.search_like_qsos(text)
+                print("Like QSO's:", found_List)
             # self.searchInBase(textCall)
             #logSearch.overlap(foundList)
-            logForm.set_data_qso(foundList)
+            #logForm.set_data_qso(found_List)
         if len(text)==0:
             logSearch.clear_table()
 
@@ -4506,10 +4510,10 @@ class foundThread(QThread):
 
     def run(self):
 
-        cursor = self.connection.cursor()
-
-        cursor.execute(self.sql_query)
-        records_dict = cursor.fetchall()
+        self.cursor = self.connection.cursor()
+        print(self.sql_query)
+        self.cursor.execute(self.sql_query)
+        records_dict = self.cursor.fetchall()
         #print("Type from thread", records_dict)
         self.result.emit(records_dict)
 
@@ -4713,10 +4717,10 @@ class Db(QObject):
         return records_dict
 
     def search_like_qsos(self, text):
-        db_conn = self.connect()
+        self.db_conn = self.connect()
         self.record_dict = {}
         sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
-        self.found_thread = foundThread(connection=db_conn, form_window=logForm, sql_query=sql_query)
+        self.found_thread = foundThread(connection=self.db_conn, form_window=logForm, sql_query=sql_query)
         self.found_thread.result.connect(self.like_qso_return)
         self.found_thread.start()
 
@@ -4728,7 +4732,7 @@ class Db(QObject):
 
     @QtCore.pyqtSlot(object)
     def like_qso_return(self, obj):
-        print("I am Object", obj)
+        #print("I am Object", obj)
         logSearch.overlap(obj)
         self.record_dict = obj
 
