@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import PyQt5.QtCore
 from PyQt5.QtWidgets import QWidget, QApplication, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, QPushButton,QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QObject
 import settings
 import parse
 import json
@@ -60,7 +61,7 @@ class Diplom_form(QWidget):
 
         self.setStyleSheet(style)
         self.name_layout = QHBoxLayout()
-        self.name_label = QLabel("Name diploma:")
+        self.name_label = QLabel("Name of Awards:")
         self.name_label.setFixedWidth(150)
         self.name_input = QLineEdit()
         self.name_input.setStyleSheet(styleform)
@@ -69,9 +70,8 @@ class Diplom_form(QWidget):
         self.name_layout.addWidget(self.name_input)
         self.name_layout.addStretch(300)
         #
-
         self.score_layout = QHBoxLayout()
-        score_text = QLabel("How many points do you need")
+        score_text = QLabel("How many points for complite finish")
         score_text.setStyleSheet(style)
         self.score_input = QLineEdit()
         self.score_input.setStyleSheet(styleform)
@@ -83,14 +83,14 @@ class Diplom_form(QWidget):
         self.text_repeat = QLabel("Repeats:")
         self.repeat_combo = QComboBox()
         self.repeat_combo.setFixedWidth(200)
-        self.repeat_combo.addItems(["resolved other bands", "resolved others mod", "resolving other mods and bands", "not resolving"])
+        self.repeat_combo.addItems(["Resolved other bands", "Resolved others mod", "Resolving other mods and bands", "Not resolving"])
         self.repeat_layout.addWidget(self.text_repeat)
         self.repeat_layout.addWidget(self.repeat_combo)
         self.repeat_layout.addStretch(100)
         #
         self.sps_layout = QHBoxLayout()
-
-
+        self.prefix_check_box = QCheckBox("as Prefix")
+        self.prefix_check_box.setChecked(False)
         self.sps_text = QLabel("Special calls \n or prefix:")
         self.sps_table_widget = QTableWidget()
         self.sps_table_widget.setStyleSheet(styleform)
@@ -125,7 +125,8 @@ class Diplom_form(QWidget):
         add_row = QPushButton("Add rows")
         add_row.clicked.connect(self.add_row)
         self.prefix_lay = QVBoxLayout()
-        #self.prefix_lay.addWidget(self.prefix_check_box)
+        self.prefix_lay.setAlignment(PyQt5.QtCore.Qt.AlignVCenter)
+        self.prefix_lay.addWidget(self.prefix_check_box)
         self.prefix_lay.addWidget(self.sps_text)
         self.sps_layout.addLayout(self.prefix_lay)
         self.sps_layout.addWidget(self.sps_table_widget)
@@ -134,7 +135,7 @@ class Diplom_form(QWidget):
         self.button_layout = QHBoxLayout()
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.close)
-        self.ok_button = QPushButton("Create diploma")
+        self.ok_button = QPushButton("Add award")
         self.ok_button.clicked.connect(self.save_diplom)
         self.button_layout.addWidget(self.cancel_button)
         self.button_layout.addWidget(self.ok_button)
@@ -189,25 +190,21 @@ class Diplom_form(QWidget):
         self.name_input.setText(list_data[0]['name'])
         self.score_input.setText(list_data[0]['score_complite'])
         self.repeat_combo.setCurrentIndex(list_data[0]['repeats'])
-        #if list_data[0]['date_e'] == 'y':
-        #    self.date_checkbox.setChecked(True)
-        #else:
-        #    self.date_checkbox.setChecked(False)
-        #if list_data[0]['prefix_only'] == 'y':
-        #    self.prefix_check_box.setChecked(True)
-        #else:
-           #self.prefix_check_box.setChecked(False)
-
         rows = len(list_data)
         self.sps_table_widget.setRowCount(rows)
         for row in range(rows):
+            self.sps_table_widget.setRowHeight(row,20)
             self.sps_table_widget.setItem(row, 0, QTableWidgetItem(list_data[row]['call']))
             self.sps_table_widget.setItem(row, 1, QTableWidgetItem(list_data[row]['score']))
+
             self.combo_mode_list.append({'combo' + str(row): QComboBox()})
             self.combo_mode_list[row]['combo' + str(row)].addItems(['SSB', 'CW', 'DIGI'])
+            self.combo_mode_list[row]['combo' + str(row)].setFixedHeight(20)
             self.combo_mode_list[row]['combo'+str(row)].setCurrentText(list_data[row]['mode'])
             self.sps_table_widget.setCellWidget(row, 2, self.combo_mode_list[row]['combo'+str(row)])
+            self.prefix_check_box.setChecked(self.list_data[row]['prefix'])
         self.sps_table_widget.resizeRowsToContents()
+
 
 
     def add_row(self):
@@ -219,48 +216,51 @@ class Diplom_form(QWidget):
         #print ("all rows:_>", counter, len(self.combo_mode_list))
         self.combo_mode_list[len(self.combo_mode_list) - 1 ]['combo' + str(counter - 1)].addItems(['SSB', 'CW', 'DIGI'])
         self.sps_table_widget.setCellWidget(counter - 1 , 2, self.combo_mode_list[len(self.combo_mode_list) - 1]['combo' + str(counter - 1)])
-       # for i in range(len(self.combo_mode_list)):
-           # print("all keys:_>", self.combo_mode_list[i].keys())
-        #pass
+
 
     def save_diplom(self):
         list_to_json = []
         settings_list = []
+        # Validate Line edit name of awards
         flag = 0
         if self.name_input.text().strip() != '':
             flag = 1
         else:
             flag = 0
             self.name_input.setStyleSheet("border: 2px solid #DD5555;")
-        #print(self.color_button.text())
+        # Validate color button
         if self.color_button.text() != 'Select color':
             flag = 1
         else:
             flag = 0
             self.color_button.setStyleSheet("border: 2px solid #DD5555;")
+        # end validate
+        # logic of saving award data
         if flag == 1:
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
-
             repeats = self.repeat_combo.currentIndex()
             count_sps = self.sps_table_widget.rowCount()
-
             for row in range(count_sps):
-
-                if self.sps_table_widget.item(row,0) != None and \
-                        self.sps_table_widget.item(row, 1) != None:
-                   # print('Item content call', self.sps_table_widget.item(row, 0).text())
+                score_sps = '0'
+                if self.sps_table_widget.item(row,0) != None:
+                    if self.sps_table_widget.item(row, 1) != None:
+                        if self.sps_table_widget.item(row, 1).text().isnumeric():
+                            score_sps = str(self.sps_table_widget.item(row, 1).text())
+                    print('Item content call', self.sps_table_widget.item(row, 0).text())
                     list_to_json.append({'call': self.sps_table_widget.item(row, 0).text().upper(),
-                                      'score': self.sps_table_widget.item(row, 1).text(),
-                                      'mode' : self.combo_mode_list[row]['combo'+str(row)].currentText(),
-                                      'name': name_programm,
-                                      'colorR':self.colorR,
-                                      'colorG': self.colorG,
-                                      'colorB': self.colorB,
-                                      'color_name': self.color_name,
-                                      'repeats':repeats, 'score_complite': score_complite,
+                                         'score': score_sps,
+                                         'mode' : self.combo_mode_list[row]['combo'+str(row)].currentText(),
+                                         'name': name_programm,
+                                         'colorR':self.colorR,
+                                         'colorG': self.colorG,
+                                         'colorB': self.colorB,
+                                         'color_name': self.color_name,
+                                         'repeats':repeats,
+                                         'score_complite': score_complite,
+                                         'prefix': self.prefix_check_box.isChecked()
                                       })
-                    
+
             self.write_rules_to_file(list_to_json, name_output_file=name_programm)
             if self.settingsDict['diploms-json'] != "":
                 settings_list = json.loads(self.settingsDict['diploms-json'])
@@ -317,11 +317,82 @@ class Diplom_form(QWidget):
         with open(filename, 'w') as f:
             f.write(json.dumps(data_to_json))
 
+class Diplom(QObject):
+    name = ''
+
+    def __init__(self, name, settingsDict, parent=''):
+        super().__init__()
+        self.name = name
+        self.settingsDict = settingsDict
+        if parent != '':
+            self.parentWindow = parent
+        else:
+            self.parentWindow = None
+        self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
+                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
+
+        self.initial()
+
+    def initial(self):
+        '''
+        initial self variables for using in internal logic
+        :return: self.diplomDataList - Object (List) with full data about awards program,
+        self.adiFile - Data from <awards name>.adi file with QSO for diplom,
+        self.qsoData - object [{qso 1 data}...{qso n data}] with All QSO data.
+        '''
+        #1
+        self.diplomDataList = self.getRules()
+        #2
+        self.adiFile = main.Adi_file("in", self.settingsDict, self.diplomDataList[0]['name'] + ".adi")
+        #3
+        self.qsoData = self.getQsoData()
+
+    def getQsoData(self):
+        '''
+        Parse .adi file and generated the dictionary object for QSOs
+        :return: qsoDataList - object [{... QSO 1 info...},{...QSO 2 info...}]
+        '''
+        qsoDataList = parse.getAllRecord(self.allCollumn, self.diplomDataList[0]['name'] + ".adi", key="import")
+        print("->-" * 10)
+        print(qsoDataList)
+        print("==" * 10)
+        return qsoDataList
+
+    def getRules(self):
+        with open(self.name + ".rules", 'r') as rules:
+            s = rules.readline()
+            #print("s", s)
+            rulesObject = json.loads(s)
+        return rulesObject
+
+    def complete(self):
+        score = self.getScore()
+        scoreComplete = self.diplomDataList[0]['score_complite']
+        if int(score) >= int(scoreComplete):
+            return True
+        return False
+
+    def getScore(self):
+        totalScore = 0
+        for callFromRules in self.diplomDataList:
+            for qso in self.qsoData:
+                if qso['CALL'] == callFromRules['call']:
+                    totalScore = totalScore + int (callFromRules['score'])
+
+        return totalScore
+
+    def filter(self, callDict):
+       if self.checkQso(callDict):
+           return True
+
+    def checkQso(self, callDict):
+             pass
+
 class diplom:
     '''
     This class work with extended functions for diplom module
     '''
-    def __init__(self, file, file_rules):
+    def __init__(self, file, file_rules, settingsDict=''):
         self.file = file
         self.file_rules = file_rules.strip()
         self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
@@ -329,6 +400,8 @@ class diplom:
         self.allRecord = parse.getAllRecord(self.allCollumn, self.file)
         #print("diplom:", self.allRecord)
         self.decode_data = self.get_rules(self.file_rules)
+        if settingsDict !='':
+            self.settingsDict = settingsDict
 
     def get_rules(self, name):
         with open(name, "r") as f:
@@ -353,25 +426,34 @@ class diplom:
 
         return color
 
-
-
     def filter (self, call_dict):
+        '''
+
+        This function chek rules for qso.
+        The function get on input dictionary with data qso (call, mode,
+        band) and check it on rules for currently awards object
+            :param call_dict: dictionary with keys: call, mode, band
+            :return: boolean
+        '''
         count_sps_call = len(self.decode_data)
-        call_found_status = 'no'
+        call_found_status = 0
         for i in range(count_sps_call):
-            if self.decode_data[i]['call'] == call_dict['call']:
-                call_found_status = 'ok'
-        # if filter for cluster
-        if call_dict['mode'] == 'cluster' and call_found_status == 'ok':
+            if self.decode_data[i]['prefix']:
+                if call_dict['call'].find(self.decode_data[i]['call']) != -1:
+                    call_found_status = 1
+            else:
+                if self.decode_data[i]['call'] == call_dict['call']:
+                    call_found_status = 1
+
+
+        # if filter using for cluster
+        if call_dict['mode'] == 'cluster' and call_found_status == 1:
             return True
         else:
-
-
             #print("repeats:_>", self.decode_data[0]['repeats'])
             found_records_in_base_list = self.search_call_in_base(call_dict['call'])
-
             # repeat 0 - resolved other bands
-            if str(self.decode_data[0]['repeats']) == '0' and call_found_status == 'ok':
+            if str(self.decode_data[0]['repeats']) == '0' and call_found_status == 1:
 
                 #print("Found QSO(s) in base", len(found_records_in_base_list))
 
@@ -390,15 +472,22 @@ class diplom:
                         return False
 
             # repeat 1 - resolved other mods
-            if str(self.decode_data[0]['repeats']) == '1' and call_found_status == 'ok':
+            if str(self.decode_data[0]['repeats']) == '1' and call_found_status == 1:
                 #print("Found QSO(s) in base", found_records_in_base_list)
                 if len(found_records_in_base_list) == 0:
                     for i in range(count_sps_call):
-                        if call_dict['mode'] == self.decode_data[i]['mode']\
-                                and call_dict['call'] == self.decode_data[i]['call']:
-                            return True
-                        else:
-                            return False
+                        if (mode == 'all'):
+                            if call_dict['mode'] == self.decode_data[i]['mode']\
+                                    and call_dict['call'] == self.decode_data[i]['call']:
+                                return True
+                            else:
+                                return False
+                        if (mode == 'prefix'):
+                            if call_dict['mode'] == self.decode_data[i]['mode']\
+                                    and call_dict['call'].find(self.decode_data[i]['call']) != -1:
+                                return True
+                            else:
+                                return False
 
                 else:
                     count_records_in_base_list = len(found_records_in_base_list)
@@ -419,24 +508,29 @@ class diplom:
                         return False
 
             # repeat 2 - resolved other mods and bands
-            if str(self.decode_data[0]['repeats']) == '2' and call_found_status == 'ok':
+            if str(self.decode_data[0]['repeats']) == '2' and call_found_status == 1:
                 #print("Found QSO(s) in base", len(found_records_in_base_list),
                  #     found_records_in_base_list)
-                mode_status = 'no'
+                mode_status = 0
                 for i in range(count_sps_call):
                     #print("call_dict['mode']", call_dict['mode'], "self.decode_data[i]['mode']",
                         #  self.decode_data[i]['mode'])
-                    if call_dict['mode'] == self.decode_data[i]['mode'] \
-                            and call_dict['call'] == self.decode_data[i]['call']:
-                        mode_status = 'ok'
+                    if (mode == 'all'):
+                        if call_dict['mode'] == self.decode_data[i]['mode'] \
+                                and call_dict['call'] == self.decode_data[i]['call']:
+                            mode_status = 1
+                    if (mode == 'prefix'):
+                        if call_dict['mode'] == self.decode_data[i]['mode'] \
+                                and call_dict['call'].find(self.decode_data[i]['call']) != -1 :
+                            mode_status = 1
 
                 count_records_in_base_list = len(found_records_in_base_list)
                 #print ("mode status:_>", mode_status)
                 #print("Found in Base", len(found_records_in_base_list), found_records_in_base_list)
-                if count_records_in_base_list == 0 and mode_status == 'ok':
+                if count_records_in_base_list == 0 and mode_status == 1:
                     #print("mode ok")
                     return True
-                if count_records_in_base_list > 0 and mode_status == 'ok':
+                if count_records_in_base_list > 0 and mode_status == 1:
                     flag = True
                     for j in range(count_records_in_base_list):
                         if call_dict['mode'] == found_records_in_base_list[j]['MODE'] \
@@ -454,14 +548,14 @@ class diplom:
 
             # repeat 3 - resolved other mods and bands
             if str(self.decode_data[0]['repeats']) == '3' \
-                and call_found_status == 'ok' \
+                and call_found_status == 1 \
                 and len(found_records_in_base_list) == 0:
                 flag = False
                 for i in range(count_sps_call):
 
                     if call_dict['mode'] == self.decode_data[i]['mode'] \
                             and call_dict['call'] == self.decode_data[i]['call']:
-                        mode_status = 'ok'
+                        mode_status = 1
                         flag = True
             else:
                 flag = False
@@ -469,83 +563,6 @@ class diplom:
                 return True
             else:
                 return False
-
-
-
-
-
-        '''
-        flag = 'nothing'
-        self.call = call_dict['call']
-        #print("count_in_rules:_>",len(self.decode_data))
-        for index_in_rules in range(len(self.decode_data)):
-            #print("decode in filter", index_in_rules, " - ", self.decode_data[index_in_rules], "call", self.call)
-            #print ("Filter call from Rules file:_>", self.decode_data[index_in_rules]['call'])
-            if call_dict['call'] == self.decode_data[index_in_rules]['call']:
-                found_flag = 'true'
-                if call_dict['mode'] == 'cluster':
-                    return True
-                else:
-                    found_records = self.search_call_in_base(self.call)
-                    print("Filter: repeats rules:_>", self.decode_data[index_in_rules]['repeats'])
-                    print("Filter: found records:_>", found_records)
-                    # 3 - not resolved
-                    if str(self.decode_data[index_in_rules]['repeats']) == '3':
-                        #print("Found Records:_>", found_records)
-                        if not found_records:
-                            return True
-                            #flag = 'true'  #True
-                            #print("if not found_records", flag)
-                        else:
-                           # print("else", flag)
-                            flag = 'false' #False
-                    # 0 - resolved other band
-                    if str(self.decode_data[index_in_rules]['repeats']) == '0':
-                        found_qso_count = len(found_records)
-                        #print("Filter. Count found QSO:_>", found_qso_count)
-                        if not found_records:
-                            return True
-                        else:
-                            for i in range(found_qso_count):
-                                #print("rules 0 iterator:_>", i)
-                               # print("call_dict Band:_>", call_dict['band'], "foundrecords Band:_>", found_records[i]['BAND'])
-                                if call_dict['band'] == found_records[i]['BAND']:
-                                    flag = 'false' # False
-                                else:
-                                    flag = 'true'
-
-                    # 1 - resolved other mode
-                    if str(self.decode_data[index_in_rules]['repeats']) == '1':
-                        found_qso_count = len(found_records)
-                        for i in range(found_qso_count):
-                           if call_dict['mode'] == found_records[i]['MODE'] \
-                                   and call_dict['call'] == found_records[i]['CALL']:
-                                flag = 'false'  # False
-                           else:
-                               flag = 'true'
-
-                    # 2 - resolved other mode and bands
-                    if str(self.decode_data[index_in_rules]['repeats']) == '2':
-                        found_qso_count = len(found_records)
-                        for i in range(found_qso_count):
-                            if call_dict['mode'] == found_records[i]['MODE'] or \
-                                    call_dict['band'] == found_records[i]['BAND']:
-                                flag = 'false'  # False
-            else:
-                if call_dict['mode'] == 'cluster':
-                    flag = 'false'
-
-               # print("else comparsion call", flag)
-                #flag = 'false'
-        if flag == 'true':
-            print("return", flag)
-            return True
-
-        if flag == 'false':
-            print("return", flag)
-            return False
-
-        '''
 
     def add_qso(self, list_data):
         '''
@@ -592,6 +609,7 @@ class diplom:
                 file.write(stringToAdiFile)
                 #print ("list_data:_>", list_data)
                 self.allRecord.append(list_data)
+
     def get_count_qso(self):
         return len(self.allRecord)
 
@@ -620,6 +638,29 @@ class diplom:
         logForm.menu_rename_diplom()
         logForm.diploms_init()
         logForm.menu()
+
+    def checkQso(self, callDict):
+        self.diplomsObject = self.get_data()
+        if self.filter({'call': callDict['CALL'], 'mode': callDict['MODE'], 'band': callDict['BAND']}):
+            print("~" * 20)
+            print("Check QSO on Awards list")
+            print("~" * 20)
+
+    def check(self):
+        self.diplomsObject = self.get_data()
+        for diplom in self.diplomsObject:
+            print("*" * 20)
+            print(type(diplom), diplom)
+            print("*" * 20)
+            foundQsoList = main.Db(self.settingsDict).getQsoByCallPattern(diplom['call'])
+            countQso = len(foundQsoList)
+            for qso in foundQsoList:
+               if self.filter({'call':qso['CALL'], 'mode':qso['MODE'], 'band':qso['BAND']}):
+                   print("**" * 20)
+                   print("Filter ok" * 10)
+                   print("**" * 20)
+#
+            print ("Len qso in checkDiploms:",countQso)
 
 class static_diplom(QWidget):
     def __init__(self, diplom_name, settingsDict):

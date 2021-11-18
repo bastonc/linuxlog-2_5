@@ -92,7 +92,7 @@ class Tci_reciever(QThread):
                 #print("Connect to ")
                 reciever = self.ws.recv()
                 if reciever != old_reciever:
-                    #print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                    print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
                     # reciev vfo (freq)
 
@@ -130,12 +130,13 @@ class Tci_reciever(QThread):
                     if tci_string[0] == 'modulation':
                          values = tci_string[1].split(",")
                          if values[0] == '0':
-                            if self.version_tci == "1.4":
-                                self.log_form.set_mode_tci(values[1].replace(';', ''))
-                                self.mode = values[1].replace(';', '')
-                            if self.version_tci == '1.5':
-                                self.log_form.set_mode_tci(values[1].replace(';', ''))
-                                self.mode = values[1].replace(';', '')
+                            #if self.version_tci == "1.4":
+                            self.log_form.set_mode_tci(values[1].replace(';', ''))
+                            self.mode = values[1].replace(';', '')
+                            #if self.version_tci == '1.5':
+                            #    self.log_form.set_mode_tci(values[1].replace(';', ''))
+                            #    self.mode = values[1].replace(';', '')
+
                             print(">", tci_string)
 
                     #if tci_string[0] == 'ready':
