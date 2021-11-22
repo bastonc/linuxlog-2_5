@@ -2579,7 +2579,7 @@ class LogForm(QMainWindow):
         #self.awardsMenu = WindowMenu.addMenu("Awards")
         #self.awardsMenu.addAction(window_form_diplom)
         #self.awardsMenu.addSeparator()
-        # WindowMenu.addAction(window_diplom_module)
+        #WindowMenu.addAction(window_diplom_module)
         ViewMenu = self.menuBarw.addMenu('&View')
         ViewMenu.setStyleSheet("QWidget{font: 12px;}")
 

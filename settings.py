@@ -773,11 +773,9 @@ class Menu (QWidget):
         context_country.addAction(delete_country)
         context_country.exec_(self.country_table.mapToGlobal(point))
 
-
     def country_del(self, index_row):
         #print("delete country", index_row)
         self.country_table.removeRow(index_row)
-
 
     def add_country_row(self):
         self.country_table.insertRow(self.country_table.rowCount())
@@ -805,7 +803,6 @@ class Menu (QWidget):
             self.country_table.setItem(0, 1, QTableWidgetItem(prefix_string))
             self.country_table.setItem(0, 2, QTableWidgetItem(country_dict[country]['itu']))
             self.country_table.setItem(0, 3, QTableWidgetItem(country_dict[country]['cq-zone']))
-
 
     def select_eqsl_color(self):
         color_eqsl = QColorDialog.getColor(initial=QColor(self.color_button_eqsl.text()), parent=None,
@@ -921,12 +918,13 @@ class Menu (QWidget):
         if fname:
            # print(fname)
             self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
-                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS']
+                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
+                               'CLUBLOG_QSO_UPLOAD_STATUS', 'STATION_CALLSIGN']
             try:
 
 
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
-                #print(allRecords)
+                print("Records from file:",allRecords)
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
                 for i, record in enumerate(allRecords):

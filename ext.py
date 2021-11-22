@@ -80,12 +80,31 @@ class Diplom_form(QWidget):
         self.score_layout.addWidget(self.score_input)
         #
         self.repeat_layout = QHBoxLayout()
+        self.only_bands_checkable = QCheckBox("Only band:")
         self.text_repeat = QLabel("Repeats:")
+        self.text_repeat.setStyleSheet("font: 10px;")
         self.repeat_combo = QComboBox()
+
         self.repeat_combo.setFixedWidth(200)
+        self.repeat_combo.setStyleSheet("font: 10px;")
         self.repeat_combo.addItems(["Resolved other bands", "Resolved others mod", "Resolving other mods and bands", "Not resolving"])
+        self.only_bands = QComboBox()
+        self.only_bands.setStyleSheet("font: 10px;")
+        self.only_bands.setFixedWidth(90)
+
+
+        self.only_bands_checkable.setStyleSheet("font: 10px;")
+        self.only_bands_layout = QHBoxLayout()
+        self.only_bands_layout.addWidget(self.only_bands_checkable)
+        self.only_bands_layout.addWidget(self.only_bands)
+        self.only_bands.addItems(["Not use","160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2"])
+        # mapping checkable
+        if self.only_bands_checkable.isChecked():
+            self.repeat_combo.setEnabled(False)
+
         self.repeat_layout.addWidget(self.text_repeat)
         self.repeat_layout.addWidget(self.repeat_combo)
+        self.repeat_layout.addLayout(self.only_bands_layout)
         self.repeat_layout.addStretch(100)
         #
         self.sps_layout = QHBoxLayout()
@@ -135,7 +154,7 @@ class Diplom_form(QWidget):
         self.button_layout = QHBoxLayout()
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.close)
-        self.ok_button = QPushButton("Add award")
+        self.ok_button = QPushButton("Save award")
         self.ok_button.clicked.connect(self.save_diplom)
         self.button_layout.addWidget(self.cancel_button)
         self.button_layout.addWidget(self.ok_button)
@@ -178,7 +197,6 @@ class Diplom_form(QWidget):
             self.color_button.setStyleSheet("background:"+color.name())
             self.color_button.setText(color.name())
 
-
     def add_info(self, list_data):
         #print ("list_data:_>",list_data)
         self.color_name = list_data[0]['color_name']
@@ -191,6 +209,8 @@ class Diplom_form(QWidget):
         self.score_input.setText(list_data[0]['score_complite'])
         self.repeat_combo.setCurrentIndex(list_data[0]['repeats'])
         rows = len(list_data)
+        self.only_bands_checkable.setChecked(self.list_data[0]['only_bands_enable'])
+        self.only_bands.setCurrentText(self.list_data[0]['only_bands'])
         self.sps_table_widget.setRowCount(rows)
         for row in range(rows):
             self.sps_table_widget.setRowHeight(row,20)
@@ -205,10 +225,7 @@ class Diplom_form(QWidget):
             self.prefix_check_box.setChecked(self.list_data[row]['prefix'])
         self.sps_table_widget.resizeRowsToContents()
 
-
-
     def add_row(self):
-
         self.sps_table_widget.insertRow(self.sps_table_widget.rowCount())
         counter = self.sps_table_widget.rowCount()
         len(self.combo_mode_list)
@@ -216,7 +233,6 @@ class Diplom_form(QWidget):
         #print ("all rows:_>", counter, len(self.combo_mode_list))
         self.combo_mode_list[len(self.combo_mode_list) - 1 ]['combo' + str(counter - 1)].addItems(['SSB', 'CW', 'DIGI'])
         self.sps_table_widget.setCellWidget(counter - 1 , 2, self.combo_mode_list[len(self.combo_mode_list) - 1]['combo' + str(counter - 1)])
-
 
     def save_diplom(self):
         list_to_json = []
@@ -240,6 +256,7 @@ class Diplom_form(QWidget):
             name_programm = self.name_input.text().strip()
             score_complite = self.score_input.text().strip()
             repeats = self.repeat_combo.currentIndex()
+            only_band = self.only_bands.currentText()
             count_sps = self.sps_table_widget.rowCount()
             for row in range(count_sps):
                 score_sps = '0'
@@ -257,6 +274,8 @@ class Diplom_form(QWidget):
                                          'colorB': self.colorB,
                                          'color_name': self.color_name,
                                          'repeats':repeats,
+                                         'only_bands_enable':self.only_bands_checkable.isChecked(),
+                                         'only_bands': self.only_bands.currentText(),
                                          'score_complite': score_complite,
                                          'prefix': self.prefix_check_box.isChecked()
                                       })
@@ -435,6 +454,7 @@ class diplom:
             :param call_dict: dictionary with keys: call, mode, band
             :return: boolean
         '''
+        print("HEllo I am filter")
         count_sps_call = len(self.decode_data)
         call_found_status = 0
         for i in range(count_sps_call):
@@ -453,6 +473,7 @@ class diplom:
             #print("repeats:_>", self.decode_data[0]['repeats'])
             found_records_in_base_list = self.search_call_in_base(call_dict['call'])
             # repeat 0 - resolved other bands
+
             if str(self.decode_data[0]['repeats']) == '0' and call_found_status == 1:
 
                 #print("Found QSO(s) in base", len(found_records_in_base_list))
