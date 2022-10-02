@@ -1,14 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import websocket
+#from websocket import WebSocket
 import time
+
+import websocket
 import std
 import traceback
 from PyQt5.QtCore import QThread,  pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QApplication
 from PyQt5 import QtCore
-import main
+
+
 
 class tci_connect:
 
@@ -23,20 +26,10 @@ class tci_connect:
         return self.log_form.get_mode()
 
     def start_tci(self, host, port):
-
         self.tci_reciever = Tci_reciever(host + ":" + port,
                                          log_form=self.log_form, settingsDict=self.settingsDict)
-
-
         self.tci_reciever.set_flag("run")
-
         self.tci_reciever.start()
-        #print(self.settingsDict['tci-server'],
-        #      self.settingsDict['tci-port'])
-        #print("Tci start:", self.tci_reciever.currentThreadId())
-
-
-
 
     def stop_tci(self):
         try:
@@ -48,9 +41,11 @@ class tci_connect:
         except Exception:
             print("TCI don't started")
 
+
 class Tci_reciever(QThread):
     tx_flag = QtCore.pyqtSignal(str)
     tx = "Disable"
+
     def __init__(self, uri, log_form, settingsDict, parent=None):
         super().__init__()
         self.uri = uri

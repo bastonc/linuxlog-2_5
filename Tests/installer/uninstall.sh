@@ -1,3 +1,3 @@
 source env/bin/activate
-pip uninstall -r requirements.txt
+pip uninstall -y -r requirements.txt
 deactivate
