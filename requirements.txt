@@ -22,7 +22,6 @@ soupsieve==2.3.2.post1
 telnetlib3==1.0.4
 urllib3==1.26.12
 websocket==0.2.1
-websocket-client==1.4.1
 websocket-client2==1.0
 zope.event==4.5.0
 zope.interface==5.4.0
