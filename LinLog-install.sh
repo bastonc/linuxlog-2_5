@@ -53,38 +53,31 @@ echo -en "\n\nDir $name_app not empty or git not install.\n\n\n"
 exit 1  
 fi
 
-#setup all depensies 
+# Create virtual env
+echo -en '-> Create  and activate virtual env'
+python3 -m venv env
+source env/bin/activate
 
+# Setup all depensies
 if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
 then
-echo -en '\n\n=======- Install all dependisesn -===========\n\n'
-sudo apt install python3-pip && sudo apt install python3-pyqt5 && sudo pip3 install datetime && sudo pip3 install urllib3 && sudo pip3 install websocket-client2 && sudo pip3 install bs4 && sudo pip3 install telnetlib3
-echo -en "\n\n=====- Dependenses insatalled -=======\n\n"
+echo -en '-> Install all dependency'
+sudo apt install python3-pip && sudo apt install python3-pyqt5 && pip3 install -r requirements.txt
 fi
 if [[ "$dist_name" == "Fedora" || "$dist_name" == "Rad-hat" || "$dist_name" == "CentOS Linux" ]]
 then
 # && sudo dnf install python3-qt5
 #http://rpmfind.net/linux/fedora/linux/updates/31/Everything/x86_64/Packages/p/python3-#qt5-5.13.2-3.fc31.i686.rpm
-if [[ "$dist_name" == 'Fedora' ]]
-then
-  if [[ "$de" != 'KDE' && "$dist_name" == 'Fedora' ]]
-    then
-      sudo dnf install python3-qt5
-    fi
-else
-    sudo dnf install python3-qt5
+echo -en '-> Install all dependency'
+      sudo dnf install python3-qt5, sudo dnf install python3-pip && pip3 install -r requirements.txt
 fi
-
-echo -en '\n\n=======- Install all dependisesn -===========\n\n'
-#sudo pip3 uninstall websocket-client && sudo pip3 install websocket-client2 &&
-sudo dnf install python3-pip && sudo pip3 install datetime && sudo pip3 install urllib3 && sudo pip3 install websocket && sudo pip3 install websocket-client2 && sudo pip3 install bs4 && sudo pip3 install telnetlib3
-echo -en "\n\n=====- Dependenses insatalled -=======\n\n"
-fi
+deactivate
 echo -en "\n\nCreating run file\n\n"
 # Create run file
 cat > $HOME/$name_app/linlog << EOF
 #!/bin/bash
 cd $HOME/$name_app/
+source env/bin/activate
 python3 main.py
 EOF
 if [[ `chmod +x $HOME/$name_app/linlog` -ne 0 ]]
