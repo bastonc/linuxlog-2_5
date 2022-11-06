@@ -31,11 +31,11 @@ else
   then
     if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
     then
-        sudo apt install git # if git not installed - install it
+        sudo apt install -y git python3-pip # if git not installed - install it
     fi
     if [[ "$dist_name" == "Fedora" || "$dist_name" == "Fedora Linux" || "$dist_name" == "Rad-hat" || "$dist_name" == "CentOS Linux" ]]
     then
-        sudo dnf install git # if git not installed - install it
+        sudo dnf install -y git python3-pip  # if git not installed - install it
     fi
   else
       echo -en '\n\ngit installed to you system\n'
@@ -59,26 +59,31 @@ python3 -m venv env
 source env/bin/activate
 python3 -m pip install --upgrade pip
 
-# Setup all depensies
+## Setup all depensies
+
+# For Debian tree
 if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
 then
-echo -en ' -> Install all dependency'
-sudo apt install python3-pip && sudo apt install python3-pyqt5 && pip3 install -r requirements.txt
+      echo -en ' -> Install all dependency'
+      sudo apt install python3-pyqt5 &&
+      sudo apt install -y mysql-server &&
+      sudo systemctl enable mariadb &&
+      sudo systemctl start mariadb &&
+      sudo apt install -y socat &&
+      sudo apt install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3 &&
+      pip3 install -r ~/${name_app}/requirements.txt
 fi
+
+# For Red-Hat tree
 if [[ "$dist_name" == "Fedora" || "$dist_name" == "Fedora Linux" || "$dist_name" == "Rad-hat" || "$dist_name" == "CentOS Linux" ]]
 then
-# && sudo dnf install python3-qt5
-#http://rpmfind.net/linux/fedora/linux/updates/31/Everything/x86_64/Packages/p/python3-#qt5-5.13.2-3.fc31.i686.rpm
-echo -en ' -> Install all dependency \n'
+      echo -en ' -> Install all dependency \n'
       sudo dnf install -y python3-qt5 &&
-      # sudo dnf install -y python3-pip &&
       sudo dnf install -y mysql-server &&
       sudo systemctl enable mariadb &&
       sudo systemctl start mariadb &&
       sudo dnf install -y socat &&
       sudo dnf install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3 &&
-
-
       pip install -r ~/${name_app}/requirements.txt
 fi
 deactivate
@@ -113,8 +118,6 @@ EOF
 destination='/usr/share/applications'
 echo " -> copying linlog.desktop file to $destination "
 sudo cp $HOME/$name_app'/linlog.desktop' $destination
-#fi
-
 echo -en "************\n -> Install complited\n73 de UR4LGA \n"
 
 exit 0
