@@ -13,12 +13,7 @@ import datetime
 import asyncio
 import traceback
 import telnetlib
-import internetworker
-import time
-import tci
 
-import std
-import settings
 import subprocess
 import ext
 import json
@@ -41,6 +36,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime, sleep
 
+import internetworker
+import time
+import tci
+
+import std
+import settings
 
 class Settings_file:
 
