@@ -44,7 +44,6 @@ import std
 import settings
 
 class Settings_file:
-
     def update_file_to_disk(self):
         # self.settingsDict = self
         filename = 'settings.cfg'
@@ -478,13 +477,7 @@ class Log_Window_2(QWidget):
             'color'] + ";"
 
         self.setStyleSheet(style)
-
-        # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
-        #			'MODE', 'RST_RCVD', 'RST_SENT',	'NAME', 'QTH')
-        #		   )
-
         self.tableWidget_qso = QTableWidget()
-
         self.event_qso_table = Filter_event_table_qso()
         # self.tableWidget_qso.wheelEvent(self.append_qso)
         self.tableWidget_qso.installEventFilter(self.event_qso_table)
@@ -494,7 +487,6 @@ class Log_Window_2(QWidget):
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
         self.tableWidget_qso.setStyleSheet(style_table)
-
         fnt = self.tableWidget_qso.font()
         fnt.setPointSize(9)
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -524,14 +516,12 @@ class Log_Window_2(QWidget):
         self.load_bar = QProgressBar()
         self.load_bar.setGeometry(30, 40, 200, 25)
         # self.load_bar.setFixedHeight(10)
-
         self.load_bar.setStyleSheet(style)
         # QLabel header
         self.header_label = QLabel()
         self.header_label.setFont(QtGui.QFont('SansSerif', 9))
         # self.header_label.setStyleSheet(style+" size: 9px;")
         # self.header_label.hide()
-
         self.menu_log_button = QHBoxLayout()
         # self.menu_log_button.addWidget(self.refresh_button)
         # self.menu_log_button.addWidget(self.filter_button)
@@ -683,7 +673,7 @@ class Log_Window_2(QWidget):
         self.refresh_data()
 
     def filter_log_pressed(self):
-        self.filter_log = ext.Filter_log(settingsDict, All_records)
+        self.filter_log = ext.Filter_log(settingsDict)
         self.filter_log.show()
 
     #  print("filter_log_pressed")
@@ -3373,6 +3363,7 @@ class LogForm(QMainWindow):
             logWindow,
             internetSearch,
             tci_recv,
+            tci_sndr,
             table_columns
         )
         self.menu.show()
@@ -4429,7 +4420,7 @@ class hello_window(QWidget):
                     self.call_input.text().strip().upper(),
                     self.table_columns
                 )
-            # print("Table:", table)
+            print("Table:", table)
             # table=1
             if table != 0:
                 settingsDict['my-call'] = self.call_input.text().strip().upper()
@@ -4566,7 +4557,7 @@ class Db(QObject):
 
         )
         cursor = db_connect_new.cursor()
-        cursor.execute('CREATE DATABASE linuxlog')
+        cursor.execute(f'CREATE DATABASE {self.db_name}')
 
     def connect(self):
         if self.db_name == '':
@@ -4608,7 +4599,7 @@ class Db(QObject):
         sql_query = "CREATE TABLE " + name_table + "(`id` INT NOT NULL AUTO_INCREMENT"
         for column in column_list:
             sql_query += ", `" + column[0] + "` " + column[1]
-        sql_query += ', PRIMARY KEY (`id`))'
+        sql_query += ', PRIMARY KEY (`id`)) CHARACTER SET ' + str(self.db_charset)
         # print (sql_query)
         try:
             query = db_conn.cursor()

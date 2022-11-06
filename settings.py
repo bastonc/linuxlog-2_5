@@ -20,7 +20,7 @@ from time import gmtime, strftime, localtime
 
 class Menu (QWidget):
     def __init__(self, app_env, settingsDict, telnetCluster, logForm, logSearch,
-                 logWindow, internetSearch, tci_class, table_columns, parent=None):
+                 logWindow, internetSearch, tci_recv, tci_sndr, table_columns, parent=None):
         super(Menu, self).__init__(parent)
         self.settingsDict = settingsDict
         self.label_style = "font: 12px;"
@@ -31,7 +31,8 @@ class Menu (QWidget):
         self.logSearch = logSearch
         self.logWindow = logWindow
         self.internetSearch = internetSearch
-        self.tci_class = tci_class
+        self.tci_rcvr = tci_recv
+        self.tci_sender = tci_sndr
         self.table_columns = table_columns
         self.app_env = app_env
         #print ("Menu init tci class:", self.tci_class.currentThreadId())
@@ -1154,13 +1155,13 @@ class Menu (QWidget):
 
         cluster_change_flag = self.store_new_settingsDict()   # save all lines from menu window \
                                                                 # to dictionary settingsDict
-
         if self.settingsDict['tci'] == 'enable':
-            self.tci_class.stop_tci()
-            self.tci_class.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
+            self.tci_rcvr.stop_tci()
+            self.tci_rcvr.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
+            self.tci_sender.web_socket_init(f"{self.settingsDict['tci-server']}:{self.settingsDict['tci-port']}")
             #self.logForm.update_settings(self.settingsDict)
         else:
-            self.tci_class.stop_tci()
+            self.tci_rcvr.stop_tci()
 
         self.logForm.refresh_interface()
         #self.logSearch.update_settings(self.settingsDict)

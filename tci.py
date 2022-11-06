@@ -184,19 +184,19 @@ class Tci_sender (QtCore.QObject):
         #super().__init__()
         self.log_form = log_form
         self.tx_flag = tx_flag
+        self.uri = uri
+        self.ws = websocket.WebSocket()
+        self.web_socket_init(self.uri)
+
+    def web_socket_init(self, uri):
         try:
-             self.uri = uri
-             self.ws = websocket.WebSocket()
-             self.ws.connect(self.uri)
-             #self.ws.send("READY;")
-
-
-
-        except:
+            self.ws.connect(uri)
+            # self.ws.send("READY;")
+        except ConnectionError:
             self.log_form.set_tci_stat('Check')
-
+            result = traceback.format_exc()
+            print(result)
             print("Can't connect to Tci_sender __init__:", uri)
-
 
 
     def update_tx_tci(self):
@@ -204,7 +204,7 @@ class Tci_sender (QtCore.QObject):
             self.ws.connect(self.uri)
         except Exception:
             result = traceback.format_exc()
-            print (result)
+            print(result)
 
     def send_command(self, string_command):
         if self.tx_flag != "Enable":
