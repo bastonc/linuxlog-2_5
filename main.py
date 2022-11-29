@@ -24,7 +24,7 @@ from functools import partial
 from os.path import expanduser
 from pymysql.cursors import DictCursor
 from bs4 import BeautifulSoup
-from gi.repository import Notify, GdkPixbuf
+# from gi.repository import Notify, GdkPixbuf
 from PyQt5.QtWidgets import QApplication, QProgressBar, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, \
     QWidget, \
     QMainWindow, QTableView, QTableWidget, QTabWidget, QTableWidgetItem, QTextEdit, \
@@ -1924,7 +1924,7 @@ class realTime(QThread):
         while 1:
             self.logformwindow.labelTime.setText("Loc: " + strftime("%H:%M:%S", localtime()) +
                                                  "  |  GMT: " + strftime("%H:%M:%S", gmtime()))
-            sleep(1)
+            QThread.sleep(1)
 
 
 class ClikableLabel(QLabel):
@@ -2340,7 +2340,7 @@ class LogForm(QMainWindow):
         super().__init__()
         # self.counter_qso = 0
         self.diploms_init()
-        self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
+        # self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
         self.initUI()
         self.country_dict = self.get_country_dict()
         self.mode = settingsDict['mode']
@@ -3461,11 +3461,19 @@ class LogForm(QMainWindow):
         sleep(0.55)
         self.labelStatusCat.setText("")
 
-    def set_telnet_stat(self):
-        self.labelStatusTelnet.setStyleSheet("color: #57BD79; font-weight: bold;")
-        self.labelStatusTelnet.setText("✔ Telnet")
+    def set_telnet_stat(self, text=None):
+        self.labelStatusTelnet.setStyleSheet("color: #58BD79; font-weight: bold;")
+        if text is None:
+            self.labelStatusTelnet.setText("✔ Telnet")
+        else:
+            self.labelStatusTelnet.setText(text)
+        #print("label_status_change")
         sleep(0.15)
         self.labelStatusTelnet.setText("")
+
+    def set_telnet_wrong(self, text=None):
+        self.labelStatusTelnet.setStyleSheet("color: #8a2222; font-weight: bold;")
+        self.labelStatusTelnet.setText(text)
 
     def get_band(self):
         return self.comboBand.currentText()
@@ -3907,134 +3915,38 @@ class CW(QWidget):
 
 
 class clusterThread(QThread):
-    reciev_spot_signal = pyqtSignal()
+    reciev_spot_signal = pyqtSignal(object)
 
-    def __init__(self, cluster_window, form_window, parent=None):
+    def __init__(self, settings_dict, parent=None):
         super().__init__()
-        self.telnetCluster = cluster_window
-        self.form_window = form_window
+        self.settings_dict = settings_dict
         # self.run()
 
     def run(self):
-        HOST = settingsDict['telnet-host']
-        PORT = settingsDict['telnet-port']
-        call = settingsDict['my-call']
+        HOST = self.settings_dict['telnet-host']
+        PORT = self.settings_dict['telnet-port']
+        call = self.settings_dict['my-call']
         while 1:
             try:
-                telnetObj = telnetlib.Telnet(HOST, PORT)
+                telnet_obj = telnetlib.Telnet(HOST, PORT)
                 break
             except:
-                sleep(3)
+                logForm.set_telnet_wrong(text="Telnet --")
+                QThread.sleep(3)
                 continue
-
-        lastRow = 0
         message = (call + "\n").encode('ascii')
-        telnetObj.read_until(b": ")
-        telnetObj.write(message)
-        # message2 = (call).encode('ascii')
-        # telnetObj.write(message2)
-        splitString = []
-        cleanList = []
-        i = 0
+        telnet_obj.read_until(b": ")
+        telnet_obj.write(message)
         print('Starting Telnet cluster:', HOST, ':', PORT, '\nCall:', call, '\n')
         while 1:
             try:
-                output_data = telnetObj.read_until(b"\r\n")
-
-                if output_data != '':
-                    lastRow = self.telnetCluster.tableWidget.rowCount()
-                    self.form_window.set_telnet_stat()
-                    # print(output_data)
-                    if output_data[0:2].decode(settingsDict['encodeStandart']) == "DX":
-                        splitString = output_data.decode(settingsDict['encodeStandart']).split(' ')
-                        count_chars = len(splitString)
-                        for i in range(count_chars):
-                            if splitString[i] != '':
-                                cleanList.append(splitString[i])
-                        # color = QColor(100, 50, 50)
-                        search_in_diplom_rules_flag = 0
-                        call_dict = {'call': cleanList[int(settingsDict['telnet-call-position'])].strip(),
-                                     'mode': 'cluster',
-                                     'band': 'cluster'}
-                        diplom_list = logForm.get_diploms()
-
-                        for i in range(len(diplom_list)):
-                            if diplom_list[i].filter(call_dict):
-                                color = diplom_list[i].get_color_bg()
-                                search_in_diplom_rules_flag = 1
-                        if telnetCluster.cluster_filter(cleanList=cleanList):
-                            self.telnetCluster.tableWidget.insertRow(lastRow)
-                            self.telnetCluster.tableWidget.setItem(lastRow, 0,
-                                                                   QTableWidgetItem(
-                                                                       strftime("%H:%M:%S", localtime())))
-
-                            self.telnetCluster.tableWidget.item(lastRow, 0).setForeground(
-                                QColor(self.telnetCluster.settings_dict["color-table"]))
-
-                            # self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
-                            if search_in_diplom_rules_flag == 1:
-                                self.telnetCluster.tableWidget.item(lastRow, 0).setBackground(color)
-                            self.telnetCluster.tableWidget.setItem(lastRow, 1,
-                                                                   QTableWidgetItem(
-                                                                       strftime("%H:%M:%S", gmtime())))
-                            self.telnetCluster.tableWidget.item(lastRow, 1).setForeground(
-                                QColor(self.telnetCluster.settings_dict["color-table"]))
-                            if search_in_diplom_rules_flag == 1:
-                                self.telnetCluster.tableWidget.item(lastRow, 1).setBackground(color)
-
-                            if (len(cleanList) > 4):
-                                self.telnetCluster.tableWidget.setItem(lastRow, 2,
-                                                                       QTableWidgetItem(cleanList[int(
-                                                                           settingsDict['telnet-call-position'])]))
-                                self.telnetCluster.tableWidget.item(lastRow, 2).setForeground(
-                                    QColor(self.telnetCluster.settings_dict["color-table"]))
-
-                                if search_in_diplom_rules_flag == 1:
-                                    self.telnetCluster.tableWidget.item(lastRow, 2).setBackground(color)
-
-                                self.telnetCluster.tableWidget.setItem(lastRow, 3,
-                                                                       QTableWidgetItem(cleanList[int(
-                                                                           settingsDict['telnet-freq-position'])]))
-                                self.telnetCluster.tableWidget.item(lastRow, 3).setForeground(
-                                    QColor(self.telnetCluster.settings_dict["color-table"]))
-
-                                if search_in_diplom_rules_flag == 1:
-                                    self.telnetCluster.tableWidget.item(lastRow, 3).setBackground(color)
-                            # print("Input line:_>", output_data)
-                            self.telnetCluster.tableWidget.setItem(lastRow, 4,
-                                                                   QTableWidgetItem(
-                                                                       output_data.decode(
-                                                                           settingsDict['encodeStandart']).replace(
-                                                                           '\x07\x07\r\n', '')))
-
-                            self.telnetCluster.tableWidget.item(lastRow, 4).setForeground(
-                                QColor(self.telnetCluster.settings_dict["color-table"]))
-
-                            if search_in_diplom_rules_flag == 1:
-                                self.telnetCluster.tableWidget.item(lastRow, 4).setBackground(color)
-
-                            self.telnetCluster.tableWidget.scrollToBottom()
-
-                            if settingsDict['spot-to-pan'] == 'enable':
-                                freq = std.std().std_freq(freq=cleanList[3])
-                                try:
-                                    if settingsDict['tci'] == 'enable':
-                                        tci_sndr.set_spot(
-                                            cleanList[4], freq, color="19711680")
-                                except Exception:
-                                    # pass
-                                    print("clusterThread: Except in Tci_sender.set_spot", traceback.format_exc())
-                            self.reciev_spot_signal.emit()
-                        ####
-                    # #print(output_data) # Check point - output input-string with data from cluster telnet-server
-                    elif output_data[0:3].decode(settingsDict['encodeStandart']) == "WWV":
-                        self.telnetCluster.labelIonosphereStat.setText(
-                            + output_data.decode(settingsDict['encodeStandart']).replace('\x07\x07\r\n', ''))
-                        # print("Ionosphere status: ", output_data.decode(settingsDict['encodeStandart']))
-                    del cleanList[0:len(cleanList)]
-                sleep(0.1)
-
-            except:
+                read_string_telnet = telnet_obj.read_until(b"\r\n")
+                if read_string_telnet != '':
+                    logForm.set_telnet_stat()
+                    self.reciev_spot_signal.emit(read_string_telnet)
+                sleep(0.2)
+            except BaseException:
+                logForm.set_telnet_wrong(text="Telnet not connection")
                 continue
 
 
@@ -4043,7 +3955,7 @@ class TelnetCluster(QWidget):
     def __init__(self):
         super().__init__()
         # self.mainwindow = mainwindow
-
+        #self.log_form = log_form
         self.host = settingsDict['telnet-host']
         self.port = settingsDict['telnet-port']
         self.call = settingsDict['my-call']
@@ -4072,7 +3984,7 @@ class TelnetCluster(QWidget):
             'color'] + ";"
         self.setStyleSheet(style)
         self.labelIonosphereStat = QLabel("Ionosphere status")
-        self.labelIonosphereStat.setFixedWidth(250)
+        self.labelIonosphereStat.setFixedWidth(400)
         self.labelIonosphereStat.setFixedHeight(10)
         self.labelIonosphereStat.setStyleSheet("font: 9px;")
         # self.labelIonosphereStat.setText("A=12, K=23, F=21, No storm, no storm")
@@ -4129,17 +4041,71 @@ class TelnetCluster(QWidget):
             print(event.globalY(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
-    @QtCore.pyqtSlot()
-    def input_spot(self):
-        self.tableWidget.resizeColumnsToContents()
-        self.tableWidget.resizeRowsToContents()
+    def add_row_to_cluster(self, string_from_telnet):
+        clean_list = []
+        last_row = self.tableWidget.rowCount()
+        # logForm.set_telnet_stat()
+        # self.form_window.set_telnet_stat()
+        # print(output_data)
+        if string_from_telnet[0:2].decode(self.settings_dict['encodeStandart']) == "DX":
+            split_telnet_string = string_from_telnet.decode(self.settings_dict['encodeStandart'], __errors='ignore').split(' ')
+            count_chars = len(splitString)
+            # get clean list with data from string of telnet
+            for item_from_string in split_telnet_string:
+                if item_from_string != '':
+                    clean_list.append(item_from_string)
+
+            # color = QColor(100, 50, 50)
+            # Chek call in diploms
+            search_in_diplom_rules_flag = 0
+            call_dict = {'call': clean_list[int(self.settings_dict['telnet-call-position'])].strip(),
+                         'mode': 'cluster',
+                         'band': 'cluster'}
+            diplom_list = logForm.get_diploms()
+            for diplom in diplom_list:
+                if diplom.filter(call_dict):
+                    color = diplom.get_color_bg()
+                    search_in_diplom_rules_flag = 1
+            if self.cluster_filter(cleanList=clean_list):
+                self.tableWidget.insertRow(last_row)
+                self.tableWidget.setItem(last_row, 0, QTableWidgetItem(strftime("%H:%M:%S", localtime())))
+                self.tableWidget.setItem(last_row, 1,QTableWidgetItem(strftime("%H:%M:%S", gmtime())))
+                if len(clean_list) > 4:
+                    self.tableWidget.setItem(last_row, 2, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-call-position'])]))
+
+                    self.tableWidget.setItem(last_row, 3, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-freq-position'])]))
+                self.tableWidget.setItem(last_row, 4, QTableWidgetItem(
+                    string_from_telnet.decode(settingsDict['encodeStandart']).replace('\x07\x07\r\n', '')))
+                self.tableWidget.scrollToBottom()
+                for col in range(self.tableWidget.columnCount()):
+                    if search_in_diplom_rules_flag == 1:
+                        self.tableWidget.item(last_row, col).setBackground(color)
+                    else:
+                        self.tableWidget.item(last_row, col).setForeground(QColor(self.settings_dict["color-table"]))
+
+                self.tableWidget.resizeColumnsToContents()
+                self.tableWidget.resizeRowsToContents()
+
+                if settingsDict['spot-to-pan'] == 'enable':
+                    freq = std.std().std_freq(freq=clean_list[3])
+                    try:
+                        if settingsDict['tci'] == 'enable':
+                            tci_sndr.set_spot(clean_list[4], freq, color="19711680")
+                    except BaseException:
+                        print("clusterThread: Except in Tci_sender.set_spot", traceback.format_exc())
+        elif string_from_telnet[0:3].decode(self.settings_dict['encodeStandart']) == "WWV":
+            self.labelIonosphereStat.setText("Propagination info: " + string_from_telnet.decode(self.settings_dict['encodeStandart']).replace('\x07\x07\r\n', ''))
+
+    @QtCore.pyqtSlot(object)
+    def input_spot(self, string_from_telnet: object):
+        self.add_row_to_cluster(string_from_telnet)
+
 
     def stop_cluster(self):
-
         print("stop_cluster:", self.run_cluster.terminate())
 
     def start_cluster(self):
-        self.run_cluster = clusterThread(cluster_window=self, form_window=logForm)
+        self.run_cluster = clusterThread(settings_dict=settingsDict)
         self.run_cluster.reciev_spot_signal.connect(self.input_spot)
         self.run_cluster.start()
 
@@ -4825,7 +4791,7 @@ class AppEnv:
 
 if __name__ == '__main__':
 
-    APP_VERSION = '2.3'
+    APP_VERSION = '2.4'
     settingsDict = {}
     table_columns = [
         ["CALL", "VARCHAR(50)"],

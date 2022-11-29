@@ -78,7 +78,7 @@ class Tci_reciever(QThread):
                 #self.log_form.set_tci_label_found()
                 #print("Tci_reciever: Except connection")
                 self.log_form.set_tci_stat('--', "#ff5555")
-                time.sleep(2)
+                QThread.sleep(2)
 
                 continue
         old_reciever = ""
@@ -155,7 +155,7 @@ class Tci_reciever(QThread):
 
 
 
-                time.sleep(0.002)
+                QThread.sleep(0.002)
 
             except Exception:
                 #print("Tci_reciever: Exception in listen port loop", Exception)
@@ -169,7 +169,7 @@ class Tci_reciever(QThread):
                     self.log_form.tx_tci("restart")
 
                 except:
-                    time.sleep(2)
+                    QThread.sleep(2)
                     self.log_form.set_tci_label_found()
                     #time.sleep(2)
                 continue
