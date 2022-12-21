@@ -389,8 +389,6 @@ class Fill_table(QThread):
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
 
-
-
                     else:
                         self.window.tableWidget_qso.setItem(
                             row, col,
@@ -400,7 +398,6 @@ class Fill_table(QThread):
                         )
                         self.window.tableWidget_qso.item(row, col).setForeground(
                             QColor(self.settingsDict["color-table"]))
-
                     if qso['EQSL_QSL_SENT'] == 'Y':
                         self.window.tableWidget_qso.item(row, col).setBackground(
                             QColor(self.settingsDict['eqsl-sent-color']))
@@ -461,6 +458,10 @@ class Log_Window_2(QWidget):
 
         self.setStyleSheet(style)
         self.tableWidget_qso = QTableWidget()
+        self.tableWidget_qso.setSortingEnabled(True)
+        #     sortByColumn(
+        #     1, QtCore.Qt.AscendingOrder
+        # )
         # self.tableWidget_qso.insertColumn()
         self.event_qso_table = Filter_event_table_qso()
         # self.tableWidget_qso.wheelEvent(self.append_qso)
@@ -565,8 +566,8 @@ class Log_Window_2(QWidget):
         # print("Bottom ---", self.tableWidget_qso.rowCount())
         for col in range(count_col):
             if self.allCollumn[col] == "id":
-                if self.tableWidget_qso.item(self.tableWidget_qso.rowCount() - 1, col):
-                    start_id = self.tableWidget_qso.item(self.tableWidget_qso.rowCount() - 1, col).text()
+                if self.tableWidget_qso.item(self.tableWidget_qso.rowCount(), col):
+                    start_id = self.tableWidget_qso.item(self.tableWidget_qso.rowCount(), col).text()
                 else:
                     start_id = 0;
         step = 100
@@ -576,9 +577,8 @@ class Log_Window_2(QWidget):
             page_count = len(page)
             col_count = len(self.allCollumn)
             for record in page:
-
                 next_string = self.tableWidget_qso.rowCount()
-                self.tableWidget_qso.insertRow(next_string)
+                self.tableWidget_qso.insertRow(self.tableWidget_qso.rowCount())
                 for col in range(col_count):
                     pole = self.allCollumn[col]
                     if self.allCollumn[col] == 'id':
@@ -4531,7 +4531,7 @@ class Db(QObject):
             time_format = qso_dict['TIME_ON'] + "00"
         else:
             time_format = qso_dict['TIME_ON']
-        if qso_dict.get('TIME_OFF') is '':
+        if qso_dict.get('TIME_OFF') == '':
             time_off_format = time_format
         else:
             if len(qso_dict['TIME_OFF'].strip()) == 4:
