@@ -134,7 +134,7 @@ class Eqsl_send(QtCore.QObject):
 
     def run(self):
 
-        api_url_eqsl = 'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinLog upload'
+        api_url_eqsl = 'https://www.eQSL.cc/qslcard/importADIF.cfm?ADIFData=LinuxLog upload'
         data_qso_string = '<BAND:' + str(len(self.recordObject['BAND'])) + '>' + str(
             self.recordObject['BAND']) + ' <CALL:' + str(len(self.recordObject['CALL'])) + '>' + str(
             self.recordObject['CALL']) + ' <MODE:' + str(len(self.recordObject['MODE'])) + '>' + str(
@@ -266,7 +266,6 @@ class Eqsl_services(QtCore.QObject):
         self.send_eqsl.error_message.connect(self.show_message)
         self.send_eqsl.sent_ok.connect(self.send_complited)
         self.send_thread.started.connect(self.send_eqsl.run)
-
         self.send_thread.start()
 
     @QtCore.pyqtSlot(str)
@@ -284,6 +283,29 @@ class Eqsl_services(QtCore.QObject):
             main.settings_file.save_all_settings(main.settings_file, self.settingsDict)
         self.send_ok.emit()
         self.send_thread.exec()
+
+
+class Eqsl_send_file(QThread):
+    eqsl_send_file_answer = QtCore.pyqtSignal(object)
+    error_connection = QtCore.pyqtSignal(object)
+    def __init__(self, parent, file_name, settings_dict):
+        super().__init__(parent)
+        self.file_name = file_name
+        self.settings_dict = settings_dict
+        self.url_post = "https://www.eQSL.cc/qslcard/ImportADIF.cfm"
+
+    def run(self):
+        files = {'Filename': open(self.file_name, 'rb')}
+        values = {'EQSL_USER': self.settings_dict['eqsl_user'],
+                  'EQSL_PSWD': self.settings_dict['eqsl_password']}
+        try:
+            answer = requests.post(self.url_post, files=files, data=values)
+            if answer.status_code == 200:
+                self.eqsl_send_file_answer.emit(answer)
+            else:
+                self.error_connection.emit("Connection error")
+        except BaseException:
+            self.error_connection.emit("Network error (Exception)")
 
 
 class check_update(QThread):

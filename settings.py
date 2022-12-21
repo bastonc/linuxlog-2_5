@@ -918,24 +918,51 @@ class Menu (QWidget):
         time.sleep(0.150)
         if fname:
            # print(fname)
-            self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
-                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'eQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
+            self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
+                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'EQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
                                'CLUBLOG_QSO_UPLOAD_STATUS', 'STATION_CALLSIGN']
             try:
-
-
+                good_qso_count = 0
+                double_qso = []
+                bad_qso = []
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
-                print("Records from file:",allRecords)
+                print("Records from file:", allRecords)
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
-                for i, record in enumerate(allRecords):
-                    main.Db(self.settingsDict).record_qso_to_base(record, mode="import")
-                    #main.Adi_file.record_dict_qso(self, allRecords)
+                all_qso_in_base = main.Db(self.settingsDict).get_all_records()
+                print("All QSO in Base", all_qso_in_base)
+                print(str(all_qso_in_base[0]["QSO_DATE"]).replace('-', ""))
+                print("All_QSO_in files", allRecords)
+                for i, qso_in_file in enumerate(allRecords):
+                    if len(qso_in_file["QSO_DATE"].strip()) != 8 or len(qso_in_file["TIME_ON"].strip()) != 6:
+                        bad_qso.append(qso_in_file)
+                        continue
+                    double_counter = len(double_qso)
+                    for qso_in_base in all_qso_in_base:
+                        if str(qso_in_base["CALL"]).strip() == str(qso_in_file["CALL"]).strip() and \
+                                str(qso_in_base["QSO_DATE"]).replace('-', "").strip() == str(qso_in_file["QSO_DATE"]).replace('-', "").strip() and \
+                                   str(qso_in_base["TIME_ON"]).replace(":", "").strip() == str(qso_in_file["TIME_ON"]).replace(":", "").strip():
+                               double_qso.append(qso_in_file)
+                               break
+                    if len(double_qso) > double_counter:
+                        continue
+                    good_qso_count += 1
+                    main.Db(self.settingsDict).record_qso_to_base(qso_in_file, mode="import")
                     self.logWindow.load_bar.setValue(int(i * 100 / all_records_count))
+                if double_qso is not None:
+                    print("qso_from_file", double_qso)
+                    main.Adi_file(self.settingsDict["APP_VERSION"], self.settingsDict).record_dict_qso(double_qso, self.allCollumn, name_file="double_adi.adi")
+                if bad_qso is not None:
+                    main.Adi_file(self.settingsDict["APP_VERSION"], self.settingsDict).record_dict_qso(bad_qso,
+                                                                                                       self.allCollumn,
+                                                                                                       name_file="bad_adi.adi")
+
                 #self.logWindow.load_bar.hide()
                 self.logWindow.refresh_data()
-
-                std.std.message(self, "Import complete!", "Ok")
+                message = f"Added QSO: {good_qso_count} \n"
+                message += f"Bad QSO: {len(bad_qso)} Incorect QSO_DATE or TIME_ON \n Bad records in /home/linlog/bad_adi.adi" if bad_qso != [] else ""
+                message += f"\nDouble QSO: {len(double_qso)} \n Double records in /home/linlog/double_adi.adi" if double_qso != [] else ""
+                std.std.message(self, message, "Import" )
             except Exception:
                 std.std.message(self, traceback.format_exc(), "STOP!")
 

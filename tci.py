@@ -87,7 +87,7 @@ class Tci_reciever(QThread):
                 #print("Connect to ")
                 reciever = self.ws.recv()
                 if reciever != old_reciever:
-                    print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                    # print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
                     # reciev vfo (freq)
 
@@ -155,7 +155,7 @@ class Tci_reciever(QThread):
 
 
 
-                QThread.sleep(0.002)
+                time.sleep(0.002)
 
             except Exception:
                 #print("Tci_reciever: Exception in listen port loop", Exception)

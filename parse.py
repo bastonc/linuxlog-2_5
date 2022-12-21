@@ -72,11 +72,11 @@ def getAllRecord(poles, filename, key=''):
             if tags:
 
                 for tag in tags.keys():
-                        record.update({tag:str(tags[tag]).replace('\n', '')})
+                        record.update({tag: str(tags[tag]).replace('\n', '')})
                 if string == '<EOR>' or string.find("<EOR>", -6) != -1:
                     iterator_records += 1
-                    tags.update({'string_in_file': str(iterator_string_file)})
-                    tags.update({'records_number': str(iterator_records)})
+                    #tags.update({'string_in_file': str(iterator_string_file)})
+                    #tags.update({'records_number': str(iterator_records)})
 
                     for tag in tags.keys():
                         record.update({tag: str(tags[tag]).replace('\n', '')})
