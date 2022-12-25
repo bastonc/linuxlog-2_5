@@ -312,7 +312,7 @@ class Fill_table(QThread):
     qsos_counter = QtCore.pyqtSignal(int)
 
     def __init__(self, all_column, window, settingsDict, parent=None):
-        super().__init__(window)
+        super().__init__()
         #
         self.all_collumn = all_column
         self.window = window
@@ -322,24 +322,24 @@ class Fill_table(QThread):
 
 
     def run(self):
-        records_dict = db.get_all_records(100)
+        records_dict = db.get_all_records(0)
         counter = len(records_dict)
         self.allRecord = records_dict
         # self.all_record = self.allRecord
         self.window.tableWidget_qso.setRowCount(0)
-        #self.window.tableWidget_qso.setHorizontalHeaderLabels(self.all_collumn)
+
         self.allRows = len(records_dict)
         # print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
         # self.window.tableWidget_qso.setRowCount(len(records_dict))
         allCols = len(self.all_collumn)
         self.window.load_bar.show()
+        self.window.qso_last_id = records_dict[-1]['id']
         for row, qso in enumerate(self.allRecord):
             self.window.tableWidget_qso.insertRow(self.window.tableWidget_qso.rowCount())
             for col in range(allCols):
                 # print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
-                if self.allRecord[(self.allRows - 1) - row][pole] != ' ' or \
-                        self.allRecord[(self.allRows - 1) - row][pole] != '':
+                if qso:
                     if pole == 'id':
                         self.window.tableWidget_qso.setItem(row, col,
                                                             self.protectionItem(
@@ -390,6 +390,8 @@ class Fill_table(QThread):
                             QColor(self.settingsDict["color-table"]))
 
                     else:
+                        if qso[pole] is None:
+                            qso[pole] = ""
                         self.window.tableWidget_qso.setItem(
                             row, col,
                             self.protectionItem(
@@ -431,13 +433,11 @@ class Log_Window_2(QWidget):
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
-        self.allRecords = Fill_table(all_column=self.allCollumn,
-                                     window=self,
-                                     settingsDict=settingsDict)
-        self.allRecords.fill_complite.connect(self.fill_complited)
+
         # self.allRecords.start()
         self.initUI()
         # all_record = All_records,
+        self.qso_last_id = None
 
     def initUI(self):
         '''
@@ -459,9 +459,7 @@ class Log_Window_2(QWidget):
         self.setStyleSheet(style)
         self.tableWidget_qso = QTableWidget()
         self.tableWidget_qso.setSortingEnabled(True)
-        #     sortByColumn(
-        #     1, QtCore.Qt.AscendingOrder
-        # )
+        self.tableWidget_qso.setRowCount(0)
         # self.tableWidget_qso.insertColumn()
         self.event_qso_table = Filter_event_table_qso()
         # self.tableWidget_qso.wheelEvent(self.append_qso)
@@ -477,7 +475,7 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
         # self.tableWidget_qso.setSortingEnabled(False)
-        self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
+        #self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
         self.tableWidget_qso.setFont(fnt)
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
@@ -573,7 +571,7 @@ class Log_Window_2(QWidget):
         step = 100
         print("start_id", start_id)
         page = db.getRange(start_id, step)
-        if page != []:
+        if page:
             page_count = len(page)
             col_count = len(self.allCollumn)
             for record in page:
@@ -633,10 +631,12 @@ class Log_Window_2(QWidget):
 
 
                     else:
+                        if record[pole] is None:
+                            record[pole] = ''
                         self.tableWidget_qso.setItem(
                             next_string, col,
                             self.protectionItem(
-                                record[pole],
+                                str(record[pole]),
                                 Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         )
                         self.tableWidget_qso.item(next_string, col).setForeground(
@@ -667,7 +667,7 @@ class Log_Window_2(QWidget):
         self.collumns_index = std.std.get_index_column(self, self.tableWidget_qso)
         self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
         context_menu = QMenu()
-        style_table = "font-size: 12px;  color: " + settingsDict['color'] + ";"
+        style_table = f"font-size: 12px;  color: {settingsDict['color']}; background: {settingsDict['background-color']};"
         context_menu.setStyleSheet(style_table)
         # context_menu.setFixedWidth(120)
         # context_menu.set
@@ -709,6 +709,7 @@ class Log_Window_2(QWidget):
 
             # Create menu ClubLog
             clublog_menu = QMenu("Club Log")
+            clublog_menu.setStyleSheet(style_table)
             clublog_menu.addAction(send_to_clublog)
             clublog_menu.addAction(del_from_clublog)
 
@@ -1193,18 +1194,22 @@ class Log_Window_2(QWidget):
             QWidget.changeEvent(self, event)
 
     def refresh_data(self):
-        if self.fill_flag == 0:
-            self.fill_flag = 1
-
+        # if self.fill_flag == 0:
+        #     self.fill_flag = 1
+            self.allRecords = Fill_table(all_column=self.allCollumn,
+                                         window=self,
+                                         settingsDict=settingsDict)
+            self.allRecords.fill_complite.connect(self.fill_complited)
             # self.allRecords.qsos_counter.connect(self.counter_qso)
             self.allRecords.start()
 
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
-        # print("All_records", len(All_records))
-
+        print("last_id", self.qso_last_id)
+        self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
+        self.tableWidget_qso.update()
         self.load_bar.hide()
         # self.header_label
         # self.header_label.show()
