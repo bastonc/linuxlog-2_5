@@ -204,8 +204,8 @@ class EqslWindow(QWidget):
         self.tableWidget.setRowCount(0)
         self.tableWidget.insertRow(0)
 
-        self.tableWidget.setCellWidget(0, 5, self.all_confirm_chkbox)
-        self.tableWidget.setCellWidget(0, 6, self.all_add_chkbox)
+        self.tableWidget.setCellWidget(0, 6, self.all_confirm_chkbox)
+        self.tableWidget.setCellWidget(0, 7, self.all_add_chkbox)
         #self.tableWidget.horizontalHeader().setWidget(5, self.all_confirm_chkbox)
 
         # table = QTableWidget()
@@ -233,27 +233,28 @@ class EqslWindow(QWidget):
                                             mode=qso['MODE'])
             self.tableWidget.insertRow(self.tableWidget.rowCount())
             self.tableWidget.setItem(row, 0, QTableWidgetItem(qso['QSO_DATE']))
-            self.tableWidget.setItem(row, 1, QTableWidgetItem(qso['CALL']))
-            self.tableWidget.setItem(row, 2, QTableWidgetItem(qso['BAND']))
-            self.tableWidget.setItem(row, 3, QTableWidgetItem(qso['MODE']))
-            self.tableWidget.setCellWidget(row, 4, show_btn)
+            self.tableWidget.setItem(row, 1, QTableWidgetItem(qso['TIME_ON']))
+            self.tableWidget.setItem(row, 2, QTableWidgetItem(qso['CALL']))
+            self.tableWidget.setItem(row, 3, QTableWidgetItem(qso['BAND']))
+            self.tableWidget.setItem(row, 4, QTableWidgetItem(qso['MODE']))
+            self.tableWidget.setCellWidget(row, 5, show_btn)
             if self.confirmed_chkbx.isChecked():
-                self.tableWidget.setItem(row, 5, QTableWidgetItem("Confirmed"))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
             elif self.unconfirmed_chkbx.isChecked() and qso.get("EQSL_QSL_SENT") == "Y":
-                self.tableWidget.setItem(row, 5, QTableWidgetItem("Confirmed"))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
             elif self.unconfirmed_chkbx.isChecked():
-                self.tableWidget.setCellWidget(row, 5, confirm_checkbox)
+                self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             elif not self.confirmed_chkbx.isChecked() and \
                     not self.unconfirmed_chkbx.isChecked() and \
                     records != () and records[0]["EQSL_QSL_SENT"] == "Y":
-                self.tableWidget.setItem(row, 5, QTableWidgetItem("Confirmed"))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
 
             else:
-                self.tableWidget.setCellWidget(row, 5, confirm_checkbox)
+                self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             if records != ():
-                self.tableWidget.setItem(row, 6, QTableWidgetItem("In log"))
+                self.tableWidget.setItem(row, 7, QTableWidgetItem("In log"))
             else:
-                self.tableWidget.setCellWidget(row, 6, add_in_base_checkbox)
+                self.tableWidget.setCellWidget(row, 7, add_in_base_checkbox)
         self.add_btn.setEnabled(True)
         self.confirm_btn.setEnabled(True)
         self.chek_btn.setEnabled(True)
@@ -319,12 +320,13 @@ class EqslWindow(QWidget):
         self.date_chkbx.setText(f"Use data:\n{date_start.month()}/{date_start.day()}/{date_start.year()} - {date_finish.month()}/{date_finish.day()}/{date_finish.year()}")
 
     def add_to_log_action(self):
-        qso_for_add = self.get_checked_qso(index_cell=6)
+        qso_for_add = self.get_checked_qso(index_cell=7)
+        #print("qso_for_add", qso_for_add)
         for qso in qso_for_add:
             if self.confirmed_chkbx.isChecked() or qso.get("EQSL_QSL_SENT") == "Y":
                 qso["EQSL_QSL_SENT"] = "Y"
             else:
-                qso["EQSL_QSL_SENT"] = "N"
+                qso["EQSL_QSL_SENT"] = "N"  # todo - check repeats qso
             self.db.record_qso_to_base(qso_dict=qso, mode="import")
         self.output_adi_to_table(self.all_qso_list, mode='refresh')
         self.log_window.refresh_data()
@@ -333,7 +335,7 @@ class EqslWindow(QWidget):
         self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
         self.status_lbl.setText("Confirmation")
         file_name = "eqsl_c.adi"
-        self.all_confirm_qso_list = self.get_checked_qso(5)
+        self.all_confirm_qso_list = self.get_checked_qso(6)
         print(self.all_confirm_qso_list)
         main.Adi_file(self.settings_dict['APP_VERSION'], self.settings_dict).record_dict_qso(self.all_confirm_qso_list,
                                                                                              self.settings_dict['adi_fields'],
@@ -379,28 +381,29 @@ class EqslWindow(QWidget):
             add_ckbx = self.tableWidget.cellWidget(row, index_cell)
             if add_ckbx is not None and add_ckbx.isChecked():
                 for qso in self.all_qso_list:
-                    if qso["CALL"] == self.tableWidget.item(row, 1).text() and \
+                    if qso["CALL"] == self.tableWidget.item(row, 2).text() and \
                         qso["QSO_DATE"] == self.tableWidget.item(row, 0).text() and \
-                        qso["MODE"] == self.tableWidget.item(row, 3).text() and \
-                        qso["BAND"] == self.tableWidget.item(row, 2).text():
+                        qso["MODE"] == self.tableWidget.item(row, 4).text() and \
+                        qso["BAND"] == self.tableWidget.item(row, 3).text() and \
+                        qso["TIME_ON"] == self.tableWidget.item(row, 1).text():
                         all_qso.append(qso)
         return all_qso
 
     def all_state_confirm(self):
         if self.all_confirm_chkbox.isChecked():
             self.all_confirm = True
-            self.all_set_checked(5)
+            self.all_set_checked(6)
         else:
             self.all_confirm = False
-            self.all_set_unchecked(5)
+            self.all_set_unchecked(6)
 
     def all_state_add(self):
         if self.all_add_chkbox.isChecked():
             self.all_add = True
-            self.all_set_checked(6)
+            self.all_set_checked(7)
         else:
             self.all_add = False
-            self.all_set_unchecked(6)
+            self.all_set_unchecked(7)
 
 
     def all_set_checked(self, cell_index):

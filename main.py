@@ -312,7 +312,7 @@ class Fill_table(QThread):
     qsos_counter = QtCore.pyqtSignal(int)
 
     def __init__(self, all_column, window, settingsDict, parent=None):
-        super().__init__()
+        super().__init__(window)
         #
         self.all_collumn = all_column
         self.window = window
@@ -335,78 +335,80 @@ class Fill_table(QThread):
         self.window.load_bar.show()
         self.window.qso_last_id = records_dict[-1]['id']
         for row, qso in enumerate(self.allRecord):
+            print("QSO", qso)
             self.window.tableWidget_qso.insertRow(self.window.tableWidget_qso.rowCount())
             for col in range(allCols):
                 # print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
-                if qso:
-                    if pole == 'id':
-                        self.window.tableWidget_qso.setItem(row, col,
-                                                            self.protectionItem(
-                                                                str(qso[pole]),
-                                                                Qt.ItemIsSelectable | Qt.ItemIsEnabled))
-                        self.window.tableWidget_qso.item(row, col).setForeground(
-                            QColor(self.settingsDict["color-table"]))
+                #if qso:
+                if pole == 'id':
+                    self.window.tableWidget_qso.setItem(row, col,
+                                                        self.protectionItem(
+                                                            str(qso[pole]),
+                                                            Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                    self.window.tableWidget_qso.item(row, col).setForeground(
+                        QColor(self.settingsDict["color-table"]))
 
-                        # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
-                    elif pole == 'QSO_DATE':
-                        date = str(qso[pole])
-                        # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
-                        # print(time_formated)
-                        self.window.tableWidget_qso.setItem(
-                            row, col,
-                            self.protectionItem(
-                                QTableWidgetItem(date),
-                                Qt.ItemIsSelectable | Qt.ItemIsEnabled
-                            )
+                    # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+                elif pole == 'QSO_DATE':
+                    date = str(qso[pole])
+                    # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                    # print(time_formated)
+                    self.window.tableWidget_qso.setItem(
+                        row, col,
+                        self.protectionItem(
+                            QTableWidgetItem(date),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
                         )
-                        self.window.tableWidget_qso.item(row, col).setForeground(
-                            QColor(self.settingsDict["color-table"]))
+                    )
+                    self.window.tableWidget_qso.item(row, col).setForeground(
+                        QColor(self.settingsDict["color-table"]))
 
-                    elif pole == 'TIME_ON':
-                        time = str(qso[pole])
-                        # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                        # print(time_formated)
-                        self.window.tableWidget_qso.setItem(
-                            row, col,
-                            self.protectionItem(
-                                QTableWidgetItem(time),
-                                Qt.ItemIsSelectable | Qt.ItemIsEnabled
-                            )
+                elif pole == 'TIME_ON':
+                    time = str(qso[pole])
+                    # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                    # print(time_formated)
+                    self.window.tableWidget_qso.setItem(
+                        row, col,
+                        self.protectionItem(
+                            QTableWidgetItem(time),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
                         )
-                        self.window.tableWidget_qso.item(row, col).setForeground(
-                            QColor(self.settingsDict["color-table"]))
-                    elif pole == 'TIME_OFF':
-                        time = str(self.allRecord[row][pole])
-                        # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                        self.window.tableWidget_qso.setItem(
-                            row, col,
-                            self.protectionItem(
-                                QTableWidgetItem(time),
-                                Qt.ItemIsSelectable | Qt.ItemIsEnabled
-                            )
+                    )
+                    self.window.tableWidget_qso.item(row, col).setForeground(
+                        QColor(self.settingsDict["color-table"]))
+                elif pole == 'TIME_OFF':
+                    time = str(self.allRecord[row][pole])
+                    # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                    self.window.tableWidget_qso.setItem(
+                        row, col,
+                        self.protectionItem(
+                            QTableWidgetItem(time),
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled
                         )
-                        self.window.tableWidget_qso.item(row, col).setForeground(
-                            QColor(self.settingsDict["color-table"]))
+                    )
+                    self.window.tableWidget_qso.item(row, col).setForeground(
+                        QColor(self.settingsDict["color-table"]))
 
-                    else:
-                        if qso[pole] is None:
-                            qso[pole] = ""
-                        self.window.tableWidget_qso.setItem(
-                            row, col,
-                            self.protectionItem(
-                                qso[pole],
-                                Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                        )
-                        self.window.tableWidget_qso.item(row, col).setForeground(
-                            QColor(self.settingsDict["color-table"]))
-                    if qso['EQSL_QSL_SENT'] == 'Y':
-                        self.window.tableWidget_qso.item(row, col).setBackground(
-                            QColor(self.settingsDict['eqsl-sent-color']))
+                else:
+                    if qso[pole] == "None":
+                        qso[pole] = ""
+                    self.window.tableWidget_qso.setItem(
+                        row, col,
+                        self.protectionItem(
+                            qso[pole],
+                            Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    )
+                    self.window.tableWidget_qso.item(row, col).setForeground(
+                        QColor(self.settingsDict["color-table"]))
+                if qso['EQSL_QSL_SENT'] == 'Y':
+                    self.window.tableWidget_qso.item(row, col).setBackground(
+                        QColor(self.settingsDict['eqsl-sent-color']))
                 #sleep(0.001)
             self.window.load_bar.setValue(round(row * 100 / self.allRows))
             # sleep(0.001)
         self.fill_complite.emit()
+
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
@@ -433,7 +435,6 @@ class Log_Window_2(QWidget):
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
-
         # self.allRecords.start()
         self.initUI()
         # all_record = All_records,
@@ -458,8 +459,8 @@ class Log_Window_2(QWidget):
 
         self.setStyleSheet(style)
         self.tableWidget_qso = QTableWidget()
-        self.tableWidget_qso.setSortingEnabled(True)
-        self.tableWidget_qso.setRowCount(0)
+        # self.tableWidget_qso.setSortingEnabled(True)
+        #self.tableWidget_qso.setRowCount(0)
         # self.tableWidget_qso.insertColumn()
         self.event_qso_table = Filter_event_table_qso()
         # self.tableWidget_qso.wheelEvent(self.append_qso)
@@ -1194,12 +1195,13 @@ class Log_Window_2(QWidget):
             QWidget.changeEvent(self, event)
 
     def refresh_data(self):
-        # if self.fill_flag == 0:
-        #     self.fill_flag = 1
+        if self.fill_flag == 0:
+            self.fill_flag = 1
             self.allRecords = Fill_table(all_column=self.allCollumn,
                                          window=self,
                                          settingsDict=settingsDict)
             self.allRecords.fill_complite.connect(self.fill_complited)
+
             # self.allRecords.qsos_counter.connect(self.counter_qso)
             self.allRecords.start()
 
@@ -1207,14 +1209,15 @@ class Log_Window_2(QWidget):
     def fill_complited(self):
         print("last_id", self.qso_last_id)
         self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
+        #self.tableWidget_qso.setSortingEnabled(True)
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
-        self.tableWidget_qso.update()
+        #self.tableWidget_qso.update()
         self.load_bar.hide()
         # self.header_label
         # self.header_label.show()
         self.fill_flag = 0
-        self.allRecords.terminate()
+        # self.allRecords.terminate()
         # print("fill_complite signal", self.allRecords.isRunning())
         # self.tableWidget_qso.hide()
         # self.tableWidget_qso.show()
@@ -4536,7 +4539,7 @@ class Db(QObject):
             time_format = qso_dict['TIME_ON'] + "00"
         else:
             time_format = qso_dict['TIME_ON']
-        if qso_dict.get('TIME_OFF') == '':
+        if qso_dict.get('TIME_OFF') == '' or qso_dict.get('TIME_OFF') is None:
             time_off_format = time_format
         else:
             if len(qso_dict['TIME_OFF'].strip()) == 4:
