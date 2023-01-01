@@ -509,7 +509,7 @@ class Log_Window_2(QWidget):
         # self.header_label.setStyleSheet(style+" size: 9px;")
         # self.header_label.hide()
         self.menu_log_button = QHBoxLayout()
-        # self.menu_log_button.addWidget(self.refresh_button)
+        self.menu_log_button.addWidget(self.refresh_button)
         # self.menu_log_button.addWidget(self.filter_button)
         # self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
@@ -1291,8 +1291,11 @@ class Log_Window_2(QWidget):
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
         print("last_id", self.qso_last_id)
+        # self.tableWidget_qso.setSortingEnabled(True)
+        # for col in range(self.tableWidget_qso.columnCount()):
+        #     self.tableWidget_qso.sortByColumn(col, QtCore.Qt.DescendingOrder)
         self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
-        #self.tableWidget_qso.setSortingEnabled(True)
+
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
         #self.tableWidget_qso.update()
@@ -1990,15 +1993,15 @@ class About_window(QWidget):
 
 
 class realTime(QThread):
-
+    real_time_signal = pyqtSignal(object)
     def __init__(self, logformwindow, parent=None):
-        super().__init__()
+        super().__init__(logformwindow)
         self.logformwindow = logformwindow
 
     def run(self):
         while 1:
-            self.logformwindow.labelTime.setText("Loc: " + strftime("%H:%M:%S", localtime()) +
-                                                 "  |  GMT: " + strftime("%H:%M:%S", gmtime()))
+            self.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
+
             time.sleep(1)
 
 
@@ -2783,16 +2786,14 @@ class LogForm(QMainWindow):
 
         QApplication.setFont(font)
         QApplication.setApplicationName('LinuxLog ' + APP_VERSION + ' | ' + settingsDict['my-call'])
-        styleform = "background :" + settingsDict['form-background'] + \
-                    "; color: " + settingsDict['color-table'] + "; padding: 0em"
+        styleform = f"background: {settingsDict['form-background']}; color: {settingsDict['color-table']}; padding: 0em"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowFlags(Qt.FramelessWindowHint)
 
-        style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + ";"
+        style = f"background-color:{settingsDict['background-color']}; color: {settingsDict['color']};"
         self.setStyleSheet(style)
         self.menu()
 
@@ -2852,7 +2853,7 @@ class LogForm(QMainWindow):
 
         self.labelName = QLabel('Name')
         self.labelName.setFont(QtGui.QFont(settingsDict['font-app'], 9))
-        self.inputName = QLineEdit(self)
+        self.inputName = QLineEdit()
         self.inputName.setFixedWidth(137)
         self.inputName.setFixedHeight(30)
         self.inputName.setStyleSheet(styleform)
@@ -2862,13 +2863,13 @@ class LogForm(QMainWindow):
         self.labelQth.setFixedWidth(36)
         self.labelQth.setFont(QtGui.QFont(settingsDict['font-app'], 9))
 
-        self.inputQth = QLineEdit(self)
+        self.inputQth = QLineEdit()
         self.inputQth.setFixedWidth(137)
         self.inputQth.setFixedHeight(30)
         self.inputQth.setStyleSheet(styleform)
         self.inputQth.returnPressed.connect(self.logFormInput)
 
-        self.comboMode = QComboBox(self)
+        self.comboMode = QComboBox()
         self.comboMode.setFixedWidth(80)
         self.comboMode.setFixedHeight(30)
         self.comboMode.addItems(["SSB", "ESSB", "CW", "AM", "FM", "DSB", "DIGI"])
@@ -2876,7 +2877,7 @@ class LogForm(QMainWindow):
         self.comboMode.setCurrentIndex(indexMode)
         self.comboMode.activated[str].connect(self.rememberMode)
 
-        self.comboBand = QComboBox(self)
+        self.comboBand = QComboBox()
         self.comboBand.setFixedWidth(80)
         self.comboBand.setFixedHeight(30)
         self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200"])
@@ -2924,12 +2925,12 @@ class LogForm(QMainWindow):
 
         # hBoxLeft = QHBoxLayout(self)
         # hBoxRight = QHBoxLayout(self)
-        hBoxRst = QHBoxLayout(self)
+        hBoxRst = QHBoxLayout()
 
-        vBoxLeft = QVBoxLayout(self)
+        vBoxLeft = QVBoxLayout()
 
-        vBoxRight = QVBoxLayout(self)
-        vBoxMain = QVBoxLayout(self)
+        vBoxRight = QVBoxLayout()
+        vBoxMain = QVBoxLayout()
         # Build header line
         hBoxHeader.addStretch(20)
         hBoxHeader.addWidget(self.labelFreq)
@@ -2939,7 +2940,7 @@ class LogForm(QMainWindow):
 
         # set label Call
         # set input CALL
-        hCall = QHBoxLayout(self)
+        hCall = QHBoxLayout()
         hCall.addWidget(self.labelCall)
         hCall.addWidget(self.inputCall)
         hCall.addWidget(self.country_label)
@@ -2953,14 +2954,14 @@ class LogForm(QMainWindow):
         hBoxRst.addStretch(1)
 
         vBoxLeft.addLayout(hBoxRst)
-        hName = QHBoxLayout(self)
+        hName = QHBoxLayout()
 
         hName.addWidget(self.labelName)
         hName.addWidget(self.inputName)
         hName.addStretch(1)
         vBoxLeft.addLayout(hName)
 
-        hQth = QHBoxLayout(self)
+        hQth = QHBoxLayout()
         hQth.addWidget(self.labelQth)
         hQth.addWidget(self.inputQth)
         hQth.addStretch(1)
@@ -3008,8 +3009,11 @@ class LogForm(QMainWindow):
 
         # run time in Thread
         self.run_time = realTime(logformwindow=self)  # run time in Thread
+        self.run_time.real_time_signal.connect(self.set_time)
         self.run_time.start()
-
+    @QtCore.pyqtSlot(object)
+    def set_time(self, time_crotage):
+        self.labelTime.setText(f"Loc: {time_crotage[0]} | GMT: {time_crotage[1]}")
     def mousePressEvent(self, event):
 
         if event.button() == 1:

@@ -153,6 +153,8 @@ class EqslWindow(QWidget):
 
         with open(f'{self.path}/{self.img_name}', 'wb') as f:
             f.write(response.content)
+        self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
+        self.status_lbl.setText("Complete")
         self.show_image_eqsl(f'{self.path}/{self.img_name}')
 
     # slot for processing connection error
@@ -253,15 +255,20 @@ class EqslWindow(QWidget):
                 self.tableWidget.setItem(row, 7, QTableWidgetItem(self.ADDED))
             else:
                 self.tableWidget.setCellWidget(row, 7, add_in_base_checkbox)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
         self.add_btn.setEnabled(True)
         self.confirm_btn.setEnabled(True)
         self.chek_btn.setEnabled(True)
 
     def get_image_eqsl(self, qso: dict):
+
         self.img_name = f"{str(qso['CALL']).replace('/', '_')}_{qso['MODE']}_{qso['BAND']}_{qso['QSO_DATE']}.jpg"
         if os.path.exists(os.path.join(self.path, self.img_name)):
             self.show_image_eqsl(os.path.join(self.path, self.img_name))
         else:
+            self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
+            self.status_lbl.setText("Getting eQSL from eQSL.cc")
             get_img_url = f"{self.base_url_eqsl}/qslcard/GeteQSL.cfm?Username={self.settings_dict['eqsl_user']}"
             get_img_url += f"&Password={self.settings_dict['eqsl_password']}&CallsignFrom={qso['CALL']}&QSOBand={qso['BAND']}"
             get_img_url += f"&QSOMode={qso['MODE']}&QSOYear={qso['QSO_DATE'][:4]}&QSOMonth={qso['QSO_DATE'][4:6]}&QSODay={qso['QSO_DATE'][6:]}"
