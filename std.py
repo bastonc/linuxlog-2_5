@@ -151,7 +151,21 @@ class std:
             time_string += digit_new
         #print("time_string", time_string)
         return time_string
+    def adi_time_to_std_time(self, adi_time):
+        if len(adi_time) == 4:
+            time = adi_time[:2] + ":" + adi_time[2:4] + ":00"
+        else:
+            time = adi_time[:2] + ":" + adi_time[2:4] + ":" + adi_time[4:]
+        return time
 
+    def adi_date_to_std_date(self, adi_date):
+        date = adi_date[:4] + "-" + adi_date[4:6] + "-" + adi_date[6:]
+        return date
+
+    def adi_time_add_seconds(self, adi_time):
+        if len(adi_time) == 4:
+            return adi_time + "00"
+        return adi_time
 class wnd_what(QWidget):
     ok = QtCore.pyqtSignal(str)
     def __init__(self, header_text):

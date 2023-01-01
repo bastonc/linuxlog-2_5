@@ -335,7 +335,7 @@ class Fill_table(QThread):
         self.window.load_bar.show()
         self.window.qso_last_id = records_dict[-1]['id']
         for row, qso in enumerate(self.allRecord):
-            print("QSO", qso)
+            #print("QSO", qso)
             self.window.tableWidget_qso.insertRow(self.window.tableWidget_qso.rowCount())
             for col in range(allCols):
                 # print("col -", col, self.all_collumn[col])
@@ -351,7 +351,7 @@ class Fill_table(QThread):
 
                     # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
                 elif pole == 'QSO_DATE':
-                    date = str(qso[pole])
+                    date = qso[pole].strftime("%Y-%m-%d")
                     # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                     # print(time_formated)
                     self.window.tableWidget_qso.setItem(
@@ -378,7 +378,7 @@ class Fill_table(QThread):
                     self.window.tableWidget_qso.item(row, col).setForeground(
                         QColor(self.settingsDict["color-table"]))
                 elif pole == 'TIME_OFF':
-                    time = str(self.allRecord[row][pole])
+                    time = str(qso[pole])
                     # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                     self.window.tableWidget_qso.setItem(
                         row, col,
@@ -436,9 +436,11 @@ class Log_Window_2(QWidget):
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
         # self.allRecords.start()
-        self.initUI()
         # all_record = All_records,
         self.qso_last_id = None
+        self.tableWidget_qso = QTableWidget()
+        # self.tableWidget_qso.setSortingEnabled(True)
+        self.initUI()
 
     def initUI(self):
         '''
@@ -458,7 +460,7 @@ class Log_Window_2(QWidget):
             'color'] + ";"
 
         self.setStyleSheet(style)
-        self.tableWidget_qso = QTableWidget()
+
         # self.tableWidget_qso.setSortingEnabled(True)
         #self.tableWidget_qso.setRowCount(0)
         # self.tableWidget_qso.insertColumn()
@@ -1197,13 +1199,94 @@ class Log_Window_2(QWidget):
     def refresh_data(self):
         if self.fill_flag == 0:
             self.fill_flag = 1
-            self.allRecords = Fill_table(all_column=self.allCollumn,
-                                         window=self,
-                                         settingsDict=settingsDict)
-            self.allRecords.fill_complite.connect(self.fill_complited)
+            self.tableWidget_qso.setRowCount(0)
+            self.read_base_string = ReadStringDb(db=db, parent=self)
+            self.read_base_string.dict_from_base.connect(self.fill_qso_table)
+            self.read_base_string.fill_complite.connect(self.fill_complited)
+            self.read_base_string.start()
+            # self.allRecords = Fill_table(all_column=self.allCollumn,
+            #                              window=self,
+            #                              settingsDict=settingsDict)
+            # self.allRecords.fill_complite.connect(self.fill_complited)
+            #
+            # # self.allRecords.qsos_counter.connect(self.counter_qso)
+            # self.allRecords.start()
 
-            # self.allRecords.qsos_counter.connect(self.counter_qso)
-            self.allRecords.start()
+    @QtCore.pyqtSlot(object)
+    def fill_qso_table(self, dict_db):
+        row = self.tableWidget_qso.rowCount()
+        self.tableWidget_qso.insertRow(self.tableWidget_qso.rowCount())
+        all_cols = len(self.allCollumn)
+        for col in range(all_cols):
+            # print("col -", col, self.all_collumn[col])
+            pole = self.allCollumn[col]
+            # if qso:
+            if pole == 'id':
+                self.tableWidget_qso.setItem(row, col,
+                                                    self.protectionItem(
+                                                        str(dict_db[pole]),
+                                                        Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                self.tableWidget_qso.item(row, col).setForeground(
+                    QColor(settingsDict["color-table"]))
+
+                # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
+            elif pole == 'QSO_DATE':
+                date = dict_db[pole].strftime("%Y-%m-%d")
+                # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
+                # print(time_formated)
+                self.tableWidget_qso.setItem(
+                    row, col,
+                    self.protectionItem(
+                        QTableWidgetItem(date),
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                )
+                self.tableWidget_qso.item(row, col).setForeground(
+                    QColor(settingsDict["color-table"]))
+
+            elif pole == 'TIME_ON':
+                time = str(dict_db[pole])
+                # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                # print(time_formated)
+                self.tableWidget_qso.setItem(
+                    row, col,
+                    self.protectionItem(
+                        QTableWidgetItem(time),
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                )
+                self.tableWidget_qso.item(row, col).setForeground(
+                    QColor(settingsDict["color-table"]))
+            elif pole == 'TIME_OFF':
+                time = str(dict_db[pole])
+                # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
+                self.tableWidget_qso.setItem(
+                    row, col,
+                    self.protectionItem(
+                        QTableWidgetItem(time),
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                )
+                self.tableWidget_qso.item(row, col).setForeground(
+                    QColor(settingsDict["color-table"]))
+
+            else:
+                if dict_db[pole] == "None":
+                    dict_db[pole] = ""
+                self.tableWidget_qso.setItem(
+                    row, col,
+                    self.protectionItem(
+                        dict_db[pole],
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                )
+                self.tableWidget_qso.item(row, col).setForeground(
+                    QColor(settingsDict["color-table"]))
+            if dict_db['EQSL_QSL_SENT'] == 'Y':
+                self.tableWidget_qso.item(row, col).setBackground(
+                    QColor(settingsDict['eqsl-sent-color']))
+            # sleep(0.001)
+        self.load_bar.setValue(round(row * 100 / len(self.allRows)))
+        # sleep(0.001)
 
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
@@ -4397,6 +4480,21 @@ class settings_file:
         # print("Save_and_Exit_button: ", old_data)
 
 
+class ReadStringDb(QThread):
+    dict_from_base = pyqtSignal(object)
+    fill_complite = pyqtSignal()
+    def __init__(self, db, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.db = db
+
+    def run(self):
+        records_dict = db.get_all_records(0)
+        self.parent.allRows = records_dict
+        for qso in records_dict:
+            self.dict_from_base.emit(qso)
+        self.fill_complite.emit()
+
 class foundThread(QThread):
     result = QtCore.pyqtSignal(object)
 
@@ -4534,9 +4632,10 @@ class Db(QObject):
 
     def record_qso_to_base(self, qso_dict, mode=''):
         db_conn = self.connect()
-        # print(qso_dict['TIME_ON'], len(qso_dict['TIME_ON'].strip()))
+        print(qso_dict['TIME_ON'], len(qso_dict['TIME_ON'].strip()))
         if len(qso_dict['TIME_ON'].strip()) == 4:
             time_format = qso_dict['TIME_ON'] + "00"
+            print("time_format:", time_format)
         else:
             time_format = qso_dict['TIME_ON']
         if qso_dict.get('TIME_OFF') == '' or qso_dict.get('TIME_OFF') is None:
@@ -4670,10 +4769,11 @@ class Db(QObject):
         # print ("Search in Base Found record:_>", records)
         return records
 
-    def search_qso_by_full_data(self, call, date, band, mode):
+    def search_qso_by_full_data(self, call, date, time_qso, band, mode):
         connection = self.connect()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s AND `QSO_DATE`=%s AND `BAND`=%s AND `MODE`=%s", [call.strip(), date.strip(), band.strip(), mode.strip()])
+        # print("seach_qso_by_full_data:", call, date, time_qso, band, mode)
+        cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s AND `QSO_DATE`=%s AND `TIME_ON`=%s AND `BAND`=%s AND `MODE`=%s", [call.strip(), date.strip(), time_qso.strip(), band.strip(), mode.strip()])
         records = cursor.fetchall()
         # print ("Search in Base Found record:_>", records)
         return records
@@ -4687,16 +4787,23 @@ class Db(QObject):
         i = 0
         for key in keys:
             i += 1
-            if object_dict[key] != "" and object_dict[key] != " ":
+            #if object_dict[key] != "" and object_dict[key] != " ":
+            if key in self.settingsDict["db_fields"] and \
+                    object_dict[key] != "" and object_dict[key] != " ":
                 update_query += "`" + key + "` = %s"
                 if len(keys) != i:
                     update_query += ", "
                 values.append(object_dict[key])
-        update_query += " WHERE id=%s"
+        update_query += "WHERE `id`= %s"
+        update_query = update_query.replace(", WHERE", " WHERE")
         values.append(record_id)
+        # print(update_query)
+        # print(values)
+        # print(record_id)
+        # print("query:" )
         cursor.execute(update_query, values)
         connection.commit()
-        # print("Object Dict:_>", values)
+
 
     def delete_qso(self, record_id):
         connect = self.connect()
@@ -4770,6 +4877,7 @@ if __name__ == '__main__':
     settingsDict.update({"adi_fields": ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
      'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'EQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
      'CLUBLOG_QSO_UPLOAD_STATUS', 'STATION_CALLSIGN']})
+
     table_columns = [
         ["CALL", "VARCHAR(50)"],
         ["MODE", "VARCHAR(50)"],
@@ -4803,6 +4911,9 @@ if __name__ == '__main__':
         ["RST_RCVD", "VARCHAR(50)"],
         ["RST_SENT", "VARCHAR(50)"],
     ]
+    settingsDict.update({"db_fields": [field[0] for field in table_columns]})
+
+
     file = open('settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':

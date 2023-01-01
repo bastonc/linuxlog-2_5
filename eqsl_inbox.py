@@ -56,6 +56,8 @@ class EqslWindow(QWidget):
         self.db = db
         self.settings_dict = settings_dict
         self.log_window = log_window
+        self.CONFIRMED = "Confirmed"
+        self.ADDED = "In log"
         self.base_url_eqsl = "https://www.eQSL.cc"
         self.url_get_link_to_adi = f"/qslcard/DownloadInBox.cfm?UserName={self.settings_dict['eqsl_user']}&Password={self.settings_dict['eqsl_password']}"
         uic.loadUi("eqsl_inbox.ui", self)
@@ -183,7 +185,6 @@ class EqslWindow(QWidget):
             date_parameter += f"%2F{str(self.date_finish.day()) if int(self.date_finish.day()) > 10 else '0' + str(self.date_finish.day())}"
             date_parameter += f"%2F{str(self.date_finish.year())}"
             url_eqsl += date_parameter
-        print(f"URL with date: {url_eqsl}")
         self.connection_to_eqsl_thread(url_eqsl)
 
     def get_url_adi_file(self, answer_form_eqsl):
@@ -203,7 +204,6 @@ class EqslWindow(QWidget):
         self.all_add_chkbox.setChecked(self.all_add)
         self.tableWidget.setRowCount(0)
         self.tableWidget.insertRow(0)
-
         self.tableWidget.setCellWidget(0, 6, self.all_confirm_chkbox)
         self.tableWidget.setCellWidget(0, 7, self.all_add_chkbox)
         #self.tableWidget.horizontalHeader().setWidget(5, self.all_confirm_chkbox)
@@ -228,9 +228,7 @@ class EqslWindow(QWidget):
             add_in_base_checkbox.setChecked(self.all_add)
             confirm_checkbox = QCheckBox()
             confirm_checkbox.setChecked(self.all_confirm)
-            date = qso['QSO_DATE'][:4] + "-" + qso['QSO_DATE'][4:6] + "-" + qso['QSO_DATE'][6:]
-            records = self.db.search_qso_by_full_data(call=qso['CALL'], date=date, band=qso['BAND'],
-                                            mode=qso['MODE'])
+            records = self.search_in_log(qso)
             self.tableWidget.insertRow(self.tableWidget.rowCount())
             self.tableWidget.setItem(row, 0, QTableWidgetItem(qso['QSO_DATE']))
             self.tableWidget.setItem(row, 1, QTableWidgetItem(qso['TIME_ON']))
@@ -239,20 +237,20 @@ class EqslWindow(QWidget):
             self.tableWidget.setItem(row, 4, QTableWidgetItem(qso['MODE']))
             self.tableWidget.setCellWidget(row, 5, show_btn)
             if self.confirmed_chkbx.isChecked():
-                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
-            elif self.unconfirmed_chkbx.isChecked() and qso.get("EQSL_QSL_SENT") == "Y":
-                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
+            elif qso.get("EQSL_QSL_SENT") == "Y":
+                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
             elif self.unconfirmed_chkbx.isChecked():
                 self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             elif not self.confirmed_chkbx.isChecked() and \
                     not self.unconfirmed_chkbx.isChecked() and \
                     records != () and records[0]["EQSL_QSL_SENT"] == "Y":
-                self.tableWidget.setItem(row, 6, QTableWidgetItem("Confirmed"))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
 
             else:
                 self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             if records != ():
-                self.tableWidget.setItem(row, 7, QTableWidgetItem("In log"))
+                self.tableWidget.setItem(row, 7, QTableWidgetItem(self.ADDED))
             else:
                 self.tableWidget.setCellWidget(row, 7, add_in_base_checkbox)
         self.add_btn.setEnabled(True)
@@ -264,7 +262,6 @@ class EqslWindow(QWidget):
         if os.path.exists(os.path.join(self.path, self.img_name)):
             self.show_image_eqsl(os.path.join(self.path, self.img_name))
         else:
-            print("Show eQSL", qso)
             get_img_url = f"{self.base_url_eqsl}/qslcard/GeteQSL.cfm?Username={self.settings_dict['eqsl_user']}"
             get_img_url += f"&Password={self.settings_dict['eqsl_password']}&CallsignFrom={qso['CALL']}&QSOBand={qso['BAND']}"
             get_img_url += f"&QSOMode={qso['MODE']}&QSOYear={qso['QSO_DATE'][:4]}&QSOMonth={qso['QSO_DATE'][4:6]}&QSODay={qso['QSO_DATE'][6:]}"
@@ -282,9 +279,7 @@ class EqslWindow(QWidget):
 
     def check_run_thread(self):
         if self.thread_connection.isRunning():
-            print("close thread", self.thread_connection.currentThreadId())
             self.thread_connection.exit(0)
-            print("after exit", self.thread_connection.currentThreadId())
 
     def state_date(self):
         if self.date_chkbx.isChecked():
@@ -321,12 +316,12 @@ class EqslWindow(QWidget):
 
     def add_to_log_action(self):
         qso_for_add = self.get_checked_qso(index_cell=7)
-        #print("qso_for_add", qso_for_add)
+
         for qso in qso_for_add:
-            if self.confirmed_chkbx.isChecked() or qso.get("EQSL_QSL_SENT") == "Y":
+            if self.confirmed_chkbx.isChecked() or qso.get("confirmed"):
                 qso["EQSL_QSL_SENT"] = "Y"
             else:
-                qso["EQSL_QSL_SENT"] = "N"  # todo - check repeats qso
+                qso["EQSL_QSL_SENT"] = "N"
             self.db.record_qso_to_base(qso_dict=qso, mode="import")
         self.output_adi_to_table(self.all_qso_list, mode='refresh')
         self.log_window.refresh_data()
@@ -336,7 +331,6 @@ class EqslWindow(QWidget):
         self.status_lbl.setText("Confirmation")
         file_name = "eqsl_c.adi"
         self.all_confirm_qso_list = self.get_checked_qso(6)
-        print(self.all_confirm_qso_list)
         main.Adi_file(self.settings_dict['APP_VERSION'], self.settings_dict).record_dict_qso(self.all_confirm_qso_list,
                                                                                              self.settings_dict['adi_fields'],
                                                                                              file_name)
@@ -357,8 +351,15 @@ class EqslWindow(QWidget):
             for qso_confirmed in self.all_confirm_qso_list:
                 if qso == qso_confirmed:
                     qso["EQSL_QSL_SENT"] = "Y"
-        print("all QSO", self.all_qso_list)
+                    record_qso = self.search_in_log(qso)
+                    if record_qso != ():
+                        qso["TIME_ON"] = std.std().adi_time_add_seconds(qso["TIME_ON"])
+                        qso["QSO_DATE"] = std.std().adi_date_to_std_date(qso["QSO_DATE"])
+                        self.db.edit_qso(int(record_qso[0]["id"]), qso)
+                        qso["TIME_ON"] = qso["TIME_ON"][:4]
+                        qso["QSO_DATE"] = qso["QSO_DATE"].replace("-", "")
         self.output_adi_to_table(self.all_qso_list, mode="refresh")
+        self.log_window.refresh_data()
 
 
     @pyqtSlot(object)
@@ -386,6 +387,14 @@ class EqslWindow(QWidget):
                         qso["MODE"] == self.tableWidget.item(row, 4).text() and \
                         qso["BAND"] == self.tableWidget.item(row, 3).text() and \
                         qso["TIME_ON"] == self.tableWidget.item(row, 1).text():
+                        if self.tableWidget.cellWidget(row, 6) is None:
+                            qso["confirmed"] = True
+                        else:
+                            qso["confirmed"] = False
+                        if self.tableWidget.cellWidget(row, 7) is None:
+                            qso["added"] = True
+                        else:
+                            qso["added"] = False
                         all_qso.append(qso)
         return all_qso
 
@@ -427,3 +436,14 @@ class EqslWindow(QWidget):
         if self.all_confirm_chkbox.isChecked():
             return True
         return False
+
+    def search_in_log(self, qso):
+        date = qso['QSO_DATE'][:4] + "-" + qso['QSO_DATE'][4:6] + "-" + qso['QSO_DATE'][6:]
+        if len(qso['TIME_ON']) == 4:
+            time_qso = qso['TIME_ON'][:2] + ":" + qso['TIME_ON'][2:] + ":00"
+        else:
+            time_qso = qso['TIME_ON'][:2] + ":" + qso['TIME_ON'][2:4] + ":" + qso['TIME_ON'][4:]
+        #print("date:", date)
+        records = self.db.search_qso_by_full_data(call=qso['CALL'], date=date, time_qso=time_qso, band=qso['BAND'],
+                                                  mode=qso['MODE'])
+        return records
