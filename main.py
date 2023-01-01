@@ -4726,10 +4726,10 @@ class Db(QObject):
         cursor = self.connect().cursor()
         if count > 0:
             records = cursor.execute(
-                "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC LIMIT " + str(count))
+                "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE + TIME_ON DESC LIMIT " + str(count))
         else:
             records = cursor.execute(
-                "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE DESC")
+                "SELECT * FROM " + self.settingsDict["my-call"] + " ORDER BY QSO_DATE + TIME_ON DESC")
 
         # print(records)
         records_dict = cursor.fetchall()
