@@ -72,7 +72,7 @@ then
       sudo systemctl enable mysql &&
       sudo systemctl start mysql &&
       sudo apt install -y socat &&
-      sudo apt install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3 &&
+      # sudo apt install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3 &&
       pip3 install -r ~/${name_app}/requirements.txt
 fi
 
@@ -123,7 +123,6 @@ sudo cp $HOME/$name_app'/linlog.desktop' $destination
 echo -en " -> Create MySQL user\n"
 sudo mysql  -e "FLUSH PRIVILEGES;" 
 sudo mysql  -e "CREATE USER 'linuxlog'@'localhost' IDENTIFIED BY 'Linuxlog12#';"
-fi
 sudo mysql  -e "GRANT ALL PRIVILEGES ON *.* TO 'linuxlog'@'localhost' WITH GRANT OPTION;"
 sudo mysql  -e "FLUSH PRIVILEGES;"
 
