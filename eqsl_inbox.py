@@ -23,6 +23,7 @@ class ConnectionToEqsl(QThread):
     get_adi_file = pyqtSignal(object)
     get_html_img_eqsl = pyqtSignal(object)
     get_img_eqsl = pyqtSignal(object)
+    outbox_adi = pyqtSignal(object)
     error_connection = pyqtSignal()
 
     def __init__(self, parrent_window):
@@ -45,6 +46,8 @@ class ConnectionToEqsl(QThread):
                 self.get_html_img_eqsl.emit(response_from_server)
             elif self.signal == "get_img_eqsl":
                 self.get_img_eqsl.emit(response_from_server)
+            elif self.signal == "outbox_link":
+                self.outbox_adi.emit(response_from_server)
 
         except BaseException:
             self.error_connection.emit()
@@ -58,8 +61,11 @@ class EqslWindow(QWidget):
         self.log_window = log_window
         self.CONFIRMED = "Confirmed"
         self.ADDED = "In log"
+        self.SEND = "Sent"
         self.base_url_eqsl = "https://www.eQSL.cc"
-        self.url_get_link_to_adi = f"/qslcard/DownloadInBox.cfm?UserName={self.settings_dict['eqsl_user']}&Password={self.settings_dict['eqsl_password']}"
+        self.auth_parameter = f"?UserName={self.settings_dict['eqsl_user']}&Password={self.settings_dict['eqsl_password']}"
+        self.url_get_link_to_adi = f"/qslcard/DownloadInBox.cfm"
+        self.upload_qsl_url = "/qslcard/DownloadADIF.cfm"
         uic.loadUi("eqsl_inbox.ui", self)
         style = "background-color:" + self.settings_dict['background-color'] + "; color:" + settings_dict[
             'color'] + ";"
@@ -82,6 +88,7 @@ class EqslWindow(QWidget):
         self.calendar_finish.setFixedWidth(300)
         self.unconfirmed_chkbx.stateChanged.connect(self.unconfirmed_activate)
         self.confirmed_chkbx.stateChanged.connect(self.confirmed_activate)
+        self.upload_chkbx.stateChanged.connect(self.upload_activate)
         self.date_start = None
         self.date_finish = None
         self.add_btn.setEnabled(False)
@@ -101,6 +108,7 @@ class EqslWindow(QWidget):
         :param signal:
         :return:
         """
+        print("URL:", url, signal)
         self.thread_connection = ConnectionToEqsl(self)
         self.thread_connection.set_attribute(url=url, signal=signal)
         #self.check_run_thread()
@@ -108,6 +116,7 @@ class EqslWindow(QWidget):
         self.thread_connection.get_adi_file.connect(self.processing_adi_file)
         self.thread_connection.get_html_img_eqsl.connect(self.processing_html_img_eqsl)
         self.thread_connection.get_img_eqsl.connect(self.processing_img_eqsl)
+        self.thread_connection.outbox_adi.connect(self.processing_link_outbox_adi)
         self.thread_connection.error_connection.connect(self.error_connection_processing)
         self.thread_connection.start()
 
@@ -125,6 +134,15 @@ class EqslWindow(QWidget):
             self.status_lbl.setText("Not connected")
             self.chek_btn.setEnabled(True)
 
+    # Slot for processing link to outbox ADI
+    @pyqtSlot(object)
+    def processing_link_outbox_adi(self, answer_from_eqsl):
+        if answer_from_eqsl.status_code == 200:
+            self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
+            self.status_lbl.setText("Complete")
+            link_adi_file = self.get_url_adi_file(answer_from_eqsl)
+
+        print(link_adi_file)
     # Slot for processing ADI file
     @pyqtSlot(object)
     def processing_adi_file(self, answer_from_eqsl):
@@ -171,9 +189,11 @@ class EqslWindow(QWidget):
         self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
         self.status_lbl.setText("Connecting to eQSL.cc")
         if self.unconfirmed_chkbx.isChecked():
-            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}&UnconfirmedOnly=1"
+            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}{self.auth_parameter}&UnconfirmedOnly=1"
         elif self.confirmed_chkbx.isChecked():
-            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}&ConfirmedOnly=1"
+            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}{self.auth_parameter}&ConfirmedOnly=1"
+        elif self.upload_chkbx.isChecked():
+            url_eqsl = f"{self.base_url_eqsl}{self.upload_qsl_url}{self.auth_parameter}"
         else:
             url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}"
         if self.date_chkbx.isChecked():
@@ -206,7 +226,8 @@ class EqslWindow(QWidget):
         self.all_add_chkbox.setChecked(self.all_add)
         self.tableWidget.setRowCount(0)
         self.tableWidget.insertRow(0)
-        self.tableWidget.setCellWidget(0, 6, self.all_confirm_chkbox)
+        if not self.upload_chkbx.isChecked():
+            self.tableWidget.setCellWidget(0, 6, self.all_confirm_chkbox)
         self.tableWidget.setCellWidget(0, 7, self.all_add_chkbox)
         #self.tableWidget.horizontalHeader().setWidget(5, self.all_confirm_chkbox)
 
@@ -238,19 +259,27 @@ class EqslWindow(QWidget):
             self.tableWidget.setItem(row, 3, QTableWidgetItem(qso['BAND']))
             self.tableWidget.setItem(row, 4, QTableWidgetItem(qso['MODE']))
             self.tableWidget.setCellWidget(row, 5, show_btn)
-            if self.confirmed_chkbx.isChecked():
-                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
-            elif qso.get("EQSL_QSL_SENT") == "Y":
-                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
-            elif self.unconfirmed_chkbx.isChecked():
-                self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
-            elif not self.confirmed_chkbx.isChecked() and \
-                    not self.unconfirmed_chkbx.isChecked() and \
-                    records != () and records[0]["EQSL_QSL_SENT"] == "Y":
-                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
-
+            if self.upload_chkbx.isChecked():
+                # t = QTableWidget()
+                # t.item(0,6).
+                self.tableWidget.setHorizontalHeaderItem(6, QTableWidgetItem("Sent"))
+                # self.tableWidget.setItem(0, 6, QTableWidgetItem(""))
+                self.tableWidget.setItem(row, 6, QTableWidgetItem(self.SEND))
+                qso["EQSL_QSL_SENT"] = "Y"
             else:
-                self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
+                if self.confirmed_chkbx.isChecked():
+                    self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
+                elif qso.get("EQSL_QSL_SENT") == "Y":
+                    self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
+                elif self.unconfirmed_chkbx.isChecked():
+                    self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
+                elif not self.confirmed_chkbx.isChecked() and \
+                        not self.unconfirmed_chkbx.isChecked() and \
+                        records != () and records[0]["EQSL_QSL_SENT"] == "Y":
+                    self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
+
+                else:
+                    self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             if records != ():
                 self.tableWidget.setItem(row, 7, QTableWidgetItem(self.ADDED))
             else:
@@ -311,10 +340,18 @@ class EqslWindow(QWidget):
     def unconfirmed_activate(self):
         if self.unconfirmed_chkbx.isChecked():
             self.confirmed_chkbx.setChecked(False)
+            self.upload_chkbx.setChecked(False)
 
     def confirmed_activate(self):
         if self.confirmed_chkbx.isChecked():
             self.unconfirmed_chkbx.setChecked(False)
+            self.upload_chkbx.setChecked(False)
+
+    def upload_activate(self):
+        if self.upload_chkbx.isChecked():
+            self.confirmed_chkbx.setChecked(False)
+            self.unconfirmed_chkbx.setChecked(False)
+
 
     def set_date_event(self):
         date_start = self.calendar_start.selectedDate()

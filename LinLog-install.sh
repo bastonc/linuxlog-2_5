@@ -29,7 +29,7 @@ else
   # Check git
   if [[ `git --version` -eq 0 ]]
   then
-    if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
+    if [[ "$dist_name" == "Linux Mint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
     then
     	sudo apt update
         sudo apt install -y git python3-pip # if git not installed - install it
@@ -64,7 +64,7 @@ python3 -m pip install --upgrade pip
 ## Setup all depensies
 
 # For Debian tree
-if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
+if [[ "$dist_name" == "Linux Mint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
 then
       echo -en ' -> Install all dependency'
       sudo apt install python3-pyqt5 &&

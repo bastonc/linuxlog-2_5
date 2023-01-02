@@ -145,6 +145,13 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QCheckBox" name="upload_chkbx">
+              <property name="text">
+               <string>Outbox QSO</string>
+              </property>
+             </widget>
+            </item>
             <item alignment="Qt::AlignLeft|Qt::AlignTop">
              <widget class="QCheckBox" name="date_chkbx">
               <property name="sizePolicy">
