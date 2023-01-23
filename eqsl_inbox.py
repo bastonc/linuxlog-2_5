@@ -195,7 +195,7 @@ class EqslWindow(QWidget):
         elif self.upload_chkbx.isChecked():
             url_eqsl = f"{self.base_url_eqsl}{self.upload_qsl_url}{self.auth_parameter}"
         else:
-            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}"
+            url_eqsl = f"{self.base_url_eqsl}{self.url_get_link_to_adi}{self.auth_parameter}"
         if self.date_chkbx.isChecked():
             self.date_start = self.calendar_start.selectedDate()
             self.date_finish = self.calendar_finish.selectedDate()

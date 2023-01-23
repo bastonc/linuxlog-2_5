@@ -1291,23 +1291,13 @@ class Log_Window_2(QWidget):
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
         print("last_id", self.qso_last_id)
-        # self.tableWidget_qso.setSortingEnabled(True)
-        # for col in range(self.tableWidget_qso.columnCount()):
-        #     self.tableWidget_qso.sortByColumn(col, QtCore.Qt.DescendingOrder)
         self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
 
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
-        #self.tableWidget_qso.update()
         self.load_bar.hide()
-        # self.header_label
-        # self.header_label.show()
         self.fill_flag = 0
-        # self.allRecords.terminate()
-        # print("fill_complite signal", self.allRecords.isRunning())
-        # self.tableWidget_qso.hide()
-        # self.tableWidget_qso.show()
-        # logForm.counter_qso = db.get_max_id
+
 
     @QtCore.pyqtSlot(int, name="counter_qso")
     def counter_qso(self, val):
@@ -2001,7 +1991,6 @@ class realTime(QThread):
     def run(self):
         while 1:
             self.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
-
             time.sleep(1)
 
 
@@ -3365,8 +3354,6 @@ class LogForm(QMainWindow):
 
         if about_window.isEnabled():
             about_window.close()
-
-
         self.remember_in_cfg(self.parameter)
 
     def remember_in_cfg(self, parameter):
