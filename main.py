@@ -1292,7 +1292,6 @@ class Log_Window_2(QWidget):
     def fill_complited(self):
         print("last_id", self.qso_last_id)
         self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
-
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
         self.load_bar.hide()
@@ -1987,11 +1986,15 @@ class realTime(QThread):
     def __init__(self, logformwindow, parent=None):
         super().__init__(logformwindow)
         self.logformwindow = logformwindow
+        self.run_flag = True
+
+    def set_run_flag(self, bool_set):
+        self.run_flag = bool_set
 
     def run(self):
-        while 1:
+        while self.run_flag:
             self.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
-            time.sleep(1)
+            time.sleep(0.1)
 
 
 class ClikableLabel(QLabel):
@@ -3327,6 +3330,7 @@ class LogForm(QMainWindow):
         logWindow.close()
         internetSearch.close()
         logSearch.close()
+        self.run_time.set_run_flag(False)
         logForm.close()
         telnetCluster.close()
         try:
