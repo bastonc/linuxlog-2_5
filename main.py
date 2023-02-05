@@ -5004,6 +5004,6 @@ if __name__ == '__main__':
             # logForm.start_cat()
         if settingsDict['tci'] == 'enable':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
-            tci_sndr = tci.Tci_sender(settingsDict["tci-server"] + ":" + settingsDict["tci-port"], "Disable", logForm)
+        tci_sndr = tci.Tci_sender(settingsDict["tci-server"] + ":" + settingsDict["tci-port"], "Disable", logForm)
 
     sys.exit(app.exec_())
