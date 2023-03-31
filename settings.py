@@ -645,33 +645,77 @@ class Menu (QWidget):
 
         # set in chekbox Sync
         self.clublog_sync_chekbox = QHBoxLayout()
-        self.clublog_sync = QCheckBox("Auto sent to Club log after QSO")
+        self.clublog_sync = QCheckBox("Auto sent to ClubLog after QSO")
         self.clublog_sync.setStyleSheet(style)
         self.clublog_sync_chekbox.addWidget(self.clublog_sync)
 
-        self.clublog_label = QLabel("Club Log service")
+        self.clublog_label = QLabel("ClubLog service")
         self.clublog_label.setStyleSheet(self.style_headers)
         spacer = QFrame()
         spacer.setFrameShape(QFrame.HLine)
         spacer.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        spacer.setContentsMargins(1,5,1,10)
+        spacer.setContentsMargins(1, 5, 1, 10)
         spacer.setLineWidth(1)
         self.clublog_lay.addWidget(spacer)
         self.clublog_lay.addWidget(self.clublog_label)
         self.clublog_lay.addSpacing(10)
         self.clublog_lay.addLayout(self.clublog_login_lay)
         self.clublog_lay.addLayout(self.clublog_pass_lay)
-        self.clublog_text_label = QLabel("NOTICE: You need use <b>password for "
-                                         "application.</b> Detail to<br>&nbsp;&nbsp;&nbsp;"
-                                         "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-                                         "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Clublog site ->"
-                                         "Settings ->App.pasword")
-        self.clublog_text_label.setStyleSheet(self.style_small)
-        self.clublog_lay.addWidget(self.clublog_text_label)
         self.clublog_lay.addLayout(self.clublog_sync_chekbox)
+
+        # Create qrz.com lay
+        self.qrz_com_lay = QVBoxLayout()
+        self.qrz_com_lay = QVBoxLayout()
+        self.qrz_com_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_login_lay = QHBoxLayout()
+        self.qrz_com_login_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_login_label = QLabel("Login:")
+        self.qrz_com_login_label.setFixedWidth(75)
+        self.qrz_com_login_label.setStyleSheet(style)
+        self.qrz_com_login_input = QLineEdit()
+        self.qrz_com_login_input.setFixedWidth(200)
+        self.qrz_com_login_input.setStyleSheet(formstyle)
+        # set in login lay
+        self.qrz_com_login_lay.addWidget(self.qrz_com_login_label)
+        self.qrz_com_login_lay.addWidget(self.qrz_com_login_input)
+
+        # set in pass lay
+        self.qrz_com_pass_lay = QHBoxLayout()
+        self.qrz_com_pass_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_pass_label = QLabel("Password:")
+        self.qrz_com_pass_label.setFixedWidth(75)
+        self.qrz_com_pass_label.setStyleSheet(style)
+        self.qrz_com_pass_input = QLineEdit()
+        self.qrz_com_pass_input.setFixedWidth(250)
+        # self.clublog_pass_input.setFixedHeight(35)
+        self.qrz_com_pass_input.setStyleSheet(formstyle)
+        self.qrz_com_pass_lay.addWidget(self.qrz_com_pass_label)
+        self.qrz_com_pass_lay.addWidget(self.qrz_com_pass_input)
+
+
+        # set in chekbox Sync
+        self.qrz_com_sync_chekbox = QHBoxLayout()
+        self.qrz_com_sync = QCheckBox("Use QRZ.com")
+        self.qrz_com_sync.setStyleSheet(style)
+        self.qrz_com_sync_chekbox.addWidget(self.qrz_com_sync)
+
+        self.qrz_com_label = QLabel("QRZ.com service")
+        self.qrz_com_label.setStyleSheet(self.style_headers)
+        spacer = QFrame()
+        spacer.setFrameShape(QFrame.HLine)
+        spacer.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer.setContentsMargins(1,5,1,10)
+        spacer.setLineWidth(1)
+        self.qrz_com_lay.addWidget(spacer)
+        self.qrz_com_lay.addWidget(self.qrz_com_label)
+        self.qrz_com_lay.addSpacing(10)
+        self.qrz_com_lay.addLayout(self.qrz_com_login_lay)
+        self.qrz_com_lay.addLayout(self.qrz_com_pass_lay)
+        self.qrz_com_lay.addLayout(self.qrz_com_sync_chekbox)
 
         self.service_tab.addLayout(self.eqsl_lay)
         self.service_tab.addLayout(self.clublog_lay)
+        self.service_tab.addLayout(self.qrz_com_lay)
 
         self.service_widget.setLayout(self.service_tab)
 
@@ -855,12 +899,21 @@ class Menu (QWidget):
         if self.settingsDict['mode-swl'] == 'enable':
             self.swl_chekbox.setChecked(True)
 
-        # intt data clublog
+        # Init data clublog
         self.clublog_login_input.setText(self.settingsDict['email-clublog'])
         self.clublog_pass_input.setText(self.settingsDict['pass-clublog'])
         if self.settingsDict['clublog'] == 'enable':
             self.clublog_sync.setChecked(True)
-        else: self.clublog_sync.setChecked(False)
+        else:
+            self.clublog_sync.setChecked(False)
+
+        # intt data clublog
+        self.qrz_com_login_input.setText(self.settingsDict['qrz-com-username'])
+        self.qrz_com_pass_input.setText(self.settingsDict['qrz-com-password'])
+        if self.settingsDict['qrz-com-enable'] == 'enable':
+            self.qrz_com_sync.setChecked(True)
+        else:
+            self.qrz_com_sync.setChecked(False)
 
 
         # Init CAT tab
@@ -1098,6 +1151,14 @@ class Menu (QWidget):
         else:
             self.settingsDict['clublog'] = 'disable'
 
+        # Save qrz.com data
+        self.settingsDict['qrz-com-username'] = self.qrz_com_login_input.text().strip()
+        self.settingsDict['qrz-com-password'] = self.qrz_com_pass_input.text().strip()
+        if self.qrz_com_sync.isChecked():
+            self.settingsDict['qrz-com-enable'] = 'enable'
+        else:
+            self.settingsDict['qrz-com-enable'] = 'disable'
+
 
         # Save TCI
         if self.tci_enable_combo.isChecked():
@@ -1186,18 +1247,13 @@ class Menu (QWidget):
             self.tci_rcvr.stop_tci()
             self.tci_rcvr.start_tci(self.settingsDict['tci-server'], self.settingsDict['tci-port'])
             self.tci_sender.web_socket_init(f"{self.settingsDict['tci-server']}:{self.settingsDict['tci-port']}")
-            #self.logForm.update_settings(self.settingsDict)
         else:
             self.tci_rcvr.stop_tci()
 
         self.logForm.refresh_interface()
-        #self.logSearch.update_settings(self.settingsDict)
         self.logSearch.refresh_interface()
-        #self.logWindow.update_settings(self.settingsDict)
         self.logWindow.refresh_interface()
-        #self.internetSearch.update_settings(self.settingsDict)
         self.internetSearch.refresh_interface()
-        #self.telnetCluster.update_settings(self.settingsDict)
         self.telnetCluster.refresh_interface()
         self.refresh_interface()
         if cluster_change_flag == 1:
@@ -1222,7 +1278,7 @@ class Menu (QWidget):
         with open(filename, 'w') as f:
             f.writelines(old_data)
         #print ("Save_and_Exit_button: ", old_data)
-        Menu.close(self)
+        self.close()
 
     def cancel_button(self):
         self.close()

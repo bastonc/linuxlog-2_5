@@ -42,6 +42,8 @@ import tci
 import eqsl_inbox
 import std
 import settings
+from qrzcom import QrzCom
+
 
 class Settings_file:
     def update_file_to_disk(self):
@@ -250,15 +252,20 @@ class Filter(QObject):
     previous_call = ''
 
     def eventFilter(self, widget, event):
-
         if event.type() == QEvent.FocusOut:
+            # print(f"widget {widget}")
             textCall = logForm.inputCall.text()
-            foundList = Db(settingsDict).search_qso_in_base(textCall)
-            print("found_list", foundList)
-            if foundList != ():
-                logForm.set_data_qso(foundList)
-            freq = logForm.get_freq()
-            if textCall != '' and textCall != Filter.previous_call:
+
+            if textCall != '' and textCall != self.previous_call:
+                self.previous_call = textCall
+                foundList = Db(settingsDict).search_qso_in_base(textCall)
+                print("found_list", foundList)
+                if foundList != ():
+                    logForm.set_data_qso(foundList)
+                else:
+                    logForm.get_info_from_qrz(textCall)
+                    print("Not found in Base")
+                freq = logForm.get_freq()
                 country = logForm.get_country(textCall)
                 # print(country)
                 if country != []:
@@ -2406,9 +2413,10 @@ class FreqWindow(QWidget):
 
 class LogForm(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, settings_dict):
         super().__init__()
         # self.counter_qso = 0
+        self.settings_dict = settings_dict
         self.diploms_init()
         # self.updater = update_after_run(version=APP_VERSION, settings_dict=settingsDict)
         self.initUI()
@@ -2416,7 +2424,39 @@ class LogForm(QMainWindow):
         self.mode = settingsDict['mode']
         self.db = Db(settingsDict)
         self.diplomsCheck()
+        self.qrz_com = QrzCom(self.settings_dict["qrz-com-username"],
+                         self.settings_dict["qrz-com-password"], self)
+        self.qrz_com.data_info.connect(self.fill_form)
+        self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
+
         # print("self.diplomsName in logForm init:_>", self.diplomsName)
+
+    def get_info_from_qrz(self, text_call):
+        self.qrz_com.get_callsign_info(text_call)
+    @PyQt5.QtCore.pyqtSlot(bool)
+    def qrz_com_status(self, connect):
+        if connect:
+            self.set_qrz_com_stat()
+        else:
+            self.set_qrz_com_wrong("qrz.com")
+
+    @PyQt5.QtCore.pyqtSlot(object)
+    def fill_form(self, data):
+        # print(f"fill_form: {data}")
+        if data is not None:
+            if data["f_name"] is not None:
+                self.inputName.setText(data["f_name"])
+            elif data["s_name"]:
+                self.inputName.setText(data["s_name"])
+            else:
+                self.inputName.clear()
+            if data["qth"] is not None:
+                self.inputQth.setText(data["qth"])
+            else:
+                self.inputQth.clear()
+        else:
+            self.inputQth.clear()
+            self.inputName.clear()
 
     def get_coordinate_windows(self):
         '''
@@ -2881,14 +2921,18 @@ class LogForm(QMainWindow):
         self.labelStatusCat = QLabel('    ')
         self.labelStatusCat.setAlignment(Qt.AlignLeft)
         self.labelStatusCat.setFont(QtGui.QFont('SansSerif', 7))
-
+        # cat label
         self.labelStatusCat_cat = QLabel('    ')
         self.labelStatusCat_cat.setAlignment(Qt.AlignLeft)
         self.labelStatusCat_cat.setFont(QtGui.QFont('SansSerif', 7))
-
+        # telnet label
         self.labelStatusTelnet = QLabel('')
         self.labelStatusTelnet.setAlignment(Qt.AlignLeft)
         self.labelStatusTelnet.setFont(QtGui.QFont('SansSerif', 7))
+        # qrz.com label
+        self.labelStatusQrzCom = QLabel('')
+        self.labelStatusQrzCom.setAlignment(Qt.AlignLeft)
+        self.labelStatusQrzCom.setFont(QtGui.QFont('SansSerif', 7))
 
         self.labelTime = QLabel()
         self.labelTime.setFont(QtGui.QFont('SansSerif', 7))
@@ -2983,6 +3027,7 @@ class LogForm(QMainWindow):
         hBoxStatus = QHBoxLayout()
         hBoxStatus.setAlignment(Qt.AlignRight)
         hBoxStatus.addWidget(self.labelStatusTelnet)
+        hBoxStatus.addWidget(self.labelStatusQrzCom)
         hBoxStatus.addWidget(self.labelStatusCat)
         hBoxStatus.addWidget(self.labelStatusCat_cat)
         vBoxMain.addSpacing(10)
@@ -3126,7 +3171,9 @@ class LogForm(QMainWindow):
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
-
+        # self.inputName.clear()
+        # self.inputQth.clear()
+        # self.comments.clear()
         country = self.get_country(text)
         # self.set_country_label(country)
         if country != []:
@@ -3139,7 +3186,8 @@ class LogForm(QMainWindow):
         if len(text) >= 4:
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 found_List = self.db.search_like_qsos(text)
-                print("Like QSO's:", found_List)
+                #print("Like QSO's:", found_List)
+
             # self.searchInBase(textCall)
             # logSearch.overlap(foundList)
             # logForm.set_data_qso(found_List)
@@ -3330,7 +3378,7 @@ class LogForm(QMainWindow):
         logWindow.close()
         internetSearch.close()
         logSearch.close()
-        self.run_time.set_run_flag(False)
+        self.run_time.terminate()
         logForm.close()
         telnetCluster.close()
         try:
@@ -3494,6 +3542,7 @@ class LogForm(QMainWindow):
         sleep(0.55)
         self.labelStatusCat.setText("")
 
+    # telnet label sets
     def set_telnet_stat(self, text=None):
         self.labelStatusTelnet.setStyleSheet("color: #58BD79; font-weight: bold;")
         if text is None:
@@ -3507,6 +3556,17 @@ class LogForm(QMainWindow):
     def set_telnet_wrong(self, text=None):
         self.labelStatusTelnet.setStyleSheet("color: #8a2222; font-weight: bold;")
         self.labelStatusTelnet.setText(text)
+
+    def set_qrz_com_stat(self, text=None):
+        self.labelStatusQrzCom.setStyleSheet("color: #58BD79; font-weight: bold;")
+        if text is None:
+            self.labelStatusQrzCom.setText("✔ qrz.com")
+        else:
+            self.labelStatusQrzCom.setText(text)
+
+    def set_qrz_com_wrong(self, text=None):
+        self.labelStatusQrzCom.setStyleSheet("color: #8a2222; font-weight: bold;")
+        self.labelStatusQrzCom.setText(text)
 
     def get_band(self):
         return self.comboBand.currentText()
@@ -4157,6 +4217,8 @@ class TelnetCluster(QWidget):
 
         logForm.set_freq(freq)
         logForm.set_call(call=call)
+
+        logForm.get_info_from_qrz(call)
         logForm.activateWindow()
 
         if settingsDict['tci'] == 'enable':
@@ -4972,8 +5034,10 @@ if __name__ == '__main__':
         logWindow = Log_Window_2()
         logSearch = LogSearch()
         internetSearch = InternetSearch()
-        logForm = LogForm()
+        logForm = LogForm(settingsDict)
         telnetCluster = TelnetCluster()
+
+
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         about_window = About_window("LinuxLog",
                                     "Version: " + APP_VERSION + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
