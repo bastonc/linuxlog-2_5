@@ -1,19 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
-
 import sys
 
 import PyQt5.QtCore
 
-import parse
 import re
 import os
 import datetime
-import asyncio
 import traceback
-import telnetlib
-
 import subprocess
 import ext
 import json
@@ -25,13 +19,13 @@ from os.path import expanduser
 from pymysql.cursors import DictCursor
 from bs4 import BeautifulSoup
 # from gi.repository import Notify, GdkPixbuf
-from PyQt5.QtWidgets import QApplication, QProgressBar, QSystemTrayIcon, QStyle, QCheckBox, QMenu, QMessageBox, QAction, \
+from PyQt5.QtWidgets import QApplication, QProgressBar, QCheckBox, QMenu, QMessageBox, QAction, \
     QWidget, \
-    QMainWindow, QTableView, QTableWidget, QTabWidget, QTableWidgetItem, QTextEdit, \
-    QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox
-from PyQt5.QtCore import pyqtSignal, QObject, QEvent, QRect, QPoint, QSize
-from PyQt5.QtGui import QIcon, QFont, QPalette, QBrush, QPixmap, QColor, QStandardItemModel
-from PyQt5 import QtGui, QtCore, uic
+    QMainWindow, QTableWidget, QTabWidget, QTableWidgetItem, \
+    QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QPlainTextEdit
+from PyQt5.QtCore import pyqtSignal, QObject, QEvent
+from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor
+from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime, sleep
@@ -42,7 +36,8 @@ import tci
 import eqsl_inbox
 import std
 import settings
-from qrzcom import QrzCom
+from cluster import ClusterThread
+from qrzcom import QrzCom, QrzLogbook
 
 
 class Settings_file:
@@ -81,10 +76,11 @@ class Adi_file:
     def get_last_string(self):
         return len(self.strings_in_file)
 
-    def rename_adi(self, old_name, new_name):
+    @staticmethod
+    def rename_adi(old_name, new_name):
         os.rename(old_name, new_name)
 
-    def store_changed_qso(self, object):
+    def store_changed_qso(self, obj):
         '''
         1. Function recived object in format (ch.1)
         2. Building string for log.adi file
@@ -101,30 +97,30 @@ class Adi_file:
         '''
 
         # print("hello  store_changed_qso method in Adi_file class\n", object)
-        stringToAdiFile = "<BAND:" + str(len(object['BAND'])) + ">" + object['BAND'] + "<CALL:" + str(
-            len(object['CALL'])) + ">"
+        stringToAdiFile = "<BAND:" + str(len(obj['BAND'])) + ">" + obj['BAND'] + "<CALL:" + str(
+            len(obj['CALL'])) + ">"
 
-        stringToAdiFile = stringToAdiFile + object['CALL'] + "<FREQ:" + str(len(object['FREQ'])) + ">" + \
-                          object['FREQ']
-        stringToAdiFile = stringToAdiFile + "<MODE:" + str(len(object['MODE'])) + ">" + object[
-            'MODE'] + "<OPERATOR:" + str(len(object['OPERATOR']))
-        stringToAdiFile = stringToAdiFile + ">" + object['OPERATOR'] + "<QSO_DATE:" + str(
-            len(object['QSO_DATE'])) + ">"
-        stringToAdiFile = stringToAdiFile + object['QSO_DATE'] + "<TIME_ON:" + str(
-            len(object['TIME_ON'])) + ">"
-        stringToAdiFile = stringToAdiFile + object['TIME_ON'] + "<RST_RCVD:" + \
-                          str(len(object['RST_RCVD'])) + ">" + object['RST_RCVD']
-        stringToAdiFile = stringToAdiFile + "<RST_SENT:" + str(len(object['RST_SENT'])) + ">" + \
-                          object['RST_SENT'] + "<NAME:" + str(len(object['NAME'])) + ">" + object['NAME'] + \
-                          "<QTH:" + str(len(object['QTH'])) + ">" + object['QTH'] + "<COMMENTS:" + \
-                          str(len(object['COMMENTS'])) + ">" + object['COMMENTS'] + "<TIME_OFF:" + \
-                          str(len(object['TIME_OFF'])) + ">" + object['TIME_OFF'] + "<EQSL_QSL_SENT:" + \
-                          str(len(object['EQSL_QSL_SENT'])) + ">" + object['EQSL_QSL_SENT'] + \
-                          "<CLUBLOG_QSO_UPLOAD_STATUS:" + str(len(object['CLUBLOG_QSO_UPLOAD_STATUS'])) + ">" + object[
+        stringToAdiFile = stringToAdiFile + obj['CALL'] + "<FREQ:" + str(len(obj['FREQ'])) + ">" + \
+                          obj['FREQ']
+        stringToAdiFile = stringToAdiFile + "<MODE:" + str(len(obj['MODE'])) + ">" + obj[
+            'MODE'] + "<OPERATOR:" + str(len(obj['OPERATOR']))
+        stringToAdiFile = stringToAdiFile + ">" + obj['OPERATOR'] + "<QSO_DATE:" + str(
+            len(obj['QSO_DATE'])) + ">"
+        stringToAdiFile = stringToAdiFile + obj['QSO_DATE'] + "<TIME_ON:" + str(
+            len(obj['TIME_ON'])) + ">"
+        stringToAdiFile = stringToAdiFile + obj['TIME_ON'] + "<RST_RCVD:" + \
+                          str(len(obj['RST_RCVD'])) + ">" + obj['RST_RCVD']
+        stringToAdiFile = stringToAdiFile + "<RST_SENT:" + str(len(obj['RST_SENT'])) + ">" + \
+                          obj['RST_SENT'] + "<NAME:" + str(len(obj['NAME'])) + ">" + obj['NAME'] + \
+                          "<QTH:" + str(len(obj['QTH'])) + ">" + obj['QTH'] + "<COMMENTS:" + \
+                          str(len(obj['COMMENTS'])) + ">" + obj['COMMENTS'] + "<TIME_OFF:" + \
+                          str(len(obj['TIME_OFF'])) + ">" + obj['TIME_OFF'] + "<EQSL_QSL_SENT:" + \
+                          str(len(obj['EQSL_QSL_SENT'])) + ">" + obj['EQSL_QSL_SENT'] + \
+                          "<CLUBLOG_QSO_UPLOAD_STATUS:" + str(len(obj['CLUBLOG_QSO_UPLOAD_STATUS'])) + ">" + obj[
                               'CLUBLOG_QSO_UPLOAD_STATUS'] + "<EOR>\n"
         print("store_changed_qso: stringToAdiFile", stringToAdiFile)
 
-        self.strings_in_file[int(object['string_in_file']) - 1] = stringToAdiFile
+        self.strings_in_file[int(obj['string_in_file']) - 1] = stringToAdiFile
         with open(self.filename, 'w') as file:
             # file.seek(0, 2)
             file.writelines(self.strings_in_file)
@@ -161,7 +157,7 @@ class Adi_file:
         return self.header_string
 
     def get_all_qso(self):
-       return self.strings_in_file
+        return self.strings_in_file
 
     def record_dict_qso(self, list_data, fields_list, name_file='log.adi'):
         '''
@@ -184,7 +180,7 @@ class Adi_file:
             file.write(self.get_header())
             for index_input in range(index):
                 for field in columns_in_base:
-                    if list_data[index_input].get(field) == None:
+                    if list_data[index_input].get(field) is None:
                         list_data[index_input][field] = ''
 
             for i in range(index):
@@ -203,14 +199,11 @@ class Adi_file:
                     len(list_data[i]['CALL'])) + ">"
 
                 stringToAdiFile = stringToAdiFile + list_data[i]['CALL'] + " <FREQ:" + str(
-                    len(list_data[i]['FREQ'])) + ">" + \
-                                  list_data[i]['FREQ']
+                    len(list_data[i]['FREQ'])) + ">" + list_data[i]['FREQ']
                 stringToAdiFile = stringToAdiFile + " <MODE:" + str(len(list_data[i]['MODE'])) + ">" + list_data[i][
                     'MODE'] + " <OPERATOR:" + str(len(list_data[i]['OPERATOR']))
-                stringToAdiFile = stringToAdiFile + ">" + list_data[i]['OPERATOR'] + " <QSO_DATE:" + str(
-                    len(qso_date)) + ">"
-                stringToAdiFile = stringToAdiFile + qso_date + " <TIME_ON:" + str(
-                    len(time_on)) + ">"
+                stringToAdiFile = stringToAdiFile + ">" + list_data[i]['OPERATOR'] + " <QSO_DATE:" + str(len(qso_date)) + ">"
+                stringToAdiFile = stringToAdiFile + qso_date + " <TIME_ON:" + str(len(time_on)) + ">"
                 stringToAdiFile = stringToAdiFile + time_on + " <RST_RCVD:" + \
                                   str(len(list_data[i]['RST_RCVD'])) + ">" + list_data[i]['RST_RCVD']
                 stringToAdiFile = stringToAdiFile + " <RST_SENT:" + str(len(list_data[i]['RST_SENT'])) + ">" + \
@@ -327,7 +320,6 @@ class Fill_table(QThread):
         # self.all_record = None
         self.settingsDict = settingsDict
 
-
     def run(self):
         records_dict = db.get_all_records(0)
         counter = len(records_dict)
@@ -342,12 +334,12 @@ class Fill_table(QThread):
         self.window.load_bar.show()
         self.window.qso_last_id = records_dict[-1]['id']
         for row, qso in enumerate(self.allRecord):
-            #print("QSO", qso)
+            # print("QSO", qso)
             self.window.tableWidget_qso.insertRow(self.window.tableWidget_qso.rowCount())
             for col in range(allCols):
                 # print("col -", col, self.all_collumn[col])
                 pole = self.all_collumn[col]
-                #if qso:
+                # if qso:
                 if pole == 'id':
                     self.window.tableWidget_qso.setItem(row, col,
                                                         self.protectionItem(
@@ -411,18 +403,18 @@ class Fill_table(QThread):
                 if qso['EQSL_QSL_SENT'] == 'Y':
                     self.window.tableWidget_qso.item(row, col).setBackground(
                         QColor(self.settingsDict['eqsl-sent-color']))
-                #sleep(0.001)
+                # sleep(0.001)
             self.window.load_bar.setValue(round(row * 100 / self.allRows))
             # sleep(0.001)
         self.fill_complite.emit()
-
 
     def update_All_records(self, all_records_list):
         self.all_records_list = all_records_list
         All_records = self.all_records_list
         # print("update_All_records > All_records:_>", All_records)
 
-    def protectionItem(self, text, flags):
+    @staticmethod
+    def protectionItem(text, flags):
         tableWidgetItem = QTableWidgetItem(text)
         tableWidgetItem.setFlags(flags)
         return tableWidgetItem
@@ -447,6 +439,7 @@ class Log_Window_2(QWidget):
         self.qso_last_id = None
         self.tableWidget_qso = QTableWidget()
         # self.tableWidget_qso.setSortingEnabled(True)
+        self.qrz_com_logbook = QrzLogbook(settingsDict)
         self.initUI()
 
     def initUI(self):
@@ -469,7 +462,7 @@ class Log_Window_2(QWidget):
         self.setStyleSheet(style)
 
         # self.tableWidget_qso.setSortingEnabled(True)
-        #self.tableWidget_qso.setRowCount(0)
+        # self.tableWidget_qso.setRowCount(0)
         # self.tableWidget_qso.insertColumn()
         self.event_qso_table = Filter_event_table_qso()
         # self.tableWidget_qso.wheelEvent(self.append_qso)
@@ -485,7 +478,7 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
         # self.tableWidget_qso.setSortingEnabled(False)
-        #self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
+        # self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
         self.tableWidget_qso.setFont(fnt)
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
@@ -577,7 +570,7 @@ class Log_Window_2(QWidget):
                 if self.tableWidget_qso.item(self.tableWidget_qso.rowCount(), col):
                     start_id = self.tableWidget_qso.item(self.tableWidget_qso.rowCount(), col).text()
                 else:
-                    start_id = 0;
+                    start_id = 0
         step = 100
         print("start_id", start_id)
         page = db.getRange(start_id, step)
@@ -637,8 +630,6 @@ class Log_Window_2(QWidget):
                         )
                         self.tableWidget_qso.item(next_string, col).setForeground(
                             QColor(settingsDict["color-table"]))
-
-
 
                     else:
                         if record[pole] is None:
@@ -778,7 +769,6 @@ class Log_Window_2(QWidget):
                 std.std.message(self, "Club log: " + response.content.decode(settingsDict['encodeStandart']),
                                 "<p style='color: green;'><b>OK</b></p>")
                 row = self.tableWidget_qso.currentItem().row()
-                cols = self.tableWidget_qso.columnCount()
                 self.tableWidget_qso.setItem(row, self.collumns_index['CLUBLOG_QSO_UPLOAD_STATUS'],
                                              QTableWidgetItem("Y"))
                 self.store_change_record(row)
@@ -1229,10 +1219,11 @@ class Log_Window_2(QWidget):
             pole = self.allCollumn[col]
             # if qso:
             if pole == 'id':
-                self.tableWidget_qso.setItem(row, col,
-                                                    self.protectionItem(
-                                                        str(dict_db[pole]),
-                                                        Qt.ItemIsSelectable | Qt.ItemIsEnabled))
+                self.tableWidget_qso.setItem(row,
+                                             col,
+                                             self.protectionItem(
+                                                 str(dict_db[pole]),
+                                                 Qt.ItemIsSelectable | Qt.ItemIsEnabled))
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
 
@@ -1304,13 +1295,13 @@ class Log_Window_2(QWidget):
         self.load_bar.hide()
         self.fill_flag = 0
 
-
     @QtCore.pyqtSlot(int, name="counter_qso")
     def counter_qso(self, val):
         logForm.counter_qso = val
         # print("Slot counter QSO", logForm.counter_qso )
 
-    def protectionItem(self, text, flags):
+    @staticmethod
+    def protectionItem(text, flags):
         tableWidgetItem = QTableWidgetItem(text)
         tableWidgetItem.setFlags(flags)
         return tableWidgetItem
@@ -1415,7 +1406,7 @@ class Log_Window_2(QWidget):
             recordObject['CLUBLOG_QSO_UPLOAD_STATUS'])
         stringToAdiFile = stringToAdiFile + "<STATION_CALLSIGN:" + str(len(recordObject['STATION_CALLSIGN'])) + ">" + str(recordObject['STATION_CALLSIGN']) + " "
 
-        stringToAdiFile = stringToAdiFile +  "<EOR>\n"
+        stringToAdiFile = stringToAdiFile + "<EOR>\n"
         # record to table
         allCols = len(self.allCollumn)
         self.tableWidget_qso.insertRow(0)
@@ -1443,16 +1434,10 @@ class Log_Window_2(QWidget):
                 time = str(recordObject[self.allCollumn[col]])
                 time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(time_formated))
-
-
             else:
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(str(recordObject[self.allCollumn[col]])))
             self.tableWidget_qso.item(0, col).setForeground(QColor(settingsDict['color-table']))
-        # print(recordObject)
-        # print("added all columns", datetime.datetime.now())
         self.tableWidget_qso.resizeRowsToContents()
-        # self.tableWidget_qso.()
-        # self.tableWidget_qso.show()
         if settingsDict['clublog'] == 'enable':
             self.clublog_thread = QThread()
             self.clublog = internetworker.Clublog(settingsDict, adi_string=stringToAdiFile)
@@ -1463,6 +1448,8 @@ class Log_Window_2(QWidget):
             self.clublog_thread.started.connect(self.clublog.add_record)
             self.clublog_thread.start()
             # response = self.clublog.add_record(stringToAdiFile)
+        if settingsDict['qrz-com-logbook-enable'] == "enable":
+            self.qrz_com_logbook.send_qso_to_logbook(stringToAdiFile)
 
     @QtCore.pyqtSlot(object)
     def clublog_sent_ok(self, response):
@@ -1828,7 +1815,6 @@ class check_update():
                     self.parrent.text.setText(
                         "Version:" + version + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>bastonsv@gmail.com")
 
-
                 else:
                     #  print("No")
                     self.parrent.check_update.setText("> Check update <")
@@ -1841,8 +1827,6 @@ class check_update():
 class Check_update_thread(QtCore.QObject):
     update_response = QtCore.pyqtSignal(object)
 
-    # error_request = QtCore.pyqtSignal()
-
     def __init__(self, url_query):
         super().__init__()
         self.url_query = url_query
@@ -1854,80 +1838,6 @@ class Check_update_thread(QtCore.QObject):
             self.update_response.emit(self.response_upd_server)
         except Exception:
             print("Can't check update")
-    # if response_upd_server.status_code == 200:
-    #    self.update_response.emit(response_upd_server)
-    # else:
-    #    self.error_request.emit()
-
-
-class update_after_run(QObject):
-
-    def __init__(self, version, settings_dict):
-        super().__init__()
-        self.version = version
-        self.settingsDict = settings_dict
-        self.update_check()
-
-    def update_check(self):
-
-        server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
-        path_directory_updater_app = "/upd/"
-
-        self.action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
-        flag = 0
-        data_flag = 0
-        self.thread_update = QThread()
-        self.check_in_thread = Check_update_thread(self.action)
-        self.check_in_thread.moveToThread(self.thread_update)
-        self.check_in_thread.update_response.connect(self.answer_from_upd_server)
-        # self.check_in_thread.start()
-        #
-        #
-        self.thread_update.started.connect(self.check_in_thread.run)
-
-        self.thread_update.start()
-        ###############
-
-    @QtCore.pyqtSlot(object)
-    def answer_from_upd_server(self, object_reciev):
-        soup = BeautifulSoup(object_reciev.text, 'html.parser')
-        try:
-            version = soup.find(id="version").get_text()
-            # git_path = soup.find(id="git_path").get_text()
-            date = soup.find(id="date").get_text()
-            self.show_message(str(version), str(date))
-        except Exception:
-            pass
-
-        ###############
-
-    def show_message(self, str_version, str_date):
-        de = os.environ['XDG_CURRENT_DESKTOP']
-        button_upd = QPushButton("Update now")
-
-        if de == "GNOME":
-            Notify.init("LinuxLog")
-            summary = "LinuxLog update"
-            body = "New version released:  v " + str_version + ".  Please update LinuxLog"
-            notification = Notify.Notification.new(
-                summary,
-                body,  # Optional
-            )
-            image = GdkPixbuf.Pixbuf.new_from_file("logo.png")
-            # notification.set_icon_from_pixbuf(image)
-            notification.set_image_from_pixbuf(image)
-            notification.show()
-        else:
-            self.tray_icon = QSystemTrayIcon(app)
-            self.tray_icon.setIcon(QIcon("logo.png"))
-
-            self.tray_icon.show()
-            self.tray_icon.showMessage(
-                "LinuxLog",
-                "New version released:  v " + str_version + ".  Please update LinuxLog",
-                QSystemTrayIcon.Information,
-                10000
-            )
 
 
 class About_window(QWidget):
@@ -1988,8 +1898,9 @@ class About_window(QWidget):
         # self.check.start()
 
 
-class realTime(QThread):
+class RealTime(QThread):
     real_time_signal = pyqtSignal(object)
+
     def __init__(self, logformwindow, parent=None):
         super().__init__(logformwindow)
         self.logformwindow = logformwindow
@@ -2053,7 +1964,7 @@ class FreqWindow(QWidget):
         self.setWindowOpacity(float(self.settings_dict['freq-input-window-opacity']))
         self.setWindowTitle('Frequency | LinLog')
         self.setStyleSheet(self.style_window)
-        ##### Create elements
+        # Create elements
 
         # create button 1
         self.button_1 = QPushButton("1")
@@ -2187,9 +2098,8 @@ class FreqWindow(QWidget):
         self.close_checkbox.setStyleSheet(self.style)
         if self.settings_dict['freq-wnd'] == "enable":
             self.close_checkbox.setChecked(True)
-
         #####################
-        ### Setup to lay
+        # Setup to lay
         # 1-3
         self.buttons1_3_lay = QHBoxLayout()
         self.buttons1_3_lay.addWidget(self.button_1)
@@ -2295,10 +2205,6 @@ class FreqWindow(QWidget):
             freq_to_label = freq[0:len_freq - 6] + '.' + freq[len_freq - 6:len_freq - 3] + '.' + freq[len_freq - 3:]
         elif len_freq > 8 and len_freq <= 9:
             freq_to_label = freq[0:len_freq - 6] + '.' + freq[len_freq - 6:len_freq - 3] + '.' + freq[len_freq - 3:]
-
-        # freq_to_label = freq[0:len_freq - 6] + "." + freq[len_freq - 6:len_freq - 3] + "." + freq[len_freq - 3:len_freq]
-        # print("freq_to_label", freq_to_label)
-
         return freq_to_label
 
     def enter_freq(self):
@@ -2338,7 +2244,7 @@ class FreqWindow(QWidget):
         self.memory_list.append(self.freq_label.text())
         self.active_memory_element = str(len(self.memory_list))
         self.memory_label.setText(self.active_memory_element)
-        self.memory_label_show.setText("Mem: " + self.active_memory_element + \
+        self.memory_label_show.setText("Mem: " + self.active_memory_element +
                                        " Frq: " + str(self.memory_list[int(self.active_memory_element) - 1]))
 
     def set_freq(self, freq):
@@ -2425,7 +2331,7 @@ class LogForm(QMainWindow):
         self.db = Db(settingsDict)
         self.diplomsCheck()
         self.qrz_com = QrzCom(self.settings_dict["qrz-com-username"],
-                         self.settings_dict["qrz-com-password"], self)
+                              self.settings_dict["qrz-com-password"], self)
         self.qrz_com.data_info.connect(self.fill_form)
         self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
 
@@ -2433,6 +2339,7 @@ class LogForm(QMainWindow):
 
     def get_info_from_qrz(self, text_call):
         self.qrz_com.get_callsign_info(text_call)
+
     @PyQt5.QtCore.pyqtSlot(bool)
     def qrz_com_status(self, connect):
         if connect:
@@ -2542,14 +2449,14 @@ class LogForm(QMainWindow):
             try:
                 self.cw_machine.reset()
 
-            except:
+            except BaseException:
                 pass
             print("RX")
 
         if parameter == 'tx':
             try:
                 self.cw_machine.set_tx_stat()
-            except:
+            except BaseException:
                 pass
 
             print("TX")
@@ -2712,6 +2619,7 @@ class LogForm(QMainWindow):
 
     def open_eqsl_inbox(self):
         self.eqsl_inbox_window = eqsl_inbox.EqslWindow(settings_dict=settingsDict, db=db, log_window=logWindow)
+
     def profile_update_menu(self):
         profiles = json.loads(settingsDict["coordinate-profile"])
         profile_action_list = []
@@ -2743,7 +2651,7 @@ class LogForm(QMainWindow):
         self.update_cordinates()
 
     def menu_add(self, name_menu):
-        #### diplom
+        # diplom
         # self.diplomMenu = self.awardsMenu.addMenu('&Awards')
         print('name_menu', name_menu)
 #        self.item_menu = self.awardsMenu.addMenu(name_menu)
@@ -3045,12 +2953,14 @@ class LogForm(QMainWindow):
         # self.show()
 
         # run time in Thread
-        self.run_time = realTime(logformwindow=self)  # run time in Thread
+        self.run_time = RealTime(logformwindow=self)  # run time in Thread
         self.run_time.real_time_signal.connect(self.set_time)
         self.run_time.start()
+
     @QtCore.pyqtSlot(object)
-    def set_time(self, time_crotage):
-        self.labelTime.setText(f"Loc: {time_crotage[0]} | GMT: {time_crotage[1]}")
+    def set_time(self, time_cortage):
+        self.labelTime.setText(f"Loc: {time_cortage[0]} | GMT: {time_cortage[1]}")
+
     def mousePressEvent(self, event):
 
         if event.button() == 1:
@@ -3186,7 +3096,7 @@ class LogForm(QMainWindow):
         if len(text) >= 4:
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 found_List = self.db.search_like_qsos(text)
-                #print("Like QSO's:", found_List)
+                # print("Like QSO's:", found_List)
 
             # self.searchInBase(textCall)
             # logSearch.overlap(foundList)
@@ -3278,21 +3188,20 @@ class LogForm(QMainWindow):
                 'ITUZ': itu,
                 'EQSL_QSL_SENT': 'N',
                 'CLUBLOG_QSO_UPLOAD_STATUS': 'N',
-                'STATION_CALLSIGN': call }
+                'STATION_CALLSIGN': call}
 
             logWindow.addRecord(self.recordObject)
 
             call_dict = {'call': call, 'mode': mode, 'band': band}
             if settingsDict['diplom'] == 'enable':
                 for diploms in self.diploms:
-                    #if diploms
                     if diploms.filter(call_dict):
                         diploms.add_qso(self.recordObject)
 
             try:
                 if settingsDict['tci'] == "enable":
                     tci_sndr.change_color_spot(call, freq)
-            except:
+            except BaseException:
                 print("LogFormInput:_> Can't connect to TCI server (set spot)")
 
             logForm.inputCall.setFocus(True)
@@ -3301,9 +3210,6 @@ class LogForm(QMainWindow):
                 self.inputCall.clear()
                 self.inputName.clear()
                 self.inputQth.clear()
-                # fnt = self.inputRstR.font()
-                # fnt.setPointSize(7)
-                # self.inputRstR.setFont(fnt)
                 self.inputRstR.setText('SWL')
                 self.inputRstR.setEnabled(False)
                 self.inputRstS.setText('59')
@@ -3323,13 +3229,10 @@ class LogForm(QMainWindow):
     def changeEvent(self, event):
 
         if event.type() == QtCore.QEvent.WindowStateChange:
-            # print("---->",event.value())
             if self.isMinimized():
                 print("Minimized")
                 if settingsDict['search-internet-window'] == 'True':
                     internetSearch.showMinimized()
-                    # internetSearch.showNormal()
-                    # settingsDict['search-internet-window'] = 'True'
                 if settingsDict['log-search-window'] == 'True':
                     logSearch.showMinimized()
                     settingsDict['log-search-window'] = 'True'
@@ -3395,7 +3298,7 @@ class LogForm(QMainWindow):
         try:
             if self.freq_input_window.isEnabled():
                 self.freq_input_window.close()
-        except:
+        except BaseException:
             pass
         try:
             if self.eqsl_inbox_window.isEnabled():
@@ -3410,7 +3313,7 @@ class LogForm(QMainWindow):
 
     def remember_in_cfg(self, parameter):
         '''
-        This function reciev Dictionary parametr with key:value
+        This function recieve Dictionary parametr with key:value
         record key=value into config.cfg
 
         :param parameter:
@@ -3429,9 +3332,6 @@ class LogForm(QMainWindow):
                     old_data[line] = string
         with open(filename, 'w') as f:
             f.writelines(old_data)
-
-    def empty(self):
-        print('hi')
 
     def logSettings(self):
         # menu_window.show()
@@ -3549,7 +3449,7 @@ class LogForm(QMainWindow):
             self.labelStatusTelnet.setText("✔ Telnet")
         else:
             self.labelStatusTelnet.setText(text)
-        #print("label_status_change")
+        # print("label_status_change")
         sleep(0.15)
         self.labelStatusTelnet.setText("")
 
@@ -3629,8 +3529,6 @@ class LogForm(QMainWindow):
                 self.start_cat()
             except Exception:
                 print("Can't start CAT interface (maybe incorrect port)")
-
-
         else:
             try:
                 self.stop_cat()
@@ -3669,23 +3567,24 @@ class LogForm(QMainWindow):
         self.diplomsList = []
         self.diploms = self.get_diploms()
         for diplom in self.diploms:
-            print("Diplom_",diplom.get_data())
+            print("Diplom_", diplom.get_data())
             if diplom.get_data() != []:
                 self.diplomsList.append(ext.Diplom(diplom.get_data()[0]['name'], settingsDict))
             else:
                 pass
+
     def diplomsCheck(self):
         for i, diplom in enumerate(self.diplomsList):
             if diplom.complete():
                 std.std.message(self, diplom.name+" is completed", "Good")
-            #print ("diplom.get_data()['call']", diplom.get_data()[0]['call'])
-            #qsoByPatern = Db(settingsDict).getQsoByCallPattern(diplom.get_data()[i]['call'])
-            #print("qso by patern:",qsoByPatern )
-            #diplom.filter({'call'})
-        #print("*" * 10)
-        #temp = self.diplomsName[0]
-        #print(temp.get_rules(temp.))
-        #print("*" * 10)
+            # print ("diplom.get_data()['call']", diplom.get_data()[0]['call'])
+            # qsoByPatern = Db(settingsDict).getQsoByCallPattern(diplom.get_data()[i]['call'])
+            # print("qso by patern:",qsoByPatern )
+            # diplom.filter({'call'})
+        # print("*" * 10)
+        # temp = self.diplomsName[0]
+        # print(temp.get_rules(temp.))
+        # print("*" * 10)
 
     def get_diploms(self):
         diploms = []
@@ -3907,25 +3806,6 @@ class CW(QWidget):
                 output_string = output_string + elem
         return output_string
 
-        '''key = ""
-        m = 0
-        for i in range(len(text)):
-            if text[i] == "%":
-
-                if m == 0:
-                    m = 1
-                elif m == 1:
-                    m = 0
-            else:
-                if m == 1:
-                    key = key + text[i]
-
-                if m == 0 and key != "":
-                    key_list.append(key)
-                    key = ""
-        return key_list
-        '''
-
     def send_cw(self):
 
         button = self.sender()
@@ -4007,62 +3887,25 @@ class CW(QWidget):
         self.wpm_speed = text
 
 
-class clusterThread(QThread):
-    reciev_spot_signal = pyqtSignal(object)
-
-    def __init__(self, settings_dict, parent=None):
-        super().__init__()
-        self.settings_dict = settings_dict
-        # self.run()
-
-    def run(self):
-        HOST = self.settings_dict['telnet-host']
-        PORT = self.settings_dict['telnet-port']
-        call = self.settings_dict['my-call']
-        while 1:
-            try:
-                telnet_obj = telnetlib.Telnet(HOST, PORT)
-                break
-            except:
-                logForm.set_telnet_wrong(text="Telnet --")
-                QThread.sleep(3)
-                continue
-        message = (call + "\n").encode('ascii')
-        telnet_obj.read_until(b": ")
-        telnet_obj.write(message)
-        print('Starting Telnet cluster:', HOST, ':', PORT, '\nCall:', call, '\n')
-        while 1:
-            try:
-                read_string_telnet = telnet_obj.read_until(b"\r\n")
-                if read_string_telnet != '':
-                    logForm.set_telnet_stat()
-                    self.reciev_spot_signal.emit(read_string_telnet)
-                sleep(0.2)
-            except BaseException:
-                logForm.set_telnet_wrong(text="Telnet not connection")
-                continue
-
-
 class TelnetCluster(QWidget):
 
     def __init__(self):
         super().__init__()
         # self.mainwindow = mainwindow
-        #self.log_form = log_form
+        # self.log_form = log_form
         self.host = settingsDict['telnet-host']
         self.port = settingsDict['telnet-port']
         self.call = settingsDict['my-call']
         self.tableWidget = QTableWidget()
         self.allRows = 0
         self.settings_dict = settingsDict
-
+        self.run_cluster = ClusterThread(settings_dict=settingsDict, parent=self)
         self.initUI()
 
     def initUI(self):
-        '''
-         Design of cluster window
-
-        '''
+        """
+        Design of cluster window
+        """
 
         self.setGeometry(int(settingsDict['telnet-cluster-window-left']),
                          int(settingsDict['telnet-cluster-window-top']),
@@ -4071,7 +3914,6 @@ class TelnetCluster(QWidget):
         self.setWindowTitle('Telnet cluster')
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowFlags(Qt.FramelessWindowHint)
-
         self.setWindowOpacity(float(settingsDict['clusterWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
@@ -4083,29 +3925,78 @@ class TelnetCluster(QWidget):
         # self.labelIonosphereStat.setText("A=12, K=23, F=21, No storm, no storm")
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
-        self.tableWidget.setStyleSheet(style_table)
+        self.tableWidget.setStyleSheet("QWidget {" + style_table + "}")
         fnt = self.tableWidget.font()
         fnt.setPointSize(9)
         self.tableWidget.setFont(fnt)
         self.tableWidget.setRowCount(0)
-        #self.tableWidget.setHorizontalHeaderItem(6,)
-        # self.tableWidget.horizontalHeader().setStyleSheet("font: 12px;")
         self.tableWidget.setColumnCount(5)
         self.tableWidget.setHorizontalHeaderLabels(["Time Loc", "Time GMT", "Call", "Freq", " Spot"])
         self.tableWidget.verticalHeader().hide()
-        # self.tableWidget.resizeColumnsToContents()
         self.tableWidget.cellClicked.connect(self.click_to_spot)
-        # self.tableWidget.resizeColumnsToContents()
-        # self.tableWidget.move(0, 0)
         self.layout = QVBoxLayout(self)
         self.layout.setSpacing(3)
         self.layout.addWidget(self.labelIonosphereStat)
         self.layout.addWidget(self.tableWidget)
-        self.setLayout(self.layout)
 
-        # logForm.test('test')
+        # Text area communicate
+        self.textarea = QPlainTextEdit()
+        self.textarea.setStyleSheet("QWidget {" + style_table + "}")
 
+        # Command input
+        self.command_input = QLineEdit()
+        # self.command_input.setFixedWidth(250)
+
+        # Command button
+        self.command_button = QPushButton("Send")
+        self.command_button.clicked.connect(self.send_to_telnet_cluster)
+        self.command_button.setFixedWidth(40)
+        # self.command_button.setFixedHeight(13)
+
+        # Command layer
+        self.command_lay = QHBoxLayout()
+        self.command_lay.addWidget(self.command_input)
+        self.command_lay.addWidget(self.command_button)
+
+        # Comunicate layer
+        self.communicate_lay = QVBoxLayout()
+        self.communicate_lay.addWidget(self.textarea)
+        self.communicate_lay.addLayout(self.command_lay)
+
+        # Cluster main widget
+        self.main_widget = QWidget()
+        self.main_widget.setLayout(self.layout)
+
+        # Cluster comunicate widget
+        self.comunicate_widget = QWidget()
+        self.comunicate_widget.setLayout(self.communicate_lay)
+
+        # Tabs
+        # Cluster tab
+        self.cluster_tab = QTabWidget()
+        self.cluster_tab.setMovable(False)
+        # Setup cluster tab
+        self.cluster_tab.addTab(self.main_widget, "Cluster")
+        # Setup comunicate tab
+        self.cluster_tab.addTab(self.comunicate_widget, "Cluster communication")
+
+        # Main layer to tab
+        self.main_lay = QVBoxLayout()
+        self.main_lay.addWidget(self.cluster_tab)
+        self.setLayout(self.main_lay)
         self.start_cluster()
+
+    def set_telnet_wrong(self, text):
+        logForm.set_telnet_wrong(text)
+
+    def set_telnet_stat(self):
+        logForm.set_telnet_stat()
+
+    def send_to_telnet_cluster(self):
+        if self.command_input.text() == "" or self.command_input.text() == " ":
+            return None
+        self.run_cluster.send_to_telnet(self.command_input.text().strip())
+        self.command_input.clear()
 
     def mousePressEvent(self, event):
 
@@ -4139,16 +4030,12 @@ class TelnetCluster(QWidget):
         clean_list = []
         last_row = self.tableWidget.rowCount()
         try:
-            if string_from_telnet[0:2].decode(self.settings_dict['encodeStandart']) == "DX":
+            if string_from_telnet[0:2].decode(self.settings_dict['encodeStandart'], errors='ignore') == "DX":
                 split_telnet_string = string_from_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore').split(' ')
-                count_chars = len(splitString)
                 # get clean list with data from string of telnet
                 for item_from_string in split_telnet_string:
                     if item_from_string != '':
                         clean_list.append(item_from_string)
-
-                # color = QColor(100, 50, 50)
-                # Chek call in diploms
                 search_in_diplom_rules_flag = 0
                 call_dict = {'call': clean_list[int(self.settings_dict['telnet-call-position'])].strip(),
                              'mode': 'cluster',
@@ -4161,13 +4048,13 @@ class TelnetCluster(QWidget):
                 if self.cluster_filter(cleanList=clean_list):
                     self.tableWidget.insertRow(last_row)
                     self.tableWidget.setItem(last_row, 0, QTableWidgetItem(strftime("%H:%M:%S", localtime())))
-                    self.tableWidget.setItem(last_row, 1,QTableWidgetItem(strftime("%H:%M:%S", gmtime())))
+                    self.tableWidget.setItem(last_row, 1, QTableWidgetItem(strftime("%H:%M:%S", gmtime())))
                     if len(clean_list) > 4:
                         self.tableWidget.setItem(last_row, 2, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-call-position'])]))
 
                         self.tableWidget.setItem(last_row, 3, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-freq-position'])]))
                     self.tableWidget.setItem(last_row, 4, QTableWidgetItem(
-                        string_from_telnet.decode(settingsDict['encodeStandart']).replace('\x07\x07\r\n', '')))
+                        string_from_telnet.decode(settingsDict['encodeStandart'], errors='ignore').replace('\x07\x07\r\n', '')))
                     self.tableWidget.scrollToBottom()
                     for col in range(self.tableWidget.columnCount()):
                         if search_in_diplom_rules_flag == 1:
@@ -4186,20 +4073,25 @@ class TelnetCluster(QWidget):
                         except BaseException:
                             print("clusterThread: Except in Tci_sender.set_spot", traceback.format_exc())
             elif string_from_telnet[0:3].decode(self.settings_dict['encodeStandart']) == "WWV":
-                self.labelIonosphereStat.setText("Propagination info: " + string_from_telnet.decode(self.settings_dict['encodeStandart']).replace('\x07\x07\r\n', ''))
+                self.labelIonosphereStat.setText("Propagination info: " + string_from_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore').replace('\x07\x07\r\n', ''))
         except BaseException:
-            print("Bad string from cluster (incorrect enciding)")
+            print("Bad string from cluster (incorrect encoding)")
+
     @QtCore.pyqtSlot(object)
-    def input_spot(self, string_from_telnet: object):
+    def add_spot_to_table(self, string_from_telnet: object):
         self.add_row_to_cluster(string_from_telnet)
 
+    @QtCore.pyqtSlot(object)
+    def communicate_out(self, telnet_string):
+        if telnet_string[:2].decode(settingsDict['encodeStandart'], errors='ignore') != "DX":
+            self.textarea.appendPlainText(telnet_string.decode(settingsDict['encodeStandart'], errors='ignore'))
 
     def stop_cluster(self):
-        print("stop_cluster:", self.run_cluster.terminate())
+        print("stop_cluster:", self.run_cluster.quit())
 
     def start_cluster(self):
-        self.run_cluster = clusterThread(settings_dict=settingsDict)
-        self.run_cluster.reciev_spot_signal.connect(self.input_spot)
+        self.run_cluster.reciev_spot_signal.connect(self.add_spot_to_table)
+        self.run_cluster.reciev_spot_signal.connect(self.communicate_out)
         self.run_cluster.start()
 
     def click_to_spot(self):
@@ -4211,13 +4103,9 @@ class TelnetCluster(QWidget):
         freq = std.std().std_freq(freq)
         band = std.std().get_std_band(freq)
         mode = std.std().mode_band_plan(band, freq)
-        # print("band:_>", band)
-        # print("mode:_>", mode)
-        # print("freq:_>", freq)
 
         logForm.set_freq(freq)
         logForm.set_call(call=call)
-
         logForm.get_info_from_qrz(call)
         logForm.activateWindow()
 
@@ -4227,7 +4115,7 @@ class TelnetCluster(QWidget):
                 if mode != 'ERROR':
                     tci_sndr.set_mode('0', mode)
 
-            except:
+            except BaseException:
                 print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
                       settingsDict['tci-port'], "freq:_>", freq)
 
@@ -4243,7 +4131,7 @@ class TelnetCluster(QWidget):
         if len(cleanList) >= 4:
 
             if settingsDict['cluster-filter'] == 'enable':
-                ### filtering by spot prefix
+                # filtering by spot prefix
                 filter_by_band = False
                 filter_by_spotter_flag = False
                 filter_by_prefix_flag = False
@@ -4254,14 +4142,14 @@ class TelnetCluster(QWidget):
                         filter_by_prefix_flag = True
                 else:
                     filter_by_prefix_flag = True
-                ### filtering by prefix spotter
+                # filtering by prefix spotter
                 if settingsDict['filter-by-prefix-spotter'] == "enable":
                     list_prefix_spotter = settingsDict['filter-prefix-spotter'].split(',')
                     if cleanList[2][0:2] in list_prefix_spotter:
                         filter_by_spotter_flag = True
                 else:
                     filter_by_spotter_flag = True
-                ### filtering by band
+                # filtering by band
                 if settingsDict['filter_by_band'] == "enable":
                     list_prefix_spotter = settingsDict['list-by-band'].split(',')
                     freq = std.std().std_freq(cleanList[3])
@@ -4276,8 +4164,6 @@ class TelnetCluster(QWidget):
                     flag = True
                 else:
                     flag = False
-
-
             else:
                 flag = True
         return flag
@@ -4540,6 +4426,7 @@ class settings_file:
 class ReadStringDb(QThread):
     dict_from_base = pyqtSignal(object)
     fill_complite = pyqtSignal()
+
     def __init__(self, db, parent):
         super().__init__(parent)
         self.parent = parent
@@ -4551,6 +4438,7 @@ class ReadStringDb(QThread):
         for qso in records_dict:
             self.dict_from_base.emit(qso)
         self.fill_complite.emit()
+
 
 class foundThread(QThread):
     result = QtCore.pyqtSignal(object)
@@ -4586,7 +4474,6 @@ class Db(QObject):
         self.db_name = settingsDict['db-name']
         self.db_charset = settingsDict['db-charset']
         self.settingsDict = settingsDict
-
 
     def getQsoByCallPattern(self, patern):
         db_conn = self.connect()
@@ -4844,7 +4731,7 @@ class Db(QObject):
         i = 0
         for key in keys:
             i += 1
-            #if object_dict[key] != "" and object_dict[key] != " ":
+            # if object_dict[key] != "" and object_dict[key] != " ":
             if key in self.settingsDict["db_fields"] and \
                     object_dict[key] != "" and object_dict[key] != " ":
                 update_query += "`" + key + "` = %s"
@@ -4861,40 +4748,11 @@ class Db(QObject):
         cursor.execute(update_query, values)
         connection.commit()
 
-
     def delete_qso(self, record_id):
         connect = self.connect()
         cursor = connect.cursor()
         cursor.execute("DELETE FROM " + settingsDict['my-call'] + " WHERE `id`=%s", [int(record_id)])
         connect.commit()
-
-
-'''class Preloader(QWidget):
-    def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
-
-    def start(self):
-        desktop = QApplication.desktop()
-        width_coordinate = (desktop.width() / 2 - 150)
-        height_coordinate = (desktop.height() / 2) - 40
-        self.setGeometry(round(width_coordinate), round(height_coordinate), 300, 80)
-        preloader_label = QLabel("Loading...")
-        preloader_layer = QVBoxLayout()
-        preloader_layer.addWidget(preloader_label)
-        self.setLayout(preloader_layer)
-        self.show()
-    def stop(self):
-        self.close()
-
-class Test(QObject):
-
-    def __init__(self):
-        super().__init__()
-
-    def test(self):
-        pass
-'''
 
 
 class Messages(QWidget):
@@ -4923,7 +4781,6 @@ class AppEnv:
 
     def appVersion(self):
         return self.data_dict['APP_VERSION']
-
 
 
 if __name__ == '__main__':
@@ -4969,8 +4826,6 @@ if __name__ == '__main__':
         ["RST_SENT", "VARCHAR(50)"],
     ]
     settingsDict.update({"db_fields": [field[0] for field in table_columns]})
-
-
     file = open('settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -4980,9 +4835,6 @@ if __name__ == '__main__':
             splitString = configstring.split('=')
             settingsDict.update({splitString[0]: splitString[1]})
     file.close()
-
-    # global All_records, qso_counter, db
-    # All_records = []
 
     ####
     app = QApplication(sys.argv)
@@ -5010,8 +4862,6 @@ if __name__ == '__main__':
                     table_columns
                 )
                 print("Create table")
-
-
         except Exception:
             try:
                 db = Db(settingsDict=settingsDict)
@@ -5036,8 +4886,6 @@ if __name__ == '__main__':
         internetSearch = InternetSearch()
         logForm = LogForm(settingsDict)
         telnetCluster = TelnetCluster()
-
-
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         about_window = About_window("LinuxLog",
                                     "Version: " + APP_VERSION + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")

@@ -12,8 +12,6 @@ class RequestToServer(QObject):
 
     def __init__(self):
         super().__init__()
-        #self.password = parent_data.password
-        #self.username = parent_data.username
         self.url = None
         self.signal = None
         self.stop_flag = False
@@ -21,9 +19,10 @@ class RequestToServer(QObject):
     def stop(self):
         self.stop_flag = True
 
-    def set_attributes(self, url, signal):
+    def set_attributes(self, url, signal, post_data={}):
         self.url = url
         self.signal = signal
+        self.post_data = post_data
 
     def get_to_server(self):
         try:
@@ -42,6 +41,15 @@ class RequestToServer(QObject):
             self.stop_flag = True
             self.deleteLater()
 
+    def post_to_server(self):
+        try:
+            answer = requests.post(self.url, data=self.post_data)
+            if answer.status_code == 200:
+                self.answer_data.emit(answer)
+            else:
+                self.error_connection.emit(answer)
+        except:
+            self.error_connection.emit("Error connection")
 
 
 
@@ -60,7 +68,7 @@ class QrzCom(QObject):
         self.callsign = None
 
     def start_thread(self, url, signal):
-        print(f"Start thread {url}, {signal}")
+        # print(f"Start thread {url}, {signal}")
         self.worker_thread = QThread()
         self.worker_class = RequestToServer()
         self.worker_class.set_attributes(url, signal)
@@ -77,19 +85,13 @@ class QrzCom(QObject):
     def stop_thread(self):
         if self.worker_thread.isRunning():
             self.worker_class.stop()
-            #self.worker_thread.wait()
-            #self.worker_thread.quit()
             self.worker_thread.quit()
-            #self.worker_thread.wait()
-
-
-
 
     def get_callsign_info(self, callsign):
 
         if callsign != self.callsign:
             self.callsign = callsign
-            print(f"get callsign info from qrz.com{callsign}")
+            # print(f"get callsign info from qrz.com{callsign}")
             if self.key is not None:
                 url = f"https://xmldata.qrz.com/xml/current/?s={self.key};callsign={self.callsign}"
                 # 8c7dd40a60b5010a1f1d1cf66cc91c06 {self.key}
@@ -97,11 +99,10 @@ class QrzCom(QObject):
             else:
                 print("qrz.com key is None")
 
-
     @pyqtSlot(object)
     def reciever_data(self, data):
         self.stop_thread()
-        print(data.text)
+        # print(data.text)
         result_dict = self.xml_parse_info(data.text)
         if result_dict is not None and "error" in result_dict and result_dict["error"] == "Invalid key":
             sleep(3)
@@ -110,17 +111,17 @@ class QrzCom(QObject):
 
         else:
             self.data_info.emit(result_dict)
-        print(f"Reciver_data Worker thread running: {self.worker_thread.isRunning()}, finished: {self.worker_thread.isFinished()}")
+        # print(f"Reciver_data Worker thread running: {self.worker_thread.isRunning()}, finished: {self.worker_thread.isFinished()}")
 
     @pyqtSlot(object)
     def set_key(self, data):
         self.stop_thread()
-        print(f"key_query_answer: {data.text}")
+        # print(f"key_query_answer: {data.text}")
         xml_dom = xml.dom.minidom.parseString(data.content)
         self.key = xml_dom.getElementsByTagName('Key')[0].childNodes[0].data
         self.qrz_com_connect.emit(True)
-        print(f"QRZ.com key: {self.key}")
-        print(f"Set key Worker thread running: {self.worker_thread.isRunning()}, finished: {self.worker_thread.isFinished()}")
+        # print(f"QRZ.com key: {self.key}")
+        # print(f"Set key Worker thread running: {self.worker_thread.isRunning()}, finished: {self.worker_thread.isFinished()}")
 
     @pyqtSlot(object)
     def error_connection(self, error_maessage):
@@ -153,3 +154,37 @@ class QrzCom(QObject):
                 str(xml_dom.getElementsByTagName('Error')[0].childNodes[0].data).find("Invalid") != -1:
             return {"error": "Invalid key"}
         return None
+
+class QrzLogbook(QObject):
+    def __init__(self, settings_dict):
+        super(QrzLogbook, self).__init__()
+        self.settings_dict = settings_dict
+        self.api_url_post = "https://logbook.qrz.com/api"
+
+    def request_to_server(self, post_data):
+        self.worker_thread = QThread()
+        self.worker_class = RequestToServer()
+        self.worker_class.set_attributes(self.api_url_post, post_data["ACTION"], post_data=post_data)
+        self.worker_class.moveToThread(self.worker_thread)
+        self.worker_class.answer_data.connect(self.reciever_data)
+        self.worker_class.error_connection.connect(self.error_connection)
+        self.worker_thread.started.connect(self.worker_class.post_to_server)
+        self.worker_thread.finished.connect(self.worker_class.stop)
+        self.worker_thread.finished.connect(self.worker_thread.quit)
+        self.worker_thread.finished.connect(self.worker_thread.deleteLater)
+        self.worker_thread.start()
+
+    def send_qso_to_logbook(self, qso_adi_string):
+        print(f"String ADI to qrz.com logbook: {str(qso_adi_string).replace(' ', '')}\n{self.settings_dict['qrz-com-app-key']}")
+        post_data = {"KEY": self.settings_dict['qrz-com-app-key'],
+                     "ACTION": "INSERT",
+                     "ADIF": str(qso_adi_string).replace(' ', '')}
+        self.request_to_server(post_data)
+
+    @pyqtSlot(object)
+    def reciever_data(self, obj):
+        print(f"Reciever POST answer: {obj.text}")
+
+    @pyqtSlot(object)
+    def error_connection(self, obj):
+        print(f"Reciever POST error_connection: {obj}")
