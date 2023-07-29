@@ -1657,172 +1657,199 @@ class check_update():
 
     def run(self):
 
-        server_url_get = 'http://357139-vds-bastonsv.gmhost.pp.ua'
-        path_directory_updater_app = "/upd/"
-
-        action = server_url_get + path_directory_updater_app + self.version + "/" + self.settingsDict['my-call']
+        server_url_get = self.settingsDict['server-upd']
+        uri_for_check_update = "/api/v1/updater/"
+        # path_directory_updater_app = "/upd/"
+        url_action = f"{server_url_get}{uri_for_check_update}{self.version}/{self.settingsDict['my-call']}"
         flag = 0
         data_flag = 0
         try:
-            response = requests.get(action)
+            response = requests.get(url_action)
+            if response.status_code == 200:
+                update_obj = json.loads(response.content)
+                if update_obj["status"]:
+                    self.update_processing(update_obj)
+                else:
+                    self.no_new_version()
+                print(f"Update object: {update_obj}")
             flag = 1
-        except Exception:
+        except ConnectionError:
             flag = 0
 
-        if flag == 1:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            try:
-                version = soup.find(id="version").get_text()
-                git_path_param = soup.find(id="git_path").get_text()
-                parameters = git_path_param.split('|')
-                git_path = parameters[0]
-                date = soup.find(id="date").get_text()
-                data_flag = 1
-            except Exception:
-                std.std.message(self.parrent, "You have latest version", "UPDATER")
-                self.parrent.check_update.setText("> Check update <")
-                self.parrent.check_update.setEnabled(True)
-            if data_flag == 1:
-                update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
-                                                     "Found new version " + version + " install it?",
-                                                     buttons=QMessageBox.Yes | QMessageBox.No,
-                                                     defaultButton=QMessageBox.Yes)
-                if update_result == QMessageBox.Yes:
-                    # print("Yes")
-                    # try:
-                    self.parrent.check_update.setText("Updating")
-                    adi_name_list = []
-                    for file in os.listdir():
-                        if file.endswith(".adi"):
-                            adi_name_list.append(file)
-                    print("found all .adi file")
-                    rules_name_list = []
-                    for file in os.listdir():
-                        if file.endswith(".rules"):
-                            rules_name_list.append(file)
-                    print("found all .rules file")
-                    # print("Rules name List:_>", rules_name_list)
-                    # print("Adi name List:_>", adi_name_list)
-                    home = expanduser("~")
-                    print("Home path:_>", home)
-                    if os.path.isdir(home + '/linuxlog-backup'):
-                        os.system("rm -rf " + home + "/linuxlog-backup")
-                    else:
-                        pass
-                    print("Create buckup folder (linuxlog-buckup)")
-                    os.mkdir(home + "/linuxlog-backup")
-                    for i in range(len(adi_name_list)):
-                        os.system("cp '" + adi_name_list[i] + "' " + home + "/linuxlog-backup")
-                    print("Copy all .adi file to backup folder")
-                    for i in range(len(rules_name_list)):
-                        os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
-                    print("Copy all .rules file to backup folder")
-                    os.system("cp settings.cfg " + home + "/linuxlog-backup")
-                    print("Copy settings.cfg to backup folder")
+        # if flag == 1:
+        #     soup = BeautifulSoup(response.text, 'html.parser')
+        #     try:
+        #         version = soup.find(id="version").get_text()
+        #         git_path_param = soup.find(id="git_path").get_text()
+        #         parameters = git_path_param.split('|')
+        #         git_path = parameters[0]
+        #         date = soup.find(id="date").get_text()
+        #         data_flag = 1
+        #     except Exception:
+        #         std.std.message(self.parrent, "You have latest version", "UPDATER")
+        #         self.parrent.check_update.setText("> Check update <")
+        #         self.parrent.check_update.setEnabled(True)
+        #     if data_flag == 1:
+        #         update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
+        #                                              "Found new version " + version + " install it?",
+        #                                              buttons=QMessageBox.Yes | QMessageBox.No,
+        #                                              defaultButton=QMessageBox.Yes)
+        #         if update_result == QMessageBox.Yes:
+        #             # print("Yes")
+        #             # try:
+        #             self.parrent.check_update.setText("Updating")
+        #             adi_name_list = []
+        #             for file in os.listdir():
+        #                 if file.endswith(".adi"):
+        #                     adi_name_list.append(file)
+        #             print("found all .adi file")
+        #             rules_name_list = []
+        #             for file in os.listdir():
+        #                 if file.endswith(".rules"):
+        #                     rules_name_list.append(file)
+        #             print("found all .rules file")
+        #             # print("Rules name List:_>", rules_name_list)
+        #             # print("Adi name List:_>", adi_name_list)
+        #             home = expanduser("~")
+        #             print("Home path:_>", home)
+        #             if os.path.isdir(home + '/linuxlog-backup'):
+        #                 os.system("rm -rf " + home + "/linuxlog-backup")
+        #             else:
+        #                 pass
+        #             print("Create buckup folder (linuxlog-buckup)")
+        #             os.mkdir(home + "/linuxlog-backup")
+        #             for i in range(len(adi_name_list)):
+        #                 os.system("cp '" + adi_name_list[i] + "' " + home + "/linuxlog-backup")
+        #             print("Copy all .adi file to backup folder")
+        #             for i in range(len(rules_name_list)):
+        #                 os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
+        #             print("Copy all .rules file to backup folder")
+        #             os.system("cp settings.cfg " + home + "/linuxlog-backup")
+        #             print("Copy settings.cfg to backup folder")
+        #
+        #             # archive dir
+        #             if os.path.isdir(home + '/linlog-old'):
+        #                 pass
+        #             else:
+        #                 os.system("mkdir " + home + "/linlog-old")
+        #             with open(home + "/linlog/linlog", 'r') as f:
+        #                 string_lines = f.readlines()
+        #                 string_line = string_lines[1].split(' ')
+        #                 current_path = string_line[1].replace('\n', '')
+        #
+        #             os.system("tar -cf " + home + "/linlog-old/linlog" + version + ".tar.gz " + current_path)
+        #             print("Create archive with linlog folder")
+        #             # print("Delete Linlog folder")
+        #             # delete dir linlog
+        #             # os.system("rm -rf " + home + "/linlog")
+        #             # clone from git repository to ~/linlog
+        #             print("Git clone to new linlog folder")
+        #             os.system("git clone " + git_path + " " + home + "/linlog_" + version)
+        #
+        #             # copy adi and rules file from linuxlog-backup to ~/linlog
+        #
+        #             for i in range(len(adi_name_list)):
+        #                 os.system("cp '" + home + "/linuxlog-backup/" + adi_name_list[
+        #                     i] + "' '" + home + "/linlog_" + version + "'")
+        #             for i in range(len(rules_name_list)):
+        #                 os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[
+        #                     i] + "' '" + home + "/linlog_" + version + "'")
+        #
+        #             # read and replace string in new settings.cfg
+        #
+        #             file = open(home + "/linlog_" + version + "/settings.cfg", "r")
+        #             settings_list = {}
+        #             for configstring in file:
+        #                 if configstring != '' and configstring != ' ' and configstring[0] != '#':
+        #                     configstring = configstring.strip()
+        #                     configstring = configstring.replace("\r", "")
+        #                     configstring = configstring.replace("\n", "")
+        #                     splitString = configstring.split('=')
+        #                     settings_list.update({splitString[0]: splitString[1]})
+        #             file.close()
+        #             for key_new in settings_list:
+        #                 for key_old in self.settingsDict:
+        #                     if key_new == key_old:
+        #                         settings_list[key_new] = self.settingsDict[key_old]
+        #
+        #             # print("settings list^_>", settings_list)
+        #
+        #             filename = home + "/linlog_" + version + "/settings.cfg"
+        #             with open(filename, 'r') as f:
+        #                 old_data = f.readlines()
+        #             for index, line in enumerate(old_data):
+        #                 key_from_line = line.split('=')[0]
+        #                 # print ("key_from_line:",key_from_line)
+        #                 for key in settings_list:
+        #
+        #                     if key_from_line == key:
+        #                         # print("key",key , "line", line)
+        #                         old_data[index] = key + "=" + settings_list[key] + "\n"
+        #             with open(filename, 'w') as f:
+        #                 f.writelines(old_data)
+        #             # done!
+        #
+        #             os.system("chmod +x " + home + "/linlog_" + version + "/linlog")
+        #             with open(home + "/linlog/linlog", "w") as f:
+        #                 string_to_file = ['#! /bin/bash\n', 'cd ' + home + '/linlog_' + version + '\n',
+        #                                   'python3 main.py\n']
+        #                 f.writelines(string_to_file)
+        #
+        #             # delete backup dir
+        #             os.system("rm -rf " + home + "/linuxlog-backup")
+        #
+        #             os.system("rm -rf " + home + "/linlog_" + self.version)
+        #         if len(parameters) > 1:
+        #             pip_install_string = 'pip3 install '
+        #             for i in range(1, len(parameters), 1):
+        #                 if parameters[i] != "" and parameters[i] != " ":
+        #                     pip_install_string += parameters[i] + ' '
+        #             if pip_install_string != "pip3 install ":
+        #                 result = os.system(pip_install_string)
+        #             else:
+        #                 result = 0
+        #             if result != 0:
+        #                 std.std.message(self.parrent, "Can't install module(s)\nPlease install modules in Terminal.\n \
+        #                                               Command: " + pip_install_string + " maybe use 'sudo'\n",
+        #                                 "ERROR install modules\n")
+        #
+        #             std.std.message(self.parrent, "Update to v." + version + " \nCOMPLITED \n "
+        #                                                                      "Please restart LinuxLog", "UPDATER")
+        #
+        #             self.version = version
+        #             self.parrent.check_update.setText("> Check update <")
+        #             self.parrent.check_update.setEnabled(True)
+        #             self.parrent.text.setText(
+        #                 "Version:" + version + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>bastonsv@gmail.com")
+        #
+        #         else:
+        #             #  print("No")
+        #             self.parrent.check_update.setText("> Check update <")
+        #             self.parrent.check_update.setEnabled(True)
+        #
+        # else:
+        #     std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
+        #
+    def update_processing(self, update_obj):
+        update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
+                                             f"Found new version {update_obj['version']} install it?",
+                                             buttons=QMessageBox.Yes | QMessageBox.No,
+                                             defaultButton=QMessageBox.Yes
+                                             )
+        if update_result == QMessageBox.Yes:
+            print("Start update process")
+        if update_result == QMessageBox.No:
+            print("Not start update process")
+            self.enable_upd_button()
+        print(f"Class check_upate.update_processing.\nInput: {update_obj}")
 
-                    # archive dir
-                    if os.path.isdir(home + '/linlog-old'):
-                        pass
-                    else:
-                        os.system("mkdir " + home + "/linlog-old")
-                    with open(home + "/linlog/linlog", 'r') as f:
-                        string_lines = f.readlines()
-                        string_line = string_lines[1].split(' ')
-                        current_path = string_line[1].replace('\n', '')
+    def no_new_version(self):
+        std.std.message(self.parrent, "You have latest version", "UPDATER")
+        self.enable_upd_button()
 
-                    os.system("tar -cf " + home + "/linlog-old/linlog" + version + ".tar.gz " + current_path)
-                    print("Create archive with linlog folder")
-                    # print("Delete Linlog folder")
-                    # delete dir linlog
-                    # os.system("rm -rf " + home + "/linlog")
-                    # clone from git repository to ~/linlog
-                    print("Git clone to new linlog folder")
-                    os.system("git clone " + git_path + " " + home + "/linlog_" + version)
-
-                    # copy adi and rules file from linuxlog-backup to ~/linlog
-
-                    for i in range(len(adi_name_list)):
-                        os.system("cp '" + home + "/linuxlog-backup/" + adi_name_list[
-                            i] + "' '" + home + "/linlog_" + version + "'")
-                    for i in range(len(rules_name_list)):
-                        os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[
-                            i] + "' '" + home + "/linlog_" + version + "'")
-
-                    # read and replace string in new settings.cfg
-
-                    file = open(home + "/linlog_" + version + "/settings.cfg", "r")
-                    settings_list = {}
-                    for configstring in file:
-                        if configstring != '' and configstring != ' ' and configstring[0] != '#':
-                            configstring = configstring.strip()
-                            configstring = configstring.replace("\r", "")
-                            configstring = configstring.replace("\n", "")
-                            splitString = configstring.split('=')
-                            settings_list.update({splitString[0]: splitString[1]})
-                    file.close()
-                    for key_new in settings_list:
-                        for key_old in self.settingsDict:
-                            if key_new == key_old:
-                                settings_list[key_new] = self.settingsDict[key_old]
-
-                    # print("settings list^_>", settings_list)
-
-                    filename = home + "/linlog_" + version + "/settings.cfg"
-                    with open(filename, 'r') as f:
-                        old_data = f.readlines()
-                    for index, line in enumerate(old_data):
-                        key_from_line = line.split('=')[0]
-                        # print ("key_from_line:",key_from_line)
-                        for key in settings_list:
-
-                            if key_from_line == key:
-                                # print("key",key , "line", line)
-                                old_data[index] = key + "=" + settings_list[key] + "\n"
-                    with open(filename, 'w') as f:
-                        f.writelines(old_data)
-                    # done!
-
-                    os.system("chmod +x " + home + "/linlog_" + version + "/linlog")
-                    with open(home + "/linlog/linlog", "w") as f:
-                        string_to_file = ['#! /bin/bash\n', 'cd ' + home + '/linlog_' + version + '\n',
-                                          'python3 main.py\n']
-                        f.writelines(string_to_file)
-
-                    # delete backup dir
-                    os.system("rm -rf " + home + "/linuxlog-backup")
-
-                    os.system("rm -rf " + home + "/linlog_" + self.version)
-                if len(parameters) > 1:
-                    pip_install_string = 'pip3 install '
-                    for i in range(1, len(parameters), 1):
-                        if parameters[i] != "" and parameters[i] != " ":
-                            pip_install_string += parameters[i] + ' '
-                    if pip_install_string != "pip3 install ":
-                        result = os.system(pip_install_string)
-                    else:
-                        result = 0
-                    if result != 0:
-                        std.std.message(self.parrent, "Can't install module(s)\nPlease install modules in Terminal.\n \
-                                                      Command: " + pip_install_string + " maybe use 'sudo'\n",
-                                        "ERROR install modules\n")
-
-                    std.std.message(self.parrent, "Update to v." + version + " \nCOMPLITED \n "
-                                                                             "Please restart LinuxLog", "UPDATER")
-
-                    self.version = version
-                    self.parrent.check_update.setText("> Check update <")
-                    self.parrent.check_update.setEnabled(True)
-                    self.parrent.text.setText(
-                        "Version:" + version + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>bastonsv@gmail.com")
-
-                else:
-                    #  print("No")
-                    self.parrent.check_update.setText("> Check update <")
-                    self.parrent.check_update.setEnabled(True)
-
-        else:
-            std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
-
+    def enable_upd_button(self):
+        self.parrent.check_update.setText("> Check update <")
+        self.parrent.check_update.setEnabled(True)
 
 class Check_update_thread(QtCore.QObject):
     update_response = QtCore.pyqtSignal(object)
@@ -1859,8 +1886,7 @@ class About_window(QWidget):
         self.setGeometry(int(width_coordinate), int(height_coordinate), 200, 300)
         self.setWindowIcon(QIcon('logo.png'))
         self.setWindowTitle('About | LinuxLog')
-        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
-            'color'] + ";}"
+        style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict['color'] + ";}"
         self.setStyleSheet(style)
         self.capture = QLabel(self.capture_string)
         self.capture.setStyleSheet("font-size: 18px")
@@ -1874,13 +1900,16 @@ class About_window(QWidget):
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setPixmap(self.image)
         # about_layer.setAlignment(Qt.AlignCenter)
+
+        # Update button
         self.check_update = QPushButton()
         self.check_update.setFixedWidth(130)
         self.check_update.setFixedHeight(60)
         self.check_update.setText("> Check update <")
         self.check_update.setStyleSheet("size: 10px;")
-
         self.check_update.clicked.connect(self.updater)
+
+        # Setup layers
         self.about_layer.addWidget(self.capture)
         self.about_layer.addSpacing(5)
         self.about_layer.addWidget(self.check_update)
@@ -2330,15 +2359,24 @@ class LogForm(QMainWindow):
         self.mode = settingsDict['mode']
         self.db = Db(settingsDict)
         self.diplomsCheck()
-        self.qrz_com = QrzCom(self.settings_dict["qrz-com-username"],
-                              self.settings_dict["qrz-com-password"], self)
-        self.qrz_com.data_info.connect(self.fill_form)
-        self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
+        self.qrz_com_ready = False
+        if self.settings_dict["qrz-com-enable"] == "enable" and \
+            self.settings_dict["qrz-com-username"] != "" and \
+                self.settings_dict["qrz-com-password"] != "":
+                self.qrz_com = QrzCom(self.settings_dict["qrz-com-username"],
+                                      self.settings_dict["qrz-com-password"], self)
+                self.qrz_com.data_info.connect(self.fill_form)
+                self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
+                self.qrz_com_ready = True
 
         # print("self.diplomsName in logForm init:_>", self.diplomsName)
 
+    def get_qrz_com_ready(self):
+        return self.qrz_com_ready
+
     def get_info_from_qrz(self, text_call):
-        self.qrz_com.get_callsign_info(text_call)
+        if self.qrz_com_ready:
+            self.qrz_com.get_callsign_info(text_call)
 
     @PyQt5.QtCore.pyqtSlot(bool)
     def qrz_com_status(self, connect):
@@ -3511,6 +3549,17 @@ class LogForm(QMainWindow):
         self.labelMyCall.setText(settingsDict['my-call'])
         self.country_dict = self.get_country_dict()
         self.profile_update_menu()
+        # Connecting to qrz.com
+        if self.settings_dict["qrz-com-enable"] == "enable" and \
+                self.settings_dict["qrz-com-username"] != "" and \
+                self.settings_dict["qrz-com-password"] != "":
+            self.qrz_com = QrzCom(self.settings_dict["qrz-com-username"],
+                                  self.settings_dict["qrz-com-password"], self)
+            self.qrz_com.data_info.connect(self.fill_form)
+            self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
+            self.qrz_com_ready = True
+
+        # SWL mode
         if settingsDict['mode-swl'] == 'enable':
             self.inputRstR.setText("SWL")
             self.inputRstR.setEnabled(False)
@@ -4030,8 +4079,9 @@ class TelnetCluster(QWidget):
         clean_list = []
         last_row = self.tableWidget.rowCount()
         try:
-            if string_from_telnet[0:2].decode(self.settings_dict['encodeStandart'], errors='ignore') == "DX":
-                split_telnet_string = string_from_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore').split(' ')
+            #print(f"Reciever string: {string_from_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore')[:2]}")
+            if string_from_telnet[:2] == "DX":
+                split_telnet_string = string_from_telnet.split(' ')
                 # get clean list with data from string of telnet
                 for item_from_string in split_telnet_string:
                     if item_from_string != '':
@@ -4053,8 +4103,7 @@ class TelnetCluster(QWidget):
                         self.tableWidget.setItem(last_row, 2, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-call-position'])]))
 
                         self.tableWidget.setItem(last_row, 3, QTableWidgetItem(clean_list[int(self.settings_dict['telnet-freq-position'])]))
-                    self.tableWidget.setItem(last_row, 4, QTableWidgetItem(
-                        string_from_telnet.decode(settingsDict['encodeStandart'], errors='ignore').replace('\x07\x07\r\n', '')))
+                    self.tableWidget.setItem(last_row, 4, QTableWidgetItem(string_from_telnet.replace('\x07\x07\r\n', '')))
                     self.tableWidget.scrollToBottom()
                     for col in range(self.tableWidget.columnCount()):
                         if search_in_diplom_rules_flag == 1:
@@ -4072,8 +4121,8 @@ class TelnetCluster(QWidget):
                                 tci_sndr.set_spot(clean_list[4], freq, color="19711680")
                         except BaseException:
                             print("clusterThread: Except in Tci_sender.set_spot", traceback.format_exc())
-            elif string_from_telnet[0:3].decode(self.settings_dict['encodeStandart']) == "WWV":
-                self.labelIonosphereStat.setText("Propagination info: " + string_from_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore').replace('\x07\x07\r\n', ''))
+            elif string_from_telnet[0:3] == "WWV":
+                self.labelIonosphereStat.setText("Propagination info: " + string_from_telnet.replace('\x07\x07\r\n', ''))
         except BaseException:
             print("Bad string from cluster (incorrect encoding)")
 
@@ -4083,8 +4132,8 @@ class TelnetCluster(QWidget):
 
     @QtCore.pyqtSlot(object)
     def communicate_out(self, telnet_string):
-        if telnet_string[:2].decode(settingsDict['encodeStandart'], errors='ignore') != "DX":
-            self.textarea.appendPlainText(telnet_string.decode(settingsDict['encodeStandart'], errors='ignore'))
+        if telnet_string != "DX":
+            self.textarea.appendPlainText(telnet_string)
 
     def stop_cluster(self):
         print("stop_cluster:", self.run_cluster.quit())
@@ -4103,7 +4152,6 @@ class TelnetCluster(QWidget):
         freq = std.std().std_freq(freq)
         band = std.std().get_std_band(freq)
         mode = std.std().mode_band_plan(band, freq)
-
         logForm.set_freq(freq)
         logForm.set_call(call=call)
         logForm.get_info_from_qrz(call)
@@ -4888,7 +4936,7 @@ if __name__ == '__main__':
         telnetCluster = TelnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         about_window = About_window("LinuxLog",
-                                    "Version: " + APP_VERSION + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+                                    "Version: " + APP_VERSION + "<br><a href='http://linuxlog.com.ua'>http://linuxlog.com.ua</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
         env_dict = {
             "APP_VERSION": APP_VERSION
         }

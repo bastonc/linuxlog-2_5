@@ -51,7 +51,7 @@ def getAllRecord(poles, filename, key=''):
     key_lock = 0
     allrecord = []
     if key == "import":
-        with open(filename, 'r') as fin:
+        with open(filename, 'r', errors="ignore") as fin:
             lines = fin.readlines()
             with open('import_tmp.adi', 'w', encoding='utf-8') as fout:
                 fout.writelines(lines)

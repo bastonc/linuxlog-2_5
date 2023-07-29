@@ -967,7 +967,7 @@ class Menu (QWidget):
         #fileimport.setNameFilter("Adi file(*.adi)")
         #fileimport.setFilter()
         home_page = '~'
-        fname = fileimport.getOpenFileName(self, 'Import adi file', home_page , "*.adi | *.ADI", options=options)[0]
+        fname = fileimport.getOpenFileName(self, 'Import adi file', home_page, "*.adi | *.ADI", options=options)[0]
         time.sleep(0.150)
         if fname:
            # print(fname)
@@ -983,10 +983,12 @@ class Menu (QWidget):
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
                 all_qso_in_base = main.Db(self.settingsDict).get_all_records()
-                print("All QSO in Base", all_qso_in_base)
-                print(str(all_qso_in_base[0]["QSO_DATE"]).replace('-', ""))
-                print("All_QSO_in files", allRecords)
+                if len(all_qso_in_base) > 0:
+                    print("All QSO in Base", all_qso_in_base)
+                    print(str(all_qso_in_base[0]["QSO_DATE"]).replace('-', ""))
+                    print("All_QSO_in files", allRecords)
                 for i, qso_in_file in enumerate(allRecords):
+
                     if len(qso_in_file["QSO_DATE"].strip()) != 8 or len(qso_in_file["TIME_ON"].strip()) != 6:
                         bad_qso.append(qso_in_file)
                         continue
