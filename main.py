@@ -38,6 +38,8 @@ import std
 import settings
 from cluster import ClusterThread
 from qrzcom import QrzCom, QrzLogbook
+from rigctl import Rigctl
+from threads_lib import RigctlLoop
 
 
 class Settings_file:
@@ -2368,8 +2370,49 @@ class LogForm(QMainWindow):
                 self.qrz_com.data_info.connect(self.fill_form)
                 self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
                 self.qrz_com_ready = True
+        if self.settings_dict['rigctl-enabled']:
+            self.rigctl_init_base_data()
 
         # print("self.diplomsName in logForm init:_>", self.diplomsName)
+    def rigctl_init_base_data(self):
+        if self.settings_dict['rigctl-enabled'] == "enable":
+            self.rigctl_rx1 = Rigctl(self.settings_dict['rigctl-uri'], self.settings_dict['rigctl-port-rx1'])
+            self.rigctl_rx1.rigctl_ready_signal.connect(self.get_base_data_rigctl)
+            self.rigctl_rx2 = Rigctl(settingsDict['rigctl-uri'], settingsDict['rigctl-port-rx2'])
+
+
+    @QtCore.pyqtSlot(object)
+    def get_base_data_rigctl(self, incoming):
+        self.rig_main_loop = RigctlLoop(self.rigctl_rx1, self.rigctl_rx2, float(self.settings_dict['rigctl-refresh-time']))
+        self.rig_main_loop.frequency_signal.connect(self.rigctl_set_freq)
+        self.rig_main_loop.vfo_signal.connect(self.rigctl_set_vfo)
+        self.rig_main_loop.mode_signal.connect(self.rigctl_set_mode)
+        self.rig_main_loop.ptt_signal.connect(self.rigctl_set_ptt)
+        self.rig_main_loop.start()
+
+
+
+    @QtCore.pyqtSlot(object)
+    def rigctl_set_freq(self, freq_str):
+        self.set_freq(freq_str)
+        standart = std.std()
+        band = standart.get_std_band(freq_str)
+        self.set_band(band)
+        # print(f"freq_str in logForm: {freq_str}\nBand:{band}")
+
+    @QtCore.pyqtSlot(object)
+    def rigctl_set_vfo(self, vfo_str):
+        self.set_vfo(vfo_str)
+        print(f"vfo_str in logForm: {vfo_str}")
+
+    @QtCore.pyqtSlot(object)
+    def rigctl_set_mode(self, mode):
+        self.set_mode_rigctl(mode)
+        print(f"mode in logForm: {mode}")
+
+    @QtCore.pyqtSlot(object)
+    def rigctl_set_ptt(self, ptt):
+        print(f"ptt in logForm: {ptt}")
 
     def get_qrz_com_ready(self):
         return self.qrz_com_ready
@@ -2858,7 +2901,7 @@ class LogForm(QMainWindow):
         self.comboBand = QComboBox()
         self.comboBand.setFixedWidth(80)
         self.comboBand.setFixedHeight(30)
-        self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200"])
+        self.comboBand.addItems(["160", "80", "40", "30", "20", "17", "15", "12", "10", "6", "2", "100", "200", "GEN"])
         indexBand = self.comboBand.findText(settingsDict['band'])
         self.comboBand.setCurrentIndex(indexBand)
         # self.comboBand.activated[str].connect(self.rememberBand)
@@ -2880,18 +2923,27 @@ class LogForm(QMainWindow):
         self.labelStatusQrzCom.setAlignment(Qt.AlignLeft)
         self.labelStatusQrzCom.setFont(QtGui.QFont('SansSerif', 7))
 
+        # Time label
         self.labelTime = QLabel()
         self.labelTime.setFont(QtGui.QFont('SansSerif', 7))
 
+        # Label VFO
+        self.labelVfo = QLabel()
+        self.labelVfo.setFont(QtGui.QFont('SansSerif', 7))
+
+        # Label frequency
         self.labelFreq = ClikableLabel()
         self.labelFreq.setFont(QtGui.QFont('SansSerif', 7))
         self.labelFreq.setText("Freq control (F12)")
         self.labelFreq.click_signal.connect(self.freq_window)
         self.labelFreq.change_value_signal.connect(self.change_freq_event)
+
+        # Callsign label
         self.labelMyCall = QLabel(settingsDict['my-call'])
         self.labelMyCall.setFont(QtGui.QFont('SansSerif', 10))
-        self.comments = QLineEdit()
 
+        # Comments field
+        self.comments = QLineEdit()
         self.comments.setStyleSheet(styleform)
         # self.comments.setFontPointSize(10)
         # self.comments.setFontWeight(3)
@@ -2915,6 +2967,7 @@ class LogForm(QMainWindow):
         vBoxMain = QVBoxLayout()
         # Build header line
         hBoxHeader.addStretch(20)
+        hBoxHeader.addWidget(self.labelVfo)
         hBoxHeader.addWidget(self.labelFreq)
         hBoxHeader.addWidget(self.labelMyCall)
         # Build Left block
@@ -3435,6 +3488,8 @@ class LogForm(QMainWindow):
         except Exception:
             pass
 
+    def set_vfo(self, vfo_str):
+        self.labelVfo.setText(str(vfo_str).upper())
     def set_freq_for_cat(self, freq):
 
         try:
@@ -3444,6 +3499,30 @@ class LogForm(QMainWindow):
 
     def set_call(self, call):
         self.inputCall.setText(str(call))
+
+    def set_mode_rigctl(self, mode_input):
+        mode = str(mode_input).lower()
+        print("mode:", mode)
+        if mode == ("lsb", "usb"):
+            mode_string = 'SSB'
+        if mode in ("am", "sam"):
+            mode_string = 'AM'
+        if mode == "dsb":
+            mode_string = 'DSB'
+        if mode in ("cw", "cwr"):
+            mode_string = 'CW'
+        if mode in ("nfm", "wfm", "fm"):
+            mode_string = 'FM'
+        if mode in ("digl", "digu", "drm", "wspr", "ft8", "ft4", "jt65", "jt9", "rtty", "bpsk", "pktusb", "pktlsb"):
+            mode_string = 'DIGI'
+
+        indexMode = self.comboMode.findText(mode_string)
+        self.comboMode.setCurrentIndex(indexMode)
+        self.mode = mode
+        try:
+            self.cw_machine.set_mode()
+        except Exception:
+            pass
 
     def set_mode_tci(self, mode_input):
         mode = str(mode_input).lower()
@@ -4027,7 +4106,7 @@ class TelnetCluster(QWidget):
         # Setup cluster tab
         self.cluster_tab.addTab(self.main_widget, "Cluster")
         # Setup comunicate tab
-        self.cluster_tab.addTab(self.comunicate_widget, "Cluster communication")
+        self.cluster_tab.addTab(self.comunicate_widget, "Cluster console")
 
         # Main layer to tab
         self.main_lay = QVBoxLayout()
@@ -4128,12 +4207,13 @@ class TelnetCluster(QWidget):
 
     @QtCore.pyqtSlot(object)
     def add_spot_to_table(self, string_from_telnet: object):
+        # print(f"Emit add_spot_to_table {string_from_telnet}")
         self.add_row_to_cluster(string_from_telnet)
 
     @QtCore.pyqtSlot(object)
     def communicate_out(self, telnet_string):
         if telnet_string != "DX":
-            self.textarea.appendPlainText(telnet_string)
+            self.textarea.appendPlainText(str(telnet_string))
 
     def stop_cluster(self):
         print("stop_cluster:", self.run_cluster.quit())
@@ -4141,7 +4221,10 @@ class TelnetCluster(QWidget):
     def start_cluster(self):
         self.run_cluster.reciev_spot_signal.connect(self.add_spot_to_table)
         self.run_cluster.reciev_spot_signal.connect(self.communicate_out)
-        self.run_cluster.start()
+        print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
+        # if self.run_cluster.get_cluster_connect_status():
+        #     print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
+        #     self.run_cluster.start()
 
     def click_to_spot(self):
         row = self.tableWidget.currentItem().row()
@@ -4965,5 +5048,6 @@ if __name__ == '__main__':
         if settingsDict['tci'] == 'enable':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
         tci_sndr = tci.Tci_sender(settingsDict["tci-server"] + ":" + settingsDict["tci-port"], "Disable", logForm)
+
 
     sys.exit(app.exec_())
