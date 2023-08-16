@@ -16,23 +16,20 @@ class std:
         file.close()
 
     def mode_band_plan(self, band, freq):
+        print(f"std: {band} {freq}")
         try:
-            if int(freq) > int(self.band_rules["start-cw"+band]) and \
-                int(freq) <=  int(self.band_rules["end-cw"+band]):
+            if int(self.band_rules["start-cw"+band]) < int(freq) <= int(self.band_rules["end-cw"+band]):
                 mode = "CW"
-            elif int(freq) > int(self.band_rules["start-ssb"+band]) and \
-                int(freq) <= int(self.band_rules["end-ssb"+band]):
+            elif int(self.band_rules["start-ssb"+band]) < int(freq) <= int(self.band_rules["end-ssb"+band]):
                 if int(band) < 40:
                     mode = "USB"
                 else:
                     mode = "LSB"
-
-            elif int(freq) > int(self.band_rules["start-digi"+band]) and \
-                int(freq) <= int(self.band_rules["end-digi"+band]):
+            elif int(self.band_rules["start-digi"+band]) < int(freq) <= int(self.band_rules["end-digi"+band]):
                 if int(band) < 40:
-                    mode = "DIGU"
+                    mode = ("DIGU", "PKTUSB")
                 else:
-                    mode = "DIGL"
+                    mode = ("DIGL", "PKTLSB")
             else:
                 mode = "ERROR"
         except Exception:

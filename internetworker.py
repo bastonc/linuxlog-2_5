@@ -25,16 +25,19 @@ import main
 
 class internetWorker(QThread):
 
-    def __init__(self, window, callsign, settings, parrent=None):
+    def __init__(self, window, settings, parrent=None):
         super().__init__()
         self.internet_search_window = window
-        self.callsign = callsign
+        self.callsign = None
         self.settings = settings
+
+    def set_callsign_for_search(self, callsign):
+        self.callsign = callsign
 
     def run(self):
         # print (self.callsign)
         info_from_internet_array = internetWorker.get_image_from_server(self)
-        print (info_from_internet_array)
+        print(info_from_internet_array)
         if info_from_internet_array != {}:
             pixmap = QPixmap(info_from_internet_array.get('img'))
             pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 20,

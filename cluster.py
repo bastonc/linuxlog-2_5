@@ -41,6 +41,7 @@ class ClusterThread(QThread):
             if in_message.decode(self.settings_dict['encodeStandart']).lower().strip().find("login:") or \
                 in_message.decode(self.settings_dict['encodeStandart']).lower().strip().find("please enter your call:"):
                     self.telnet_socket.send(message)
+                    self.parent.set_telnet_stat()
                     print(f"send message")
                     break
             sleep(0.1)
@@ -64,13 +65,16 @@ class ClusterThread(QThread):
             try:
                 read_string_telnet = self.telnet_socket.recv(1024)
                 # print(read_string_telnet)
-                if read_string_telnet != '':
-                    reciev_fragment = read_string_telnet.decode(self.settings_dict['encodeStandart'], errors='ignore').split("\r\n")
-                    reciev_fragment[0] = re.search(r'.*Z', reciev_fragment[0]).group()
+                if bytes.decode(read_string_telnet, self.settings_dict['encodeStandart'], errors="ignore") not in ('', None):
+                    reciev_fragment = bytes.decode(read_string_telnet, self.settings_dict['encodeStandart'], errors="ignore").split("\r\n")
+                    # print(f"reciev_fragment{reciev_fragment[0]}")
+                    reciev_fragment[0] = re.search(r'.*Z', reciev_fragment[0])
+                    if reciev_fragment[0] is not None:
+                        reciev_fragment[0] = reciev_fragment[0].group()
                     #print(f"String strip {reciev_fragment[0]}")
                     for sub_string in reciev_fragment:
                         # print(f"Sub_string: {sub_string} sub_st[0:2]: {sub_string[:2]} sub_str[:-1]: {sub_string[-1:]}")
-                        if sub_string[:2] == "DX" and sub_string[-1:] == "Z":
+                        if sub_string is not None and sub_string[:2] == "DX" and sub_string[-1:] == "Z":
                             self.reciev_string = sub_string
                             # print(f"reciever_string: {self.reciev_string}")
                             self.parent.set_telnet_stat()
@@ -82,5 +86,5 @@ class ClusterThread(QThread):
                             self.reciev_string = ""
                 sleep(0.2)
             except BaseException:
-                self.parent.set_telnet_wrong(text="Wait telnet")
+                self.parent.set_telnet_wrong(text="· Telnet")
                 continue

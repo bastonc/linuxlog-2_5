@@ -75,9 +75,9 @@ class Tci_reciever(QThread):
                 break
                 #time.sleep(3)
             except Exception:
-                #self.log_form.set_tci_label_found()
-                #print("Tci_reciever: Except connection")
-                self.log_form.set_tci_stat('--', "#ff5555")
+                # self.log_form.set_tci_label_found()
+                # print("Tci_reciever: Except connection")
+                # self.log_form.set_tci_stat('--', "#ff5555")
                 QThread.sleep(2)
 
                 continue
@@ -159,7 +159,7 @@ class Tci_reciever(QThread):
 
             except Exception:
                 #print("Tci_reciever: Exception in listen port loop", Exception)
-                self.log_form.set_tci_stat(' ')
+                self.log_form.set_tci_stat('')
                 #self.log_form.set_tci_label_found()
                 try:
                     self.ws.close()
@@ -170,7 +170,7 @@ class Tci_reciever(QThread):
 
                 except:
                     QThread.sleep(2)
-                    self.log_form.set_tci_label_found()
+                    # self.log_form.set_tci_label_found()
                     #time.sleep(2)
                 continue
 
@@ -193,7 +193,7 @@ class Tci_sender (QtCore.QObject):
             self.ws.connect(uri)
             # self.ws.send("READY;")
         except ConnectionError:
-            self.log_form.set_tci_stat('Check')
+            self.log_form.set_tci_stat('· TCI', color="#aaaaaa")
             result = traceback.format_exc()
             print(result)
             print("Can't connect to Tci_sender __init__:", uri)

@@ -66,7 +66,7 @@ class Cat_start(QObject):
                                  parity=parity, rtscts=1)
             self.protocol_command_list = self.protocol_cat() # list of commands for models TRX
             self.start_reciever_cat()
-            self.parent_window.set_cat_label(True)
+            self.parent_window.set_caFt_label(True)
 
         except Exception:
             std.std.message(self.parent_window, "Can't open "+self.settingsDict['cat-port'], "Error CAT system")

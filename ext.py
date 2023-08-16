@@ -671,21 +671,21 @@ class diplom:
             print("Check QSO on Awards list")
             print("~" * 20)
 
-    def check(self):
-        self.diplomsObject = self.get_data()
-        for diplom in self.diplomsObject:
-            print("*" * 20)
-            print(type(diplom), diplom)
-            print("*" * 20)
-            foundQsoList = main.Db(self.settingsDict).getQsoByCallPattern(diplom['call'])
-            countQso = len(foundQsoList)
-            for qso in foundQsoList:
-                if self.filter({'call': qso['CALL'], 'mode': qso['MODE'], 'band': qso['BAND']}):
-                    print("**" * 20)
-                    print("Filter ok" * 10)
-                    print("**" * 20)
-            #
-            print("Len qso in checkDiploms:", countQso)
+    # def check(self):
+    #     self.diplomsObject = self.get_data()
+    #     for diplom in self.diplomsObject:
+    #         print("*" * 20)
+    #         print(type(diplom), diplom)
+    #         print("*" * 20)
+    #         foundQsoList = main.Db(self.settingsDict).getQsoByCallPattern(diplom['call'])
+    #         countQso = len(foundQsoList)
+    #         for qso in foundQsoList:
+    #             if self.filter({'call': qso['CALL'], 'mode': qso['MODE'], 'band': qso['BAND']}):
+    #                 print("**" * 20)
+    #                 print("Filter ok" * 10)
+    #                 print("**" * 20)
+    #         #
+    #         print("Len qso in checkDiploms:", countQso)
 
 
 class static_diplom(QWidget):

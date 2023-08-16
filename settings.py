@@ -64,7 +64,7 @@ class Menu (QWidget):
     #
         self.tab.addTab(self.general_tab, "General")
         self.tab.addTab(self.cluster_tab, "Cluster")
-        self.tab.addTab(self.tci_tab, "TCI")
+        self.tab.addTab(self.tci_tab, "TCI/ RIG control")
         self.tab.addTab(self.cat_tab, "CAT")
         self.tab.addTab(self.io_tab, "Log file")
         self.tab.addTab(self.service_widget, "Services")
@@ -256,8 +256,9 @@ class Menu (QWidget):
         self.cluster_port_input = QLineEdit()
         self.cluster_port_input.setFixedWidth(50)
         self.cluster_port_input.setStyleSheet(formstyle)
-        self.host_port_lay = QHBoxLayout()
+
         # create host:port lay
+        self.host_port_lay = QHBoxLayout()
         self.host_lay = QVBoxLayout()
         self.host_lay.addWidget(self.cluster_host)
         self.host_lay.addWidget(self.cluster_host_input)
@@ -410,6 +411,15 @@ class Menu (QWidget):
         self.tci_enable_combo = QCheckBox("TCI Enable")
         self.tci_enable_combo.setStyleSheet("QCheckBox{"+self.settingsDict['color']+"}")
         self.tci_enable_combo_lay.addWidget(self.tci_enable_combo)
+
+        # Layout and checkbox Rigctl
+        self.rigctl_enable_combo_lay = QHBoxLayout()
+        self.rigctl_enable_combo_lay.setAlignment(Qt.AlignCenter)
+        self.rigctl_enable_combo = QCheckBox("RIGctl Enable")
+        self.rigctl_enable_combo.setStyleSheet("QCheckBox{" + self.settingsDict['color'] + "}")
+        self.rigctl_enable_combo_lay.addWidget(self.rigctl_enable_combo)
+
+
         self.tci_tab.layout = QVBoxLayout(self)
         self.tci_host = QLabel("TCI host:")
         self.tci_host_input = QLineEdit()
@@ -420,21 +430,75 @@ class Menu (QWidget):
         self.tci_port_input.setFixedWidth(50)
         self.tci_port_input.setStyleSheet(formstyle)
         self.host_port_lay = QHBoxLayout()
+
+        # self.tci_tab.layout = QVBoxLayout(self)
+        self.rigctl_host = QLabel("RIGctl host:")
+        self.rigctl_host_input = QLineEdit()
+        self.rigctl_host_input.setFixedWidth(150)
+        self.rigctl_host_input.setStyleSheet(formstyle)
+
+
+        # Port rigctl rx1
+        self.rigctl_port = QLabel("RIGctl port:")
+        self.rigctl_port_input = QLineEdit()
+        self.rigctl_port_input.setFixedWidth(50)
+        self.rigctl_port_input.setStyleSheet(formstyle)
+
+        # Port rigctl rx2
+        self.rigctl_port_rx2 = QLabel("RIGctl port RX2:")
+        self.rigctl_port_input_rx2 = QLineEdit()
+        self.rigctl_port_input_rx2.setFixedWidth(50)
+        self.rigctl_port_input_rx2.setStyleSheet(formstyle)
+
+        self.host_port_lay = QHBoxLayout()
+
         # create host:port lay
+        # self.host_lay = QVBoxLayout()
+
+
+
+        # TCI host lay
         self.host_lay = QVBoxLayout()
         self.host_lay.addWidget(self.tci_host)
         self.host_lay.addWidget(self.tci_host_input)
 
+        # TCI host lay
         self.port_lay = QVBoxLayout()
         self.port_lay.addWidget(self.tci_port)
         self.port_lay.addWidget(self.tci_port_input)
 
+
+
+        # Rigctl host lay
+        self.rigctl_host_lay = QVBoxLayout()
+        self.rigctl_host_lay.addWidget(self.rigctl_host)
+        self.rigctl_host_lay.addWidget(self.rigctl_host_input)
+
+        # Rigctl port lay
+        self.rigctl_port_lay = QVBoxLayout()
+        self.rigctl_port_lay.addWidget(self.rigctl_port)
+        self.rigctl_port_lay.addWidget(self.rigctl_port_input)
+
+        # Rigctl port lay
+        self.rigctl_port_lay_rx2 = QVBoxLayout()
+        self.rigctl_port_lay_rx2.addWidget(self.rigctl_port_rx2)
+        self.rigctl_port_lay_rx2.addWidget(self.rigctl_port_input_rx2)
+
+
+        # Setup TCI port and host to Hlay
         self.host_port_lay.addLayout(self.host_lay)
         self.host_port_lay.addLayout(self.port_lay)
 
+        self.rigctl_host_port = QHBoxLayout()
+        self.rigctl_host_port.addLayout(self.rigctl_host_lay)
+        self.rigctl_host_port.addLayout(self.rigctl_port_lay)
+        self.rigctl_host_port.addLayout(self.rigctl_port_lay_rx2)
 
         self.tci_tab.layout.addLayout(self.tci_enable_combo_lay)
         self.tci_tab.layout.addLayout(self.host_port_lay)
+        self.tci_tab.layout.addWidget(Separador)
+        self.tci_tab.layout.addLayout(self.rigctl_enable_combo_lay)
+        self.tci_tab.layout.addLayout(self.rigctl_host_port)
         self.tci_tab.layout.addSpacing(250)
         self.tci_tab.setLayout(self.tci_tab.layout)
     # Create CAT tab
@@ -891,6 +955,14 @@ class Menu (QWidget):
         self.tci_host_input.setText(host)
         self.tci_port_input.setText(self.settingsDict['tci-port'])
 
+        # Init data Rigctl
+        if self.settingsDict['rigctl-enabled'] == "enable":
+            self.rigctl_enable_combo.setChecked(True)
+        self.rigctl_host_input.setText(self.settingsDict['rigctl-uri'])
+        self.rigctl_port_input.setText(self.settingsDict['rigctl-port-rx1'])
+        self.rigctl_port_input_rx2.setText(self.settingsDict['rigctl-port-rx2'])
+
+
         # init data eQSL
         self.eqsl_login.setText(self.settingsDict['eqsl_user'])
         self.eqsl_password.setText(self.settingsDict['eqsl_password'])
@@ -1062,7 +1134,6 @@ class Menu (QWidget):
         self.cluster.start()
 
     def refresh_interface(self):
-
         self.update_color_schemes()
 
     def text_color_select(self):
@@ -1170,6 +1241,16 @@ class Menu (QWidget):
         self.settingsDict['tci-server'] = "ws://" + self.tci_host_input.text().strip()
         self.settingsDict['tci-port'] = self.tci_port_input.text().strip()
 
+        # Save Rigctl
+        if self.rigctl_enable_combo.isChecked():
+            self.settingsDict['rigctl-enabled'] = 'enable'
+        else:
+            self.settingsDict['rigctl-enabled'] = 'disable'
+        self.settingsDict['rigctl-uri'] = self.rigctl_host_input.text().strip()
+        self.settingsDict['rigctl-port-rx1'] = self.rigctl_port_input.text().strip()
+        self.settingsDict['rigctl-port-rx2'] = self.rigctl_port_input_rx2.text().strip()
+
+
         # Save CAT
         self.settingsDict['cat-port'] = self.port_cat_input.text().strip()
         self.settingsDict['speed-cat'] = self.baud_cat_combo.currentText()
@@ -1251,6 +1332,12 @@ class Menu (QWidget):
             self.tci_sender.web_socket_init(f"{self.settingsDict['tci-server']}:{self.settingsDict['tci-port']}")
         else:
             self.tci_rcvr.stop_tci()
+
+        if self.settingsDict['rigctl-enabled'] == 'enable':
+            self.logForm.rigctl_stop()
+            self.logForm.rigctl_init_base_data()
+        else:
+            self.logForm.rigctl_stop()
 
         self.logForm.refresh_interface()
         self.logSearch.refresh_interface()
