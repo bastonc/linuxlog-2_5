@@ -82,7 +82,7 @@ class Menu (QWidget):
         self.call_input.setStyleSheet(formstyle)
         # Chekbox SWL
         self.swl_chekbox = QCheckBox("Enable SWL mode")
-        self.swl_chekbox.setStyleSheet("QCheckBox{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
+        self.swl_chekbox.setStyleSheet("color:" + self.settingsDict['color'] + "; font-size: 12px;")
         self.dlg = QColorDialog(self)
         self.back_color_label = QLabel("Window color")
         self.back_color_label.setStyleSheet(self.label_style)
@@ -314,7 +314,7 @@ class Menu (QWidget):
 
         ## Create filter band
         self.cluster_filter_band_combo = QCheckBox("Filter BAND")
-        self.cluster_filter_band_combo.setStyleSheet("QCheckBox{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
+        self.cluster_filter_band_combo.setStyleSheet("QWidget{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
         self.cluster_filter_band_input = QLineEdit()
         self.cluster_filter_band_input.setFixedWidth(80)
         self.cluster_filter_band_input.setFixedHeight(20)
@@ -333,7 +333,7 @@ class Menu (QWidget):
         ## Create filter spot
         self.cluster_filter_spot_combo = QCheckBox("Filter SPOT")
         self.cluster_filter_spot_combo.setStyleSheet(
-            "QCheckBox{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
+            "QWidget {color:" + self.settingsDict['color'] + "; font-size: 12px;}")
         self.cluster_filter_spot_input = QLineEdit()
         self.cluster_filter_spot_input.setFixedWidth(80)
         self.cluster_filter_spot_input.setFixedHeight(20)
@@ -351,7 +351,7 @@ class Menu (QWidget):
         ## create filter spotter
         self.cluster_filter_spotter_combo = QCheckBox("Filter SPOTTER")
         self.cluster_filter_spotter_combo.setStyleSheet(
-            "QCheckBox{ color:" + self.settingsDict['color'] + "; font-size: 12px;}")
+            "QWidget {color:" + self.settingsDict['color'] + "; font-size: 12px;}")
         self.cluster_filter_spotter_input = QLineEdit()
         self.cluster_filter_spotter_input.setFixedWidth(80)
         self.cluster_filter_spotter_input.setFixedHeight(20)
@@ -409,14 +409,14 @@ class Menu (QWidget):
         self.tci_enable_combo_lay = QHBoxLayout()
         self.tci_enable_combo_lay.setAlignment(Qt.AlignCenter)
         self.tci_enable_combo = QCheckBox("TCI Enable")
-        self.tci_enable_combo.setStyleSheet("QCheckBox{"+self.settingsDict['color']+"}")
+        self.tci_enable_combo.setStyleSheet("QWidget {"+self.settingsDict['color']+"}")
         self.tci_enable_combo_lay.addWidget(self.tci_enable_combo)
 
         # Layout and checkbox Rigctl
         self.rigctl_enable_combo_lay = QHBoxLayout()
         self.rigctl_enable_combo_lay.setAlignment(Qt.AlignCenter)
         self.rigctl_enable_combo = QCheckBox("RIGctl Enable")
-        self.rigctl_enable_combo.setStyleSheet("QCheckBox{" + self.settingsDict['color'] + "}")
+        self.rigctl_enable_combo.setStyleSheet("QWidget {" + self.settingsDict['color'] + "}")
         self.rigctl_enable_combo_lay.addWidget(self.rigctl_enable_combo)
 
 
@@ -631,7 +631,7 @@ class Menu (QWidget):
         self.eqsl_lay.setAlignment(Qt.AlignCenter)
         self.eqsl_activate = QHBoxLayout()
         self.eqsl_chekBox = QCheckBox("Auto sent eQSL after QSO")
-        self.eqsl_chekBox.setStyleSheet("{ color:" + self.settingsDict['color'] + "; font-size: 12px; border-color: white }")
+        self.eqsl_chekBox.setStyleSheet("color:" + self.settingsDict['color'] + "; font-size: 12px; border-color: white;")
 
         self.eqsl_activate.addWidget(self.eqsl_chekBox)
         #self.eqsl_activate.addWidget(QLabel("eQSL.cc"))

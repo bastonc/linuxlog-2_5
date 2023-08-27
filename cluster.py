@@ -9,6 +9,7 @@ from threads_lib import Set_connect_thread
 
 class ClusterThread(QThread):
     reciev_spot_signal = pyqtSignal(object)
+    reciev_string_signal = pyqtSignal(object)
 
     def __init__(self, settings_dict, parent=None):
         super().__init__()
@@ -30,7 +31,7 @@ class ClusterThread(QThread):
         self.connect.start()
 
     @pyqtSlot(object)
-    def connect_ok(self, connect_object):
+    def connect_ok(self, connect_object: socket.socket):
         message = (self.settings_dict['my-call'] + "\n").encode('ascii')
         self.telnet_socket = connect_object
         while 1:
@@ -53,7 +54,8 @@ class ClusterThread(QThread):
         self.parent.set_telnet_wrong(text="Telnet --")
 
     def send_to_telnet(self, message):
-        self.telnet_socket.send((message + "\n").encode('ascii'))
+        print(f"Message to telnet server")
+        self.telnet_socket.send(bytes(message + "\n", "ascii"))
 
     def get_cluster_connect_status(self):
         return self.cluster_connect_flag
@@ -63,8 +65,9 @@ class ClusterThread(QThread):
         # print("start main loop cluster")
         while 1:
             try:
+
                 read_string_telnet = self.telnet_socket.recv(1024)
-                # print(read_string_telnet)
+                print(read_string_telnet)
                 if bytes.decode(read_string_telnet, self.settings_dict['encodeStandart'], errors="ignore") not in ('', None):
                     reciev_fragment = bytes.decode(read_string_telnet, self.settings_dict['encodeStandart'], errors="ignore").split("\r\n")
                     # print(f"reciev_fragment{reciev_fragment[0]}")
@@ -80,11 +83,15 @@ class ClusterThread(QThread):
                             self.parent.set_telnet_stat()
                             self.reciev_spot_signal.emit(self.reciev_string)
                             self.reciev_string = ""
-                        if self.reciev_string[:2] == "DX" and self.reciev_string[:-1] == "Z":
-                            self.parent.set_telnet_stat()
-                            self.reciev_spot_signal.emit(self.reciev_string)
-                            self.reciev_string = ""
+                        else:
+                            self.reciev_string_signal.emit(read_string_telnet)                                           # if self.reciev_string[:2] == "DX" and self.reciev_string[:-1] == "Z":
+                        #     self.parent.set_telnet_stat()
+                        #     self.reciev_spot_signal.emit(self.reciev_string)
+                        #     self.reciev_string = ""
+
                 sleep(0.2)
             except BaseException:
+                self.telnet_socket.close()
                 self.parent.set_telnet_wrong(text="· Telnet")
+                self.connecting_telnet()
                 continue

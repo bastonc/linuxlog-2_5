@@ -45,7 +45,7 @@ class Set_connect_thread(QThread):
                 self.connect_socket_signal.emit(self.telnet_socket)
                 break
             except:
-                self.telnet_socket.close()
+                #self.telnet_socket.close()
                 self.error_connect_signal.emit("Error")
                 # print(f"Except connect to {self.HOST}:{self.PORT}")
                 QThread.sleep(2)
@@ -230,8 +230,9 @@ class Rigctl_thread(QThread):
 
     def socket_shutdown(self):
         # print(f"SOCKET ID: {id(self.socket)}")
-        if self.socket_connect.close_socket() is not None:
-            self.socket_connect.close_socket()
+
+        self.socket_connect.close_socket()
+        if self.socket is not None:
             self.socket.close()
         self.socket_connect.stop_tying_connect()
         # self.socket_connect.terminate()

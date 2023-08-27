@@ -1977,13 +1977,10 @@ class FreqWindow(QWidget):
         self.parent_window = parent_window
         self.active_memory_element = "0"
         self.label_style = "background:" + self.settings_dict['form-background'] + \
-                           "; color:" + self.settings_dict['color-table'] + "; font: 25px"
-        self.style_mem_label = "background:" + self.settings_dict['form-background'] + \
-                               "; color:" + self.settings_dict['color-table'] + "; font: 12px"
-        self.style = "background:" + self.settings_dict['background-color'] + "; color:" \
-                     + self.settings_dict['color'] + "; font: 12px;"
-        self.style_window = "background:" + self.settings_dict['background-color'] + "; color:" \
-                            + self.settings_dict['color'] + ";"
+                           "; color:" + self.settings_dict['color-table'] + "; font: 25px;"
+        self.style_mem_label = f"background: {self.settings_dict['form-background']}; color: {self.settings_dict['color-table']}; font: 12px;"
+        self.style = f"background: {self.settings_dict['background-color']}; color: {self.settings_dict['color']}; font: 12px;"
+        self.style_window = f"background: {self.settings_dict['background-color']}; color: {self.settings_dict['color']};"
         self.freq_status = 0
         self.initUI()
 
@@ -2410,6 +2407,7 @@ class LogForm(QMainWindow):
 
     @QtCore.pyqtSlot(object)
     def rigctl_start_main_loop(self, socket):
+        print(f"rigctl _start_main_loop")
         self.rigctl_main_loop = RigctlMainLoop(
             socket=socket,
             sleep_time=float(self.settings_dict['rigctl-refresh-time']),
@@ -2968,7 +2966,7 @@ class LogForm(QMainWindow):
 
         QApplication.setFont(font)
         QApplication.setApplicationName('LinuxLog ' + APP_VERSION + ' | ' + settingsDict['my-call'])
-        styleform = f"background: {settingsDict['form-background']}; color: {settingsDict['color-table']}; padding: 0em"
+        styleform = f"background-color: {settingsDict['form-background']}; color: {settingsDict['color-table']}; padding: 0em;"
         self.setGeometry(int(settingsDict['log-form-window-left']), int(settingsDict['log-form-window-top']),
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
@@ -3120,7 +3118,7 @@ class LogForm(QMainWindow):
         self.comments.setFixedHeight(35)
         self.country_label = QLabel()
         self.country_label.setFixedWidth(100)
-        self.country_label.setStyleSheet(styleform + "font-size: 12px;")
+        self.country_label.setStyleSheet(style + " font-size: 12px;")
         hBoxHeader = QHBoxLayout()
         hBoxHeader.addWidget(self.labelTime)
         hBoxRst = QHBoxLayout()
@@ -4272,6 +4270,7 @@ class TelnetCluster(QWidget):
 
         # Command input
         self.command_input = QLineEdit()
+        self.command_input.setStyleSheet("QWidget {" + style_table + "}")
         # self.command_input.setFixedWidth(250)
 
         # Command button
@@ -4320,7 +4319,7 @@ class TelnetCluster(QWidget):
         logForm.set_telnet_stat()
 
     def send_to_telnet_cluster(self):
-        if self.command_input.text() == "" or self.command_input.text() == " ":
+        if self.command_input.text() in ("", " "):
             return None
         self.run_cluster.send_to_telnet(self.command_input.text().strip())
         self.textarea.appendPlainText(self.command_input.text().strip())
@@ -4441,7 +4440,7 @@ class TelnetCluster(QWidget):
     @QtCore.pyqtSlot(object)
     def communicate_out(self, telnet_string):
         if telnet_string != "DX":
-            self.textarea.appendPlainText(str(telnet_string))
+            self.textarea.appendPlainText(str(telnet_string, settingsDict["encodeStandart"], errors="ignore"))
 
     def add_new_spot(self, string_from_telnet):
         spot_dict = self.parsing_telnet_string(string_from_telnet)
@@ -4456,7 +4455,7 @@ class TelnetCluster(QWidget):
 
     def start_cluster(self):
         self.run_cluster.reciev_spot_signal.connect(self.add_spot_to_table)
-        self.run_cluster.reciev_spot_signal.connect(self.communicate_out)
+        self.run_cluster.reciev_string_signal.connect(self.communicate_out)
         # print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
         # if self.run_cluster.get_cluster_connect_status():
         #     print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
