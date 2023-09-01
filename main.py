@@ -3461,7 +3461,7 @@ class LogForm(QMainWindow):
                 'STATION_CALLSIGN': call}
 
             logWindow.addRecord(self.recordObject)
-            if call == self.current_spot['call']:
+            if self.current_spot is not None and call == self.current_spot['call']:
                 self.current_spot['complete'] = 1
                 self.spot_index_by_band[self.get_current_band()] -= 1
 
