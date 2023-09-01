@@ -4720,7 +4720,7 @@ class hello_window(QWidget):
     def ok_button_push(self):
         if self.call_input.text().strip() != "" and len(self.call_input.text().strip()) >= 3:
             db_name = settingsDict['db-name']
-            db = Db(settingsDict)
+            db = Db(settingsDict, first_run=True)
             answer = db.check_database(db_name)
             print("Answer:", answer)
             if answer == ():
@@ -4844,7 +4844,7 @@ class FoundThread(QThread):
 
 
 class Db(QObject):
-    def __init__(self, settingsDict, db_name='', db_charset='utf8mb4'):
+    def __init__(self, settingsDict, db_name='', db_charset='utf8mb4', first_run=False):
         super().__init__()
 
         self.db_host = settingsDict['db-host']
@@ -4855,6 +4855,8 @@ class Db(QObject):
         self.settingsDict = settingsDict
         self.possible_search_qso_in_base = True
         self.main_connection = None
+        if first_run:
+            self.create_database()
         self.connection_sql()
         # self.db_conn =
         print("Create and run FoundThread")
