@@ -1548,10 +1548,6 @@ class LogSearch(QWidget):
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + "; font: 12px;"
         self.setStyleSheet(style)
-
-        # print ('%10s %5s %10s %16s %8s %8s %8s %15s %15s' % ('QSO_DATE', 'TIME', 'FREQ', 'CALL',
-        #			'MODE', 'RST_RCVD', 'RST_SENT',	'NAME', 'QTH')
-        #		   )
         self.tableWidget = QTableWidget()
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
             'color-table'] + "; font: 12px;  gridline-color: " + settingsDict['solid-color'] + ";"
@@ -1571,7 +1567,6 @@ class LogSearch(QWidget):
         self.tableWidget.setRowCount(0)
 
     def mousePressEvent(self, event):
-
         if event.button() == 1:
             self.offset = event.pos()
             self.flag_button = "right"
@@ -1581,8 +1576,6 @@ class LogSearch(QWidget):
             self.x = self.width()
             self.y = self.height()
 
-        print(event.button())
-
     def mouseMoveEvent(self, event):
         if self.flag_button == "right":
             x = event.globalX()
@@ -1591,11 +1584,8 @@ class LogSearch(QWidget):
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
         if self.flag_button == "left":
-            # x = self.width()
-            # y = self.height()
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
-            print(event.globalY(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
     def changeEvent(self, event):
@@ -1610,10 +1600,10 @@ class LogSearch(QWidget):
             # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
             QWidget.changeEvent(self, event)
 
-    def overlap(self, foundList):
-        if foundList != "":
+    def overlap_qso_info(self, foundList):
+        if foundList:
             allRows = len(foundList)
-            # print("overlap", foundList)
+            print("overlap", foundList)
             self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
@@ -1621,7 +1611,6 @@ class LogSearch(QWidget):
                  "RST s", " Time ", "      Name      ", "      QTH      "])
             self.tableWidget.resizeColumnsToContents()
             allCols = self.tableWidget.columnCount()
-            # print(foundList[0]["CALL"])
             for row in range(allRows):
                 for col in range(allCols):
                     pole = logWindow.allCollumn[col]
@@ -1631,8 +1620,9 @@ class LogSearch(QWidget):
             self.tableWidget.resizeColumnsToContents()
             self.foundList = foundList
         else:
+            print(f"empty call")
             self.tableWidget.clearContents()
-        # print(self.foundList)
+            #self.tableWidget.clear()
 
     def refresh_interface(self):
 
@@ -1667,7 +1657,6 @@ class check_update():
         self.run()
 
     def run(self):
-
         server_url_get = self.settingsDict['server-upd']
         uri_for_check_update = "/api/v1/updater/"
         # path_directory_updater_app = "/upd/"
@@ -2359,9 +2348,10 @@ class FreqWindow(QWidget):
 
 class LogForm(QMainWindow):
 
-    def __init__(self, settings_dict):
+    def __init__(self, settings_dict, log_search):
         super().__init__()
         self.settings_dict = settings_dict
+        self.logSearch = log_search
         self._filter = Filter(internetSearch, self.settings_dict)
         self.diploms_init()
         self.spot_index_by_band = {}
@@ -2369,6 +2359,7 @@ class LogForm(QMainWindow):
         self.country_dict = self.get_country_dict()
         self.mode = settingsDict['mode']
         self.db = db
+        self.db.search_in_db_like_signal.connect(self.olerlap_found_qso)
         self.diplomsCheck()
         self.qrz_com_ready = False
         self.rigctl_main_loop = None
@@ -2499,6 +2490,10 @@ class LogForm(QMainWindow):
         else:
             self.inputQth.clear()
             self.inputName.clear()
+
+    @QtCore.pyqtSlot(object)
+    def olerlap_found_qso(self, obj: list):
+        self.logSearch.overlap_qso_info(obj)
 
     def get_coordinate_windows(self):
         '''
@@ -3351,11 +3346,7 @@ class LogForm(QMainWindow):
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
-        # self.inputName.clear()
-        # self.inputQth.clear()
-        # self.comments.clear()
         country = self.get_country(text)
-        # self.set_country_label(country)
         if country != []:
             self.set_country_label(country[0] + ' <h6 style="font-size: 10px;">ITU: ' + str(country[1]) + '</h6>')
         else:
@@ -3366,11 +3357,6 @@ class LogForm(QMainWindow):
         if len(text) >= 4:
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 found_List = self.db.search_like_qsos(text)
-                print("Like QSO's:")
-
-            # self.searchInBase(textCall)
-            # logSearch.overlap(foundList)
-            # logForm.set_data_qso(found_List)
         if len(text) == 0:
             logSearch.clear_table()
 
@@ -4821,10 +4807,11 @@ class FoundThread(QThread):
     busy_signal = QtCore.pyqtSignal()
     vacant_signal = QtCore.pyqtSignal()
 
-    def __init__(self, connection):
+    def __init__(self, connection, query):
         super().__init__()
         self.sql_query_list = []
         self.connection = connection
+        self.query = query
 
     def add_to_stack(self, sql_query):
         self.sql_query_list.append(sql_query)
@@ -4833,18 +4820,22 @@ class FoundThread(QThread):
         print("FoundThread")
         self.busy_signal.emit()
         self.cursor = self.connection.cursor()
-
-        while len(self.sql_query_list) > 0:
-            print(self.sql_query_list)
-            sql_query = self.sql_query_list.pop()
-            self.cursor.execute(sql_query)
-            records_dict = self.cursor.fetchall()
-            self.result.emit(records_dict)
+        self.cursor.execute(self.query)
+        records_dict = self.cursor.fetchall()
+        self.result.emit(records_dict)
+        # while len(self.sql_query_list) > 0:
+        #     print(self.sql_query_list)
+        #     sql_query = self.sql_query_list.pop()
+        #     self.cursor.execute(sql_query)
+        #     records_dict = self.cursor.fetchall()
+        #     self.result.emit(records_dict)
         self.vacant_signal.emit()
-        self.terminate()
+        #self.terminate()
 
 
 class Db(QObject):
+
+    search_in_db_like_signal = pyqtSignal(object)
     def __init__(self, settingsDict, db_name='', db_charset='utf8mb4', first_run=False):
         super().__init__()
 
@@ -4859,12 +4850,9 @@ class Db(QObject):
         if first_run:
             self.create_database()
         self.connection_sql()
+        self.connect_to_sql = self.connect_sql()
         # self.db_conn =
         print("Create and run FoundThread")
-        self.found_thread = FoundThread(connection=self.connect_sql())
-        self.found_thread.result.connect(self.like_qso_return)
-        self.found_thread.busy_signal.connect(self.busy_search_thread)
-        self.found_thread.vacant_signal.connect(self.vacant_search_thread)
 
 
     def connection_sql(self):
@@ -5086,17 +5074,15 @@ class Db(QObject):
         return records_dict
 
     def search_like_qsos(self, text):
-
         #self.record_dict = {}
         sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
-        if self.possible_search_qso_in_base:
-            self.found_thread.add_to_stack(sql_query)
-            #self.found_thread.start() # todo freeze log (
-        else:
-            print("search thread busy, add to stack")
-            #self.found_thread.add_to_stack(sql_query)
+        self.found_thread = FoundThread(connection=self.connect_to_sql, query=sql_query)
+        self.found_thread.result.connect(self.like_qso_return)
+        self.found_thread.busy_signal.connect(self.busy_search_thread)
+        self.found_thread.vacant_signal.connect(self.vacant_search_thread)
+        #self.found_thread.add_to_stack(sql_query)
+        self.found_thread.start()
 
-        #return self.record_dict
 
     @QtCore.pyqtSlot()
     def vacant_search_thread(self):
@@ -5110,12 +5096,13 @@ class Db(QObject):
 
     @QtCore.pyqtSlot(object)
     def like_qso_return(self, obj):
-        # print("I am Object", obj)
-        logSearch.overlap(obj)
-        self.record_dict = obj
+        print("I am Object", obj)
+        self.search_in_db_like_signal.emit(obj)
+        #logSearch.overlap(obj)
+        #self.record_dict = obj
 
     def search_qso_in_base(self, call):
-        print(f"Call in search_db_in_base {call}")
+        #print(f"Call in search_db_in_base {call}")
         connection = self.connect_sql()
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s", [call.strip()])
@@ -5293,7 +5280,7 @@ if __name__ == '__main__':
         logWindow = Log_Window_2()
         logSearch = LogSearch()
         internetSearch = InternetSearch()
-        logForm = LogForm(settingsDict)
+        logForm = LogForm(settingsDict, logSearch)
         telnetCluster = TelnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         about_window = About_window("LinuxLog",
