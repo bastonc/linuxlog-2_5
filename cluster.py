@@ -65,6 +65,7 @@ class ClusterThread(QThread):
         # print("start main loop cluster")
         while 1:
             try:
+                print(f"cluster Loop")
 
                 read_string_telnet = self.telnet_socket.recv(1024)
                 print(read_string_telnet)
@@ -91,7 +92,7 @@ class ClusterThread(QThread):
 
                 sleep(0.2)
             except BaseException:
-                self.telnet_socket.close()
+                #self.telnet_socket.close()
                 self.parent.set_telnet_wrong(text="· Telnet")
                 self.connecting_telnet()
                 continue
