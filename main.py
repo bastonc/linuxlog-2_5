@@ -2375,9 +2375,12 @@ class LogForm(QMainWindow):
                                       self.settings_dict["qrz-com-password"])
                 self.qrz_com.data_info.connect(self.fill_form)
                 self.qrz_com.qrz_com_connect.connect(self.qrz_com_status)
+                self.qrz_com.qrz_com_error.connect(self.qrz_com_error)
                 #self.qrz_com_ready = True
         self.rigctl_init_base_data()
 
+    def set_current_spot(self, spot_dict):
+        self.current_spot = spot_dict
     def rigctl_init_base_data(self):
         if self.settings_dict['rigctl-enabled'] == "enable":
             self.set_rigctl_stat(color="#aaaaaa")
@@ -2472,6 +2475,10 @@ class LogForm(QMainWindow):
             self.qrz_com_ready = True
         else:
             self.set_qrz_com_wrong("qrz.com")
+
+    @PyQt5.QtCore.pyqtSlot(object)
+    def qrz_com_error(self, error_message):
+        std.std().message(error_message, "QRZ.COM ERROR")
 
     @PyQt5.QtCore.pyqtSlot(object)
     def fill_form(self, data):
@@ -2657,8 +2664,6 @@ class LogForm(QMainWindow):
             self.get_prev_spot_on_band()
         if e.key() == QtCore.Qt.Key_F3:
             self.get_next_spot_on_band()
-        # if e.key() == Qt.Key_F4:
-        #     self.get_last_spot_on_band()
         if e.key() == Qt.Key_F4:
             self.get_prev_general_spot()
         if e.key() == Qt.Key_F6:
@@ -2670,7 +2675,7 @@ class LogForm(QMainWindow):
         print("get last general spot")
         all_spots = telnetCluster.get_all_spots()
         #print(all_spots)
-        if all_spots:
+        if all_spots and self.current_spot != all_spots[-1]:
             self.prev_spots = self.current_spot
             self.current_spot = all_spots[-1]
             self.fill_qso_form_from_cluster(self.current_spot)
@@ -4443,10 +4448,6 @@ class TelnetCluster(QWidget):
     def start_cluster(self):
         self.run_cluster.reciev_spot_signal.connect(self.add_spot_to_table)
         self.run_cluster.reciev_string_signal.connect(self.communicate_out)
-        # print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
-        # if self.run_cluster.get_cluster_connect_status():
-        #     print(f"un_cluster.get_cluster_connect_status(): {self.run_cluster.get_cluster_connect_status()}")
-        #     self.run_cluster.start()
 
     def click_to_spot(self):
         row = self.tableWidget.currentItem().row()
@@ -4458,9 +4459,17 @@ class TelnetCluster(QWidget):
         freq = std.std().std_freq(freq)
         band = std.std().get_std_band(freq)
         mode = std.std().mode_band_plan(band, freq)
+        complete = complete = 0 if db.search_qso_in_base(call) == () else 1
+        spot = {"call": call,
+                "freq": freq,
+                "band": band,
+                "mode": mode,
+                "complete": complete,
+                "comment": ""}
         logForm.set_freq(freq)
         logForm.set_call(call=call)
         logForm.get_info_from_qrz(call)
+        logForm.set_current_spot(spot)
         logForm.activateWindow()
 
         if settingsDict['tci'] == 'enable':

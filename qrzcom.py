@@ -4,6 +4,8 @@ from time import sleep
 import requests
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
+import std
+
 
 class RequestToServer(QObject):
     answer_data = pyqtSignal(object)
@@ -165,9 +167,13 @@ class QrzComApi(QObject):
     @pyqtSlot(object)
     def set_key(self, data):
         xml_dom = xml.dom.minidom.parseString(data.content)
-        self.key = xml_dom.getElementsByTagName('Key')[0].childNodes[0].data
-        self.qrz_com_thread.set_key(self.key)
-        self.qrz_com_connect.emit(True)
+        if xml_dom.getElementsByTagName('Error'):
+            self.qrz_com_thread.set_run_signal(False)
+            std.std().message(xml_dom.getElementsByTagName('Error')[0].childNodes[0].data, "QRZ.COM ERROR")
+        else:
+            self.key = xml_dom.getElementsByTagName('Key')[0].childNodes[0].data
+            self.qrz_com_thread.set_key(self.key)
+            self.qrz_com_connect.emit(True)
 
     @pyqtSlot(object)
     def error_connection(self, error_maessage):

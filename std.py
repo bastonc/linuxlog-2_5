@@ -126,7 +126,7 @@ class std:
         return freq
 
     def message(self, detail_text, text_short):
-        message = QMessageBox(self)
+        message = QMessageBox()
         message.setGeometry(500, 300, 1000, 500)
         message.setWindowTitle("Information")
         message.setText(text_short)
