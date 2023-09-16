@@ -1,12 +1,6 @@
-import datetime
 import socket
-import time
-from time import sleep
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QObject
-
-from threads_lib import Set_connect_thread
+from PyQt5.QtCore import pyqtSignal, QObject
 
 class Rigctl_sender(QObject):
 
@@ -20,11 +14,8 @@ class Rigctl_sender(QObject):
     def send_command(self, command):
         self.command = command
         try:
-
             self.rigctl_socket.send(bytes(str(self.command+"\n").encode("ascii")))
-            print(f"input command: {self.command}")
             read_string = self.rigctl_socket.recv(1024)
             return bytes.decode(read_string, "utf-8").replace("\n", "")
-
         except BaseException:
             self.error_send_signal.emit(self.command)

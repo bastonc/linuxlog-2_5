@@ -28,7 +28,6 @@ class RequestToServer(QObject):
 
     def get_to_server(self):
         try:
-            print("Thread get_to_server")
             answer = requests.get(self.url, timeout=30)
             if answer.status_code == 200:
                 if self.signal == "callsign_info":
@@ -76,7 +75,6 @@ class QrzComApiThread(QThread):
 
     def get_to_server(self):
         try:
-            print("Thread get_to_server")
             answer = requests.get(self.url, timeout=30)
             if answer.status_code == 200:
                 if self.signal == "callsign_info":

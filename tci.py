@@ -181,7 +181,7 @@ class Tci_reciever(QThread):
 class Tci_sender (QtCore.QObject):
 
     def __init__(self, uri, tx_flag, log_form):
-        #super().__init__()
+        super().__init__()
         self.log_form = log_form
         self.tx_flag = tx_flag
         self.uri = uri
@@ -195,8 +195,7 @@ class Tci_sender (QtCore.QObject):
         except ConnectionError:
             self.log_form.set_tci_stat('· TCI', color="#aaaaaa")
             result = traceback.format_exc()
-            print(result)
-            print("Can't connect to Tci_sender __init__:", uri)
+            print("> Tci_sender: Not connect", uri)
 
 
     def update_tx_tci(self):

@@ -16,7 +16,6 @@ class std:
         file.close()
 
     def mode_band_plan(self, band, freq):
-        print(f"std: {band} {freq}")
         try:
             if int(self.band_rules["start-cw"+band]) < int(freq) <= int(self.band_rules["end-cw"+band]):
                 mode = "CW"
@@ -74,7 +73,6 @@ class std:
         return index_columns
 
     def get_std_band(self, freq):  # get Band in m
-        #print(freq)
         band ="GEN"
         if int(freq) >= 1800000 and int(freq) <= 2000000:
             band = '160'
@@ -100,28 +98,22 @@ class std:
             band = '6'
         if int(freq) >= 144000000 and int(freq) <= 146500000:
             band = '2'
-        #print("get_std_band: band", band)
         return band
 
     def std_freq(self, freq):   # get format freq in Hz (Ex.14000000)
         freq = freq.replace('.', '')
-        #print("freq in std", freq)
         len_freq = len(freq)
         if len_freq < 8 and len_freq <= 5:
             while len_freq < 7:
                 freq += "0"
                 len_freq = len(freq)
             freq = "0" + freq
-            #print("len_freq < 8 and len_freq <= 5")
         if len(freq) < 8 and len(freq) > 5 and len(freq) != 7:
             while len_freq < 8:
-                #print("len(freq) < 8 and len(freq) > 5 and len(freq) != 7:")
                 freq += "0"
                 len_freq = len(freq)
         if len(freq) == 7 and int(freq) > 1000000:
-            #print("len(freq) == 7 and int(freq) > 1000000")
             freq += "00"
-        #if len(freq) > 8:
 
         return freq
 
@@ -137,16 +129,13 @@ class std:
     def std_time(self, string_time):
         time_formated = string_time
         time_split = time_formated.split(":")
-        #print("time_split", time_split)
         time_string = ""
         for digit in time_split:
             if len(digit) < 2:
                 digit_new = "0" + digit
-                #print ("digit new", digit_new)
             else:
                 digit_new = digit
             time_string += digit_new
-        #print("time_string", time_string)
         return time_string
     def adi_time_to_std_time(self, adi_time):
         if len(adi_time) == 4:
@@ -175,7 +164,6 @@ class wnd_what(QWidget):
         width_coordinate = (desktop.width() / 2 - 75)
         height_coordinate = (desktop.height() / 2) - 40
         self.setGeometry(round(width_coordinate), round(height_coordinate), 300, 80)
-
         self.setFixedWidth(170)
         self.setFixedHeight(90)
         self.label = QLabel(str(self.header_text))
@@ -187,7 +175,6 @@ class wnd_what(QWidget):
         self.button_ok.setFixedHeight(20)
         self.button_ok.clicked.connect(self.out_data)
         self.v_box = QVBoxLayout()
-        #self.v_box.alignmentRect()
         self.v_box.totalHeightForWidth(100)
         self.v_box.addWidget(self.label)
         self.v_box.addWidget(self.input_line)

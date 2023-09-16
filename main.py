@@ -305,136 +305,15 @@ class Filter(QObject):
             # we don't care about other events
             return False
 
-    # def searchInBase(self, call):
-    #     # print ("search_in Base:_>", call)
-    #     records = db.search_qso_in_base(call)
-    #     return records
 
 
 class Communicate(QObject):
     signalComplited = pyqtSignal(int)
 
-
-# class Fill_table(QThread):
-#     fill_complite = QtCore.pyqtSignal()
-#     qsos_counter = QtCore.pyqtSignal(int)
-#
-#     def __init__(self, all_column, window, settingsDict, parent=None):
-#         super().__init__(window)
-#         #
-#         self.all_collumn = all_column
-#         self.window = window
-#         self.allRecord = None
-#         # self.all_record = None
-#         self.settingsDict = settingsDict
-#
-#     def run(self):
-#         print("FillTable")
-#         records_dict = db.get_all_records(0)
-#         counter = len(records_dict)
-#         self.allRecord = records_dict
-#         # self.all_record = self.allRecord
-#         self.window.tableWidget_qso.setRowCount(0)
-#
-#         self.allRows = len(records_dict)
-#         # print(" self.allRecords:_> ", len(self.allRecord), self.allRecord)
-#         # self.window.tableWidget_qso.setRowCount(len(records_dict))
-#         allCols = len(self.all_collumn)
-#         self.window.load_bar.show()
-#         self.window.qso_last_id = records_dict[-1]['id']
-#         for row, qso in enumerate(self.allRecord):
-#             # print("QSO", qso)
-#             self.window.tableWidget_qso.insertRow(self.window.tableWidget_qso.rowCount())
-#             for col in range(allCols):
-#                 # print("col -", col, self.all_collumn[col])
-#                 pole = self.all_collumn[col]
-#                 # if qso:
-#                 if pole == 'id':
-#                     self.window.tableWidget_qso.setItem(row, col,
-#                                                         self.protectionItem(
-#                                                             str(qso[pole]),
-#                                                             Qt.ItemIsSelectable | Qt.ItemIsEnabled))
-#                     self.window.tableWidget_qso.item(row, col).setForeground(
-#                         QColor(self.settingsDict["color-table"]))
-#
-#                     # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
-#                 elif pole == 'QSO_DATE':
-#                     date = qso[pole].strftime("%Y-%m-%d")
-#                     # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
-#                     # print(time_formated)
-#                     self.window.tableWidget_qso.setItem(
-#                         row, col,
-#                         self.protectionItem(
-#                             QTableWidgetItem(date),
-#                             Qt.ItemIsSelectable | Qt.ItemIsEnabled
-#                         )
-#                     )
-#                     self.window.tableWidget_qso.item(row, col).setForeground(
-#                         QColor(self.settingsDict["color-table"]))
-#
-#                 elif pole == 'TIME_ON':
-#                     time = str(qso[pole])
-#                     # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-#                     # print(time_formated)
-#                     self.window.tableWidget_qso.setItem(
-#                         row, col,
-#                         self.protectionItem(
-#                             QTableWidgetItem(time),
-#                             Qt.ItemIsSelectable | Qt.ItemIsEnabled
-#                         )
-#                     )
-#                     self.window.tableWidget_qso.item(row, col).setForeground(
-#                         QColor(self.settingsDict["color-table"]))
-#                 elif pole == 'TIME_OFF':
-#                     time = str(qso[pole])
-#                     # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-#                     self.window.tableWidget_qso.setItem(
-#                         row, col,
-#                         self.protectionItem(
-#                             QTableWidgetItem(time),
-#                             Qt.ItemIsSelectable | Qt.ItemIsEnabled
-#                         )
-#                     )
-#                     self.window.tableWidget_qso.item(row, col).setForeground(
-#                         QColor(self.settingsDict["color-table"]))
-#
-#                 else:
-#                     if qso[pole] == "None":
-#                         qso[pole] = ""
-#                     self.window.tableWidget_qso.setItem(
-#                         row, col,
-#                         self.protectionItem(
-#                             qso[pole],
-#                             Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-#                     )
-#                     self.window.tableWidget_qso.item(row, col).setForeground(
-#                         QColor(self.settingsDict["color-table"]))
-#                 if qso['EQSL_QSL_SENT'] == 'Y':
-#                     self.window.tableWidget_qso.item(row, col).setBackground(
-#                         QColor(self.settingsDict['eqsl-sent-color']))
-#                 # sleep(0.001)
-#             self.window.load_bar.setValue(round(row * 100 / self.allRows))
-#             # sleep(0.001)
-#         self.fill_complite.emit()
-#
-#     def update_All_records(self, all_records_list):
-#         self.all_records_list = all_records_list
-#         All_records = self.all_records_list
-#         # print("update_All_records > All_records:_>", All_records)
-#
-#     @staticmethod
-#     def protectionItem(text, flags):
-#         tableWidgetItem = QTableWidgetItem(text)
-#         tableWidgetItem.setFlags(flags)
-#         return tableWidgetItem
-
-
 class Qso_counter:
     def __init__(self, counter):
         self.counter = counter
         qso_counter = self.counter
-    # print ("Counter", counter)
-
 
 class Log_Window_2(QWidget):
 
@@ -443,14 +322,11 @@ class Log_Window_2(QWidget):
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
                            'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
         self.fill_flag = 0
-        # self.allRecords.start()
-        # all_record = All_records,
         self.qso_last_id = None
         self.read_base_string = ReadStringDb(db=db, parent=self)
         self.read_base_string.dict_from_base.connect(self.fill_qso_table)
         self.read_base_string.fill_complite.connect(self.fill_complited)
         self.tableWidget_qso = QTableWidget()
-        # self.tableWidget_qso.setSortingEnabled(True)
         self.qrz_com_logbook = QrzLogbook(settingsDict)
         self.initUI()
 
@@ -470,16 +346,9 @@ class Log_Window_2(QWidget):
         self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
-
         self.setStyleSheet(style)
-
-        # self.tableWidget_qso.setSortingEnabled(True)
-        # self.tableWidget_qso.setRowCount(0)
-        # self.tableWidget_qso.insertColumn()
         self.event_qso_table = Filter_event_table_qso()
-        # self.tableWidget_qso.wheelEvent(self.append_qso)
         self.tableWidget_qso.installEventFilter(self.event_qso_table)
-
         self.tableWidget_qso.move(0, 0)
         self.tableWidget_qso.verticalHeader().hide()
         style_table = "background-color:" + settingsDict['form-background'] + "; color:" + settingsDict[
@@ -489,14 +358,9 @@ class Log_Window_2(QWidget):
         fnt.setPointSize(9)
         self.tableWidget_qso.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.tableWidget_qso.customContextMenuRequested.connect(self.context_menu)
-        # self.tableWidget_qso.setSortingEnabled(False)
-        # self.tableWidget_qso.sortByColumn(0, Qt.AscendingOrder)
         self.tableWidget_qso.setFont(fnt)
         self.tableWidget_qso.setColumnCount(len(self.allCollumn))
         self.tableWidget_qso.setHorizontalHeaderLabels(self.allCollumn)
-        # self.tableWidget.resizeRowsToContents()
-
-        # self.tableWidget_qso.itemActivated.connect(self.store_change_record)
 
         # MENU LOG WINDOW Lay
         button_style = "font-size: 9px;"
@@ -510,38 +374,30 @@ class Log_Window_2(QWidget):
         self.refresh_button.setFixedHeight(20)
         self.refresh_button.setStyleSheet(button_style)
         self.refresh_button.clicked.connect(self.refresh_data_button)
+
         # QProgress Bar
         self.load_bar = QProgressBar()
         self.load_bar.setGeometry(30, 40, 200, 25)
         # self.load_bar.setFixedHeight(10)
         self.load_bar.setStyleSheet(style)
+
         # QLabel header
         self.header_label = QLabel()
         self.header_label.setFont(QtGui.QFont('SansSerif', 9))
-        # self.header_label.setStyleSheet(style+" size: 9px;")
-        # self.header_label.hide()
         self.menu_log_button = QHBoxLayout()
         self.menu_log_button.addWidget(self.refresh_button)
-        # self.menu_log_button.addWidget(self.filter_button)
-        # self.menu_log_button.addWidget(self.header_label)
         self.menu_log_button.addWidget(self.load_bar)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
+
         # Set layouts
         self.layout = QVBoxLayout()
         self.layout.addLayout(self.menu_log_button)
         self.layout.addWidget(self.tableWidget_qso)
-
         self.setLayout(self.layout)
-        # self.show()
-
         self.refresh_data()
 
     def mouseDoubleClickEvent(self, event):
-        # self.overrideWindowFlags(Qt.FramelessWindowHint)
         self.setWindowTitle("LinuxLog")
-        # self.setWindowFlag(True)
-
-        print("double click")
 
     def mousePressEvent(self, event):
 
@@ -1209,16 +1065,7 @@ class Log_Window_2(QWidget):
         if self.fill_flag == 0:
             self.fill_flag = 1
             self.tableWidget_qso.setRowCount(0)
-            print("Create and run ReadStringDb")
-
             self.read_base_string.start()
-            # self.allRecords = Fill_table(all_column=self.allCollumn,
-            #                              window=self,
-            #                              settingsDict=settingsDict)
-            # self.allRecords.fill_complite.connect(self.fill_complited)
-            #
-            # # self.allRecords.qsos_counter.connect(self.counter_qso)
-            # self.allRecords.start()
 
     @QtCore.pyqtSlot(object)
     def fill_qso_table(self, dict_db):
@@ -1226,23 +1073,18 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.insertRow(self.tableWidget_qso.rowCount())
         all_cols = len(self.allCollumn)
         for col in range(all_cols):
-            # print("col -", col, self.all_collumn[col])
-            pole = self.allCollumn[col]
-            # if qso:
-            if pole == 'id':
+            field = self.allCollumn[col]
+            if field == 'id':
                 self.tableWidget_qso.setItem(row,
                                              col,
                                              self.protectionItem(
-                                                 str(dict_db[pole]),
+                                                 str(dict_db[field]),
                                                  Qt.ItemIsSelectable | Qt.ItemIsEnabled))
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
 
-                # QTableWidgetItem(self.allRecord[(self.allRows - 1) - row][pole]))
-            elif pole == 'QSO_DATE':
-                date = dict_db[pole].strftime("%Y-%m-%d")
-                # date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
-                # print(time_formated)
+            elif field == 'QSO_DATE':
+                date = dict_db[field].strftime("%Y-%m-%d")
                 self.tableWidget_qso.setItem(
                     row, col,
                     self.protectionItem(
@@ -1253,10 +1095,8 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
 
-            elif pole == 'TIME_ON':
-                time = str(dict_db[pole])
-                # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
-                # print(time_formated)
+            elif field == 'TIME_ON':
+                time = str(dict_db[field])
                 self.tableWidget_qso.setItem(
                     row, col,
                     self.protectionItem(
@@ -1266,8 +1106,9 @@ class Log_Window_2(QWidget):
                 )
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
-            elif pole == 'TIME_OFF':
-                time = str(dict_db[pole])
+
+            elif field == 'TIME_OFF':
+                time = str(dict_db[field])
                 # time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                 self.tableWidget_qso.setItem(
                     row, col,
@@ -1280,26 +1121,24 @@ class Log_Window_2(QWidget):
                     QColor(settingsDict["color-table"]))
 
             else:
-                if dict_db[pole] == "None":
-                    dict_db[pole] = ""
+                if dict_db[field] == "None":
+                    dict_db[field] = ""
                 self.tableWidget_qso.setItem(
                     row, col,
                     self.protectionItem(
-                        dict_db[pole],
+                        dict_db[field],
                         Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 )
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
+
             if dict_db['EQSL_QSL_SENT'] == 'Y':
                 self.tableWidget_qso.item(row, col).setBackground(
                     QColor(settingsDict['eqsl-sent-color']))
-            # sleep(0.001)
         self.load_bar.setValue(round(row * 100 / len(self.allRows)))
-        # sleep(0.001)
 
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
-        print("last_id", self.qso_last_id)
         self.tableWidget_qso.sortByColumn(0, QtCore.Qt.DescendingOrder)
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
@@ -1309,7 +1148,6 @@ class Log_Window_2(QWidget):
     @QtCore.pyqtSlot(int, name="counter_qso")
     def counter_qso(self, val):
         logForm.counter_qso = val
-        # print("Slot counter QSO", logForm.counter_qso )
 
     @staticmethod
     def protectionItem(text, flags):
@@ -1318,12 +1156,10 @@ class Log_Window_2(QWidget):
         return tableWidgetItem
 
     def store_change_record(self, row_arg=""):
-
         if row_arg == '':
             row = self.tableWidget_qso.currentItem().row()
         else:
             row = int(row_arg)
-
         record_id = self.tableWidget_qso.item(row, self.collumns_index['id']).text()
         date = str(self.tableWidget_qso.item(row, self.collumns_index['QSO_DATE']).text())
         date_formated = date.replace("-", "")
@@ -1367,20 +1203,23 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.setStyleSheet(style_form)
         all_rows = self.tableWidget_qso.rowCount()
         all_cols = self.tableWidget_qso.columnCount()
-        print("All_rows", all_rows, "All_cols", all_cols)
         for row in range(all_rows):
             for col in range(all_cols):
                 self.tableWidget_qso.item(row, col).setForeground(QColor(settingsDict["color-table"]))
-
         self.setStyleSheet(style)
-        # self.refresh_data()
 
     def addRecord(self, recordObject):
-        # <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
+        """
+        info for method:
+        ADIF string - <BAND:3>20M <CALL:6>DL1BCL <FREQ:9>14.000000
         # <MODE:3>SSB <OPERATOR:6>UR4LGA <PFX:3>DL1 <QSLMSG:19>TNX For QSO TU 73!.
         # <QSO_DATE:8:D>20131011 <TIME_ON:6>184700 <RST_RCVD:2>57 <RST_SENT:2>57 <TIME_OFF:6>184700
         # <eQSL_QSL_RCVD:1>Y <APP_LOGGER32_QSO_NUMBER:1>1  <EOR>
-        # record to file
+
+        :param recordObject:
+        :return:
+        """
+
         self.collumns_index = std.std.get_index_column(self, self.tableWidget_qso)
         if settingsDict['eqsl'] == 'enable':
             try:
@@ -1416,31 +1255,24 @@ class Log_Window_2(QWidget):
             len(recordObject['CLUBLOG_QSO_UPLOAD_STATUS'])) + ">" + str(
             recordObject['CLUBLOG_QSO_UPLOAD_STATUS'])
         stringToAdiFile = stringToAdiFile + "<STATION_CALLSIGN:" + str(len(recordObject['STATION_CALLSIGN'])) + ">" + str(recordObject['STATION_CALLSIGN']) + " "
-
         stringToAdiFile = stringToAdiFile + "<EOR>\n"
+
         # record to table
         allCols = len(self.allCollumn)
         self.tableWidget_qso.insertRow(0)
-        # print("Write to base - start", datetime.datetime.now())
         last_id = db.record_qso_to_base(recordObject)
-        # print("Fill tablewidget - start", datetime.datetime.now())
         for col in range(allCols):
-
             header = self.tableWidget_qso.horizontalHeaderItem(col).text()
-
             if header == 'id':
-                # pass
                 self.tableWidget_qso.setItem(
                     0,
                     col,
                     self.protectionItem(str(last_id[0]['LAST_INSERT_ID()']), Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 )
-
             elif header == 'QSO_DATE':
                 date = str(recordObject[self.allCollumn[col]])
                 date_formated = date[:4] + "-" + date[4:6] + "-" + date[6:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(date_formated))
-
             elif header == 'TIME_ON' or header == 'TIME_OFF':
                 time = str(recordObject[self.allCollumn[col]])
                 time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
@@ -1458,7 +1290,6 @@ class Log_Window_2(QWidget):
             self.clublog.sent_qso_error.connect(self.clublog_sent_error)
             self.clublog_thread.started.connect(self.clublog.add_record)
             self.clublog_thread.start()
-            # response = self.clublog.add_record(stringToAdiFile)
         if settingsDict['qrz-com-logbook-enable'] == "enable":
             self.qrz_com_logbook.send_qso_to_logbook(stringToAdiFile)
 
@@ -1471,7 +1302,6 @@ class Log_Window_2(QWidget):
 
     @QtCore.pyqtSlot(object)
     def clublog_sent_no(self, response):
-        print("clublog_sent_no")
         std.std.message(self,
                         "Club log: " + response.content.decode(settingsDict['encodeStandart']) + "\n",
                         "ERROR")
@@ -1481,7 +1311,6 @@ class Log_Window_2(QWidget):
 
     @QtCore.pyqtSlot()
     def clublog_sent_error(self):
-        print("clublog_sent_error")
         std.std.message(self,
                         "<strong>Can't send to Club Log</strong><br>Check internet connection<br><br><i><p style='font-size: 12px;'>You can disable auto send to Club log <br> (Settings -> Services -> Auto sent to Club log after QSO )</p></i>",
                         "<p style='color: red'>ERROR Clublog</p>")
@@ -1501,14 +1330,12 @@ class Log_Window_2(QWidget):
 
     @QtCore.pyqtSlot()
     def eqsl_error(self):
-        # self.recordObject['EQSL_QSL_SENT'] = 'Y'
         pass
 
     def search_in_table(self, call):
         list_dict = []
         if self.tableWidget_qso.rowCount() > 0:
             for rows in range(self.tableWidget_qso.rowCount()):
-                # print(self.tableWidget.item(rows, 4).text())
                 try:
                     if self.tableWidget_qso.item(rows, 4).text() == call:
                         row_in_dict = {"No": self.tableWidget_qso.item(rows, 0).text(),
@@ -1526,7 +1353,7 @@ class Log_Window_2(QWidget):
                                        "Eqsl_sent": self.tableWidget_qso.item(rows, 12).text()}
                         list_dict.append(row_in_dict)
                 except Exception:
-                    print("Search in table > Don't Load text from table")
+                    print("> Search in table > Don't Load text from table")
             return list_dict
 
 
@@ -1593,25 +1420,20 @@ class LogSearch(QWidget):
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.isMinimized():
                 settingsDict['log-search-window'] = 'False'
-                # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
-                # telnetCluster.showMinimized()
             elif self.isVisible():
                 settingsDict['log-search-window'] = 'True'
-            # print("log-search-window: changeEvent:_>", settingsDict['log-search-window'])
             QWidget.changeEvent(self, event)
 
     def overlap_qso_info(self, foundList):
         if foundList:
             allRows = len(foundList)
-            print("overlap", foundList)
             self.tableWidget.clearContents()
-
             self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
                 ["   Date   ", "Band", "   Freq   ", "Call", "Mode", "RST r",
                  "RST s", " Time ", "      Name      ", "      QTH      "])
-            #self.tableWidget.resizeColumnsToContents()
+            # self.tableWidget.resizeColumnsToContents()
             allCols = self.tableWidget.columnCount()
             for row in range(allRows):
                 for col in range(allCols):
@@ -1622,10 +1444,8 @@ class LogSearch(QWidget):
             self.tableWidget.resizeColumnsToContents()
             self.foundList = foundList
         else:
-            print(f"empty call")
             self.tableWidget.clearContents()
             self.tableWidget.setRowCount(0)
-            #self.tableWidget.clear()
 
     def refresh_interface(self):
 
@@ -1662,10 +1482,7 @@ class check_update():
     def run(self):
         server_url_get = self.settingsDict['server-upd']
         uri_for_check_update = "/api/v1/updater/"
-        # path_directory_updater_app = "/upd/"
         url_action = f"{server_url_get}{uri_for_check_update}{self.version}/{self.settingsDict['my-call']}"
-        flag = 0
-        data_flag = 0
         try:
             response = requests.get(url_action)
             if response.status_code == 200:
@@ -1674,165 +1491,9 @@ class check_update():
                     self.update_processing(update_obj)
                 else:
                     self.no_new_version()
-                print(f"Update object: {update_obj}")
-            flag = 1
         except ConnectionError:
-            flag = 0
+            print(f"Don't connected to update server")
 
-        # if flag == 1:
-        #     soup = BeautifulSoup(response.text, 'html.parser')
-        #     try:
-        #         version = soup.find(id="version").get_text()
-        #         git_path_param = soup.find(id="git_path").get_text()
-        #         parameters = git_path_param.split('|')
-        #         git_path = parameters[0]
-        #         date = soup.find(id="date").get_text()
-        #         data_flag = 1
-        #     except Exception:
-        #         std.std.message(self.parrent, "You have latest version", "UPDATER")
-        #         self.parrent.check_update.setText("> Check update <")
-        #         self.parrent.check_update.setEnabled(True)
-        #     if data_flag == 1:
-        #         update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
-        #                                              "Found new version " + version + " install it?",
-        #                                              buttons=QMessageBox.Yes | QMessageBox.No,
-        #                                              defaultButton=QMessageBox.Yes)
-        #         if update_result == QMessageBox.Yes:
-        #             # print("Yes")
-        #             # try:
-        #             self.parrent.check_update.setText("Updating")
-        #             adi_name_list = []
-        #             for file in os.listdir():
-        #                 if file.endswith(".adi"):
-        #                     adi_name_list.append(file)
-        #             print("found all .adi file")
-        #             rules_name_list = []
-        #             for file in os.listdir():
-        #                 if file.endswith(".rules"):
-        #                     rules_name_list.append(file)
-        #             print("found all .rules file")
-        #             # print("Rules name List:_>", rules_name_list)
-        #             # print("Adi name List:_>", adi_name_list)
-        #             home = expanduser("~")
-        #             print("Home path:_>", home)
-        #             if os.path.isdir(home + '/linuxlog-backup'):
-        #                 os.system("rm -rf " + home + "/linuxlog-backup")
-        #             else:
-        #                 pass
-        #             print("Create buckup folder (linuxlog-buckup)")
-        #             os.mkdir(home + "/linuxlog-backup")
-        #             for i in range(len(adi_name_list)):
-        #                 os.system("cp '" + adi_name_list[i] + "' " + home + "/linuxlog-backup")
-        #             print("Copy all .adi file to backup folder")
-        #             for i in range(len(rules_name_list)):
-        #                 os.system("cp  '" + rules_name_list[i] + "' " + home + "/linuxlog-backup")
-        #             print("Copy all .rules file to backup folder")
-        #             os.system("cp settings.cfg " + home + "/linuxlog-backup")
-        #             print("Copy settings.cfg to backup folder")
-        #
-        #             # archive dir
-        #             if os.path.isdir(home + '/linlog-old'):
-        #                 pass
-        #             else:
-        #                 os.system("mkdir " + home + "/linlog-old")
-        #             with open(home + "/linlog/linlog", 'r') as f:
-        #                 string_lines = f.readlines()
-        #                 string_line = string_lines[1].split(' ')
-        #                 current_path = string_line[1].replace('\n', '')
-        #
-        #             os.system("tar -cf " + home + "/linlog-old/linlog" + version + ".tar.gz " + current_path)
-        #             print("Create archive with linlog folder")
-        #             # print("Delete Linlog folder")
-        #             # delete dir linlog
-        #             # os.system("rm -rf " + home + "/linlog")
-        #             # clone from git repository to ~/linlog
-        #             print("Git clone to new linlog folder")
-        #             os.system("git clone " + git_path + " " + home + "/linlog_" + version)
-        #
-        #             # copy adi and rules file from linuxlog-backup to ~/linlog
-        #
-        #             for i in range(len(adi_name_list)):
-        #                 os.system("cp '" + home + "/linuxlog-backup/" + adi_name_list[
-        #                     i] + "' '" + home + "/linlog_" + version + "'")
-        #             for i in range(len(rules_name_list)):
-        #                 os.system("cp '" + home + "/linuxlog-backup/" + rules_name_list[
-        #                     i] + "' '" + home + "/linlog_" + version + "'")
-        #
-        #             # read and replace string in new settings.cfg
-        #
-        #             file = open(home + "/linlog_" + version + "/settings.cfg", "r")
-        #             settings_list = {}
-        #             for configstring in file:
-        #                 if configstring != '' and configstring != ' ' and configstring[0] != '#':
-        #                     configstring = configstring.strip()
-        #                     configstring = configstring.replace("\r", "")
-        #                     configstring = configstring.replace("\n", "")
-        #                     splitString = configstring.split('=')
-        #                     settings_list.update({splitString[0]: splitString[1]})
-        #             file.close()
-        #             for key_new in settings_list:
-        #                 for key_old in self.settingsDict:
-        #                     if key_new == key_old:
-        #                         settings_list[key_new] = self.settingsDict[key_old]
-        #
-        #             # print("settings list^_>", settings_list)
-        #
-        #             filename = home + "/linlog_" + version + "/settings.cfg"
-        #             with open(filename, 'r') as f:
-        #                 old_data = f.readlines()
-        #             for index, line in enumerate(old_data):
-        #                 key_from_line = line.split('=')[0]
-        #                 # print ("key_from_line:",key_from_line)
-        #                 for key in settings_list:
-        #
-        #                     if key_from_line == key:
-        #                         # print("key",key , "line", line)
-        #                         old_data[index] = key + "=" + settings_list[key] + "\n"
-        #             with open(filename, 'w') as f:
-        #                 f.writelines(old_data)
-        #             # done!
-        #
-        #             os.system("chmod +x " + home + "/linlog_" + version + "/linlog")
-        #             with open(home + "/linlog/linlog", "w") as f:
-        #                 string_to_file = ['#! /bin/bash\n', 'cd ' + home + '/linlog_' + version + '\n',
-        #                                   'python3 main.py\n']
-        #                 f.writelines(string_to_file)
-        #
-        #             # delete backup dir
-        #             os.system("rm -rf " + home + "/linuxlog-backup")
-        #
-        #             os.system("rm -rf " + home + "/linlog_" + self.version)
-        #         if len(parameters) > 1:
-        #             pip_install_string = 'pip3 install '
-        #             for i in range(1, len(parameters), 1):
-        #                 if parameters[i] != "" and parameters[i] != " ":
-        #                     pip_install_string += parameters[i] + ' '
-        #             if pip_install_string != "pip3 install ":
-        #                 result = os.system(pip_install_string)
-        #             else:
-        #                 result = 0
-        #             if result != 0:
-        #                 std.std.message(self.parrent, "Can't install module(s)\nPlease install modules in Terminal.\n \
-        #                                               Command: " + pip_install_string + " maybe use 'sudo'\n",
-        #                                 "ERROR install modules\n")
-        #
-        #             std.std.message(self.parrent, "Update to v." + version + " \nCOMPLITED \n "
-        #                                                                      "Please restart LinuxLog", "UPDATER")
-        #
-        #             self.version = version
-        #             self.parrent.check_update.setText("> Check update <")
-        #             self.parrent.check_update.setEnabled(True)
-        #             self.parrent.text.setText(
-        #                 "Version:" + version + "<br><a href='http://linuxlog.su'>http://linuxlog.su</a><br>Baston Sergey<br>bastonsv@gmail.com")
-        #
-        #         else:
-        #             #  print("No")
-        #             self.parrent.check_update.setText("> Check update <")
-        #             self.parrent.check_update.setEnabled(True)
-        #
-        # else:
-        #     std.std.message(self.parrent, "Sorry\ntimeout server.", "UPDATER")
-        #
     def update_processing(self, update_obj):
         update_result = QMessageBox.question(self.parrent, "LinuxLog | Updater",
                                              f"Found new version {update_obj['version']} install it?",
@@ -1942,11 +1603,9 @@ class RealTime(QThread):
         self.run_flag = bool_set
 
     def run(self):
-        print("RealTime")
         while self.run_flag:
             self.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
             time.sleep(0.1)
-
 
 class ClikableLabel(QLabel):
     click_signal = QtCore.pyqtSignal()
@@ -3212,10 +2871,9 @@ class LogForm(QMainWindow):
         # self.show()
 
         # run time in Thread
-        print("Create and run RealTime")
         self.run_time = RealTime(logformwindow=self)  # run time in Thread
         self.run_time.real_time_signal.connect(self.set_time)
-        #self.run_time.start() # todo run time
+        self.run_time.start()
         self.init_data()
 
     @QtCore.pyqtSlot(object)
@@ -3368,6 +3026,7 @@ class LogForm(QMainWindow):
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 print(f"Start Search")
                 self.db.search_like_qsos(text)
+                self.get_info_from_qrz(text)
         if len(text) == 0:
             print(f"Clear Seach window")
             self.logSearch.clear_table()
@@ -3380,14 +3039,10 @@ class LogForm(QMainWindow):
         country_list = []
 
         for keys in self.country_dict:
-            # print("keys", keys)
             for list_elem in self.country_dict[keys]['prefix']:
-
                 if call.find(list_elem) == 0:
                     country_lists.append(
                         [list_elem, keys, self.country_dict[keys]['itu'], self.country_dict[keys]['cq-zone']])
-
-        # print("find in elements:", country_lists)
         count = 0
         for i in range(len(country_lists)):
             lenght_str = len(country_lists[i][0])
@@ -3544,16 +3199,17 @@ class LogForm(QMainWindow):
 
     def closeEvent(self, event):
         '''
-        This function recieve signal close() from logSearch window
-        Save coordinate and size all window
+        This function recieve signal close() from logForm window
+        Save coordinate and size all windows
+        Stop real-time thread
         Close app
         '''
-
+        self.run_time.set_run_flag(False)
         self.parameter = self.get_coordinate_windows()
         logWindow.close()
         internetSearch.close()
         logSearch.close()
-        self.run_time.terminate()
+        #self.run_time.terminate()
         logForm.close()
         telnetCluster.close()
         try:
@@ -4356,14 +4012,12 @@ class TelnetCluster(QWidget):
         spot_data_dict = {}
         if telnet_string[:2] == "DX":
             elem_string_list = [elem for elem in telnet_string.split(' ') if elem not in ("", " ")]
-            # print(f"SPLIT input string: {telnet_string}")
             standart_lib = std.std()
             call = elem_string_list[int(self.settings_dict['telnet-call-position'])]
             freq = standart_lib.std_freq(elem_string_list[int(self.settings_dict['telnet-freq-position'])])
             band = standart_lib.get_std_band(str(freq).replace(".",""))
             mode  = standart_lib.mode_band_plan(band, freq)
             complete = 0 if db.search_qso_in_base(elem_string_list[int(self.settings_dict['telnet-call-position'])]) == () else 1  # todo Create method search qso in current contest. In present method searching qso in general database (all qso at all time)
-            print(f"complete {complete}, search in db: {db.search_qso_in_base(elem_string_list[int(self.settings_dict['telnet-call-position'])])}")
             comment = " ".join(elem_string_list[int(self.settings_dict['telnet-call-position']) + 1:])
             de = elem_string_list[2]
             spot_data_dict.update({
@@ -4376,7 +4030,6 @@ class TelnetCluster(QWidget):
                 "de": de,
                 "timestamp": datetime.datetime.utcnow()
             })
-            # print(f"Spot dict {spot_data_dict}")
             return spot_data_dict
 
     def add_row_to_cluster(self, string_from_telnet):
@@ -4475,7 +4128,6 @@ class TelnetCluster(QWidget):
                 "comment": ""}
         logForm.set_freq(freq)
         logForm.set_call(call=call)
-        logForm.get_info_from_qrz(call)
         logForm.set_current_spot(spot)
         logForm.activateWindow()
 
@@ -4809,7 +4461,6 @@ class ReadStringDb(QThread):
         self.db = db
 
     def run(self):
-        print("ReadStringDb")
         records_dict = db.get_all_records(0)
         self.parent.allRows = records_dict
         for qso in records_dict:

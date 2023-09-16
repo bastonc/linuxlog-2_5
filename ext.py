@@ -287,15 +287,11 @@ class Diplom_form(QWidget):
             self.write_rules_to_file(list_to_json, name_output_file=name_programm)
             if self.settingsDict['diploms-json'] != "":
                 settings_list = json.loads(self.settingsDict['diploms-json'])
-                # print("settings_list", settings_list)
             else:
-                # print("settings list is empty")
-                # settings_list.append({'name_programm': name_programm})
                 self.settingsDict['diploms-json'] = json.dumps([{'name_programm': name_programm}])
                 main.Settings_file.update_file_to_disk(self)
             if len(settings_list) > 0:
                 for i in range(len(settings_list)):
-                    # name = str(settings_list[i]['name_programm'])
                     if name_programm == str(settings_list[i]['name_programm']) and self.diplomname == '':
                         std.std.message(self, "Programm with that name already exists", "Repeats")
                         repeat_flag = 1
@@ -304,7 +300,6 @@ class Diplom_form(QWidget):
                         repeat_flag = 0
             else:
                 repeat_flag = 0
-
             if repeat_flag == 0:
                 if self.diplomname == '':
                     settings_list.append({'name_programm': name_programm})
@@ -322,15 +317,12 @@ class Diplom_form(QWidget):
                                                 self.name_input.text() + ".adi")
                             settings_list[i]['name_programm'] = self.name_input.text()
 
-                    # print(settings_list)
                     self.settingsDict['diploms-json'] = json.dumps(settings_list)
                     main.Settings_file.update_file_to_disk(self)
-
                     self.logForm.menu_rename_diplom()
                     self.logForm.diploms_init()
                     self.logForm.menu()
                     self.close()
-
             self.logForm.diploms_init()
         elif flag == 0:
             pass
