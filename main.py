@@ -305,10 +305,10 @@ class Filter(QObject):
             # we don't care about other events
             return False
 
-    def searchInBase(self, call):
-        # print ("search_in Base:_>", call)
-        records = db.search_qso_in_base(call)
-        return records
+    # def searchInBase(self, call):
+    #     # print ("search_in Base:_>", call)
+    #     records = db.search_qso_in_base(call)
+    #     return records
 
 
 class Communicate(QObject):
@@ -1604,12 +1604,14 @@ class LogSearch(QWidget):
         if foundList:
             allRows = len(foundList)
             print("overlap", foundList)
+            self.tableWidget.clearContents()
+
             self.tableWidget.setRowCount(allRows)
             self.tableWidget.setColumnCount(10)
             self.tableWidget.setHorizontalHeaderLabels(
                 ["   Date   ", "Band", "   Freq   ", "Call", "Mode", "RST r",
                  "RST s", " Time ", "      Name      ", "      QTH      "])
-            self.tableWidget.resizeColumnsToContents()
+            #self.tableWidget.resizeColumnsToContents()
             allCols = self.tableWidget.columnCount()
             for row in range(allRows):
                 for col in range(allCols):
@@ -1622,6 +1624,7 @@ class LogSearch(QWidget):
         else:
             print(f"empty call")
             self.tableWidget.clearContents()
+            self.tableWidget.setRowCount(0)
             #self.tableWidget.clear()
 
     def refresh_interface(self):
@@ -3351,19 +3354,23 @@ class LogForm(QMainWindow):
             string_old = self.inputCall.text()
             string_reverse = self.key_lay_reverse(string_old)
             self.inputCall.setText(string_reverse)
-        country = self.get_country(text)
-        if country != []:
-            self.set_country_label(country[0] + ' <h6 style="font-size: 10px;">ITU: ' + str(country[1]) + '</h6>')
-        else:
-            self.set_country_label('')
+        if len(text) > 2:
+            print(f"Get country")
+            country = self.get_country(text)
+            if country != []:
+                self.set_country_label(country[0] + ' <h6 style="font-size: 10px;">ITU: ' + str(country[1]) + '</h6>')
+            else:
+                self.set_country_label('')
 
         if len(text) < 2:
             self.set_country_label("")
         if len(text) >= 4:
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
-                found_List = self.db.search_like_qsos(text)
+                print(f"Start Search")
+                self.db.search_like_qsos(text)
         if len(text) == 0:
-            logSearch.clear_table()
+            print(f"Clear Seach window")
+            self.logSearch.clear_table()
 
     def get_country(self, call_dark):
 
@@ -4813,8 +4820,6 @@ class ReadStringDb(QThread):
 class FoundThread(QThread):
 
     result = QtCore.pyqtSignal(object)
-    busy_signal = QtCore.pyqtSignal()
-    vacant_signal = QtCore.pyqtSignal()
 
     def __init__(self, connection, query):
         super().__init__()
@@ -4826,21 +4831,10 @@ class FoundThread(QThread):
         self.sql_query_list.append(sql_query)
 
     def run(self):
-        print("FoundThread")
-        self.busy_signal.emit()
         self.cursor = self.connection.cursor()
         self.cursor.execute(self.query)
         records_dict = self.cursor.fetchall()
         self.result.emit(records_dict)
-        # while len(self.sql_query_list) > 0:
-        #     print(self.sql_query_list)
-        #     sql_query = self.sql_query_list.pop()
-        #     self.cursor.execute(sql_query)
-        #     records_dict = self.cursor.fetchall()
-        #     self.result.emit(records_dict)
-        self.vacant_signal.emit()
-        #self.terminate()
-
 
 class Db(QObject):
 
@@ -5087,28 +5081,27 @@ class Db(QObject):
         sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
         self.found_thread = FoundThread(connection=self.connect_to_sql, query=sql_query)
         self.found_thread.result.connect(self.like_qso_return)
-        self.found_thread.busy_signal.connect(self.busy_search_thread)
-        self.found_thread.vacant_signal.connect(self.vacant_search_thread)
-        #self.found_thread.add_to_stack(sql_query)
+        # self.found_thread.busy_signal.connect(self.busy_search_thread)
+        # self.found_thread.vacant_signal.connect(self.vacant_search_thread)
+        # self.found_thread.add_to_stack(sql_query)
         self.found_thread.start()
 
 
-    @QtCore.pyqtSlot()
-    def vacant_search_thread(self):
-        if self.found_thread.isRunning():
-            self.found_thread.terminate()
-        self.possible_search_qso_in_base = True
+    # @QtCore.pyqtSlot()
+    # def vacant_search_thread(self):
+    #     if self.found_thread.isRunning():
+    #         print("vacant_search_thread")
+    #         self.found_thread.terminate()
+    #     self.possible_search_qso_in_base = True
 
-    @QtCore.pyqtSlot()
-    def busy_search_thread(self):
-        self.possible_search_qso_in_base = False
+    # @QtCore.pyqtSlot()
+    # def busy_search_thread(self):
+    #     self.possible_search_qso_in_base = False
 
     @QtCore.pyqtSlot(object)
     def like_qso_return(self, obj):
         print("I am Object", obj)
         self.search_in_db_like_signal.emit(obj)
-        #logSearch.overlap(obj)
-        #self.record_dict = obj
 
     def search_qso_in_base(self, call):
         #print(f"Call in search_db_in_base {call}")
