@@ -2509,7 +2509,7 @@ class LogForm(QMainWindow):
                 print("self.diplomsName:_>", diplom_data)
                 if diplom_data != []:
                     self.menu_add(diplom_data[0]['name'])
-        minimizeMenu = QAction("🗕", self)
+        minimizeMenu = QAction("_", self)
         minimizeMenu.triggered.connect(self.showMinimized)
         closeMenu = QAction("✘", self)
         closeMenu.triggered.connect(self.close)
