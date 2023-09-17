@@ -3204,12 +3204,12 @@ class LogForm(QMainWindow):
         Stop real-time thread
         Close app
         '''
-        self.run_time.set_run_flag(False)
+        #self.run_time.set_run_flag(False)
         self.parameter = self.get_coordinate_windows()
         logWindow.close()
         internetSearch.close()
         logSearch.close()
-        #self.run_time.terminate()
+        self.run_time.terminate()
         logForm.close()
         telnetCluster.close()
         try:
@@ -4377,7 +4377,6 @@ class hello_window(QWidget):
             db_name = settingsDict['db-name']
             db = Db(settingsDict, first_run=True)
             answer = db.check_database(db_name)
-            print("Answer:", answer)
             if answer == ():
                 db.create_database()
                 settingsDict['db-name'] = db_name
@@ -4562,7 +4561,11 @@ class Db(QObject):
 
         )
         cursor = db_connect_new.cursor()
-        cursor.execute(f'CREATE DATABASE {self.db_name}')
+        try:
+            cursor.execute(f"USE {self.db_name}")
+            print(cursor.fetchall())
+        except pymysql.err.OperationalError:
+            cursor.execute(f'CREATE DATABASE {self.db_name}')
 
     def connect_sql(self):
         if self.db_name == '':
