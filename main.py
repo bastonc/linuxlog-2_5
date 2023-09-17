@@ -329,6 +329,7 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso = QTableWidget()
         self.qrz_com_logbook = QrzLogbook(settingsDict)
         self.initUI()
+        self.refresh_data()
 
     def initUI(self):
         '''
@@ -394,7 +395,7 @@ class Log_Window_2(QWidget):
         self.layout.addLayout(self.menu_log_button)
         self.layout.addWidget(self.tableWidget_qso)
         self.setLayout(self.layout)
-        self.refresh_data()
+
 
     def mouseDoubleClickEvent(self, event):
         self.setWindowTitle("LinuxLog")
@@ -1126,7 +1127,7 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.setItem(
                     row, col,
                     self.protectionItem(
-                        dict_db[field],
+                        str(dict_db[field]),
                         Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 )
                 self.tableWidget_qso.item(row, col).setForeground(
@@ -2959,6 +2960,7 @@ class LogForm(QMainWindow):
     def changed_mode(self):
         self.comboMode.clearFocus()
         self.rememberMode(self.comboMode.currentText())
+        self.sender()
 
     def rememberMode(self, text):
         # print(self.comboMode.currentText())
@@ -3026,7 +3028,10 @@ class LogForm(QMainWindow):
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 print(f"Start Search")
                 self.db.search_like_qsos(text)
-                self.get_info_from_qrz(text)
+                # self.get_info_from_qrz(text)
+        else:
+            self.logSearch.clear_table()
+
         if len(text) == 0:
             print(f"Clear Seach window")
             self.logSearch.clear_table()
