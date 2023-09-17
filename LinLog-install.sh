@@ -1,6 +1,6 @@
 #!/bin/bash
 name_app='linlog'
-git_path='https://github.com/bastonc/LinLog-unstable.git'
+git_path='https://github.com/bastonc/linuxlog-2_5.git'
 de=$XDG_CURRENT_DESKTOP
 #echo $de
 dist=`cat /etc/*release | grep -w NAME`
