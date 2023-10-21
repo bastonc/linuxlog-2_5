@@ -89,7 +89,7 @@ def getAllRecord(poles, filename, key=''):
                     allrecord.append(record)
                     record = {}
 
-        if string == "<EOH>\n":  # if we went to end by text header in ADI file (<EOH>) - set key by ready parsing in value = 1
+        if string.upper().find("<EOH>\n"):  # if we went to end by text header in ADI file (<EOH>) - set key by ready parsing in value = 1
             key_lock = 1
 
     file.close()

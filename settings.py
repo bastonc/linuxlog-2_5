@@ -1051,40 +1051,34 @@ class Menu (QWidget):
                 double_qso = []
                 bad_qso = []
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
-                print("Records from file:", allRecords)
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
-                all_qso_in_base = main.Db(self.settingsDict).get_all_records()
-                if len(all_qso_in_base) > 0:
-                    print("All QSO in Base", all_qso_in_base)
-                    print(str(all_qso_in_base[0]["QSO_DATE"]).replace('-', ""))
-                    print("All_QSO_in files", allRecords)
                 for i, qso_in_file in enumerate(allRecords):
 
                     if len(qso_in_file["QSO_DATE"].strip()) != 8 or len(qso_in_file["TIME_ON"].strip()) != 6:
                         bad_qso.append(qso_in_file)
                         continue
                     double_counter = len(double_qso)
-                    for qso_in_base in all_qso_in_base:
-                        if str(qso_in_base["CALL"]).strip() == str(qso_in_file["CALL"]).strip() and \
-                                str(qso_in_base["QSO_DATE"]).replace('-', "").strip() == str(qso_in_file["QSO_DATE"]).replace('-', "").strip() and \
-                                   str(qso_in_base["TIME_ON"]).replace(":", "").strip() == str(qso_in_file["TIME_ON"]).replace(":", "").strip():
-                               double_qso.append(qso_in_file)
-                               break
+                    search_qso_in_base = main.Db(self.settingsDict).search_qso_by_full_data(
+                        str(qso_in_file["CALL"]),
+                        str(qso_in_file["QSO_DATE"]),
+                        str(qso_in_file["TIME_ON"]),
+                        str(qso_in_file["BAND"]),
+                        str(qso_in_file["MODE"])
+                    )
+                    if search_qso_in_base:
+                        double_qso.append(qso_in_file)
                     if len(double_qso) > double_counter:
                         continue
                     good_qso_count += 1
                     main.Db(self.settingsDict).record_qso_to_base(qso_in_file, mode="import")
                     self.logWindow.load_bar.setValue(int(i * 100 / all_records_count))
                 if double_qso is not None:
-                    print("qso_from_file", double_qso)
-                    main.Adi_file(self.settingsDict["APP_VERSION"], self.settingsDict).record_dict_qso(double_qso, self.allCollumn, name_file="double_adi.adi")
+                    main.Adi_file(self.settingsDict["APP_VERSION"],
+                                  self.settingsDict).record_dict_qso(double_qso, self.allCollumn, name_file="double_adi.adi")
                 if bad_qso is not None:
-                    main.Adi_file(self.settingsDict["APP_VERSION"], self.settingsDict).record_dict_qso(bad_qso,
-                                                                                                       self.allCollumn,
-                                                                                                       name_file="bad_adi.adi")
-
-                #self.logWindow.load_bar.hide()
+                    main.Adi_file(self.settingsDict["APP_VERSION"],
+                                  self.settingsDict).record_dict_qso(bad_qso, self.allCollumn, name_file="bad_adi.adi")
                 self.logWindow.refresh_data()
                 message = f"Added QSO: {good_qso_count} \n"
                 message += f"Bad QSO: {len(bad_qso)} Incorect QSO_DATE or TIME_ON \n Bad records in /home/linlog/bad_adi.adi" if bad_qso != [] else ""
