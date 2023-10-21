@@ -2024,7 +2024,7 @@ class LogForm(QMainWindow):
         self.db = db
         self.db.search_in_db_like_signal.connect(self.olerlap_found_qso)
         self.diplomsCheck()
-        self.qrz_com_ready = False
+        self.qrz_com_ready = True
         self.rigctl_main_loop = None
         self.sender = None
         self.current_spot = None
@@ -4626,13 +4626,15 @@ class Db(QObject):
 
     def record_qso_to_base(self, qso_dict, mode=''):
         db_conn = self.connect_sql()
-        print(qso_dict['TIME_ON'], len(qso_dict['TIME_ON'].strip()))
+        # print(qso_dict['TIME_ON'], len(qso_dict['TIME_ON'].strip()))
+        # print("TIME_OFF in record_qso_to_base:", qso_dict.get("TIME_OFF"), len(qso_dict["TIME_OFF"].strip()))
         if len(qso_dict['TIME_ON'].strip()) == 4:
             time_format = qso_dict['TIME_ON'] + "00"
-            print("time_format:", time_format)
+            # print("time_format:", time_format)
         else:
             time_format = qso_dict['TIME_ON']
-        if qso_dict.get('TIME_OFF') == '' or qso_dict.get('TIME_OFF') is None:
+        if len(str(qso_dict.get('TIME_OFF')).strip()) == 0 or qso_dict.get('TIME_OFF') is None:
+            # print(f"Time_OFF none")
             time_off_format = time_format
         else:
             if len(qso_dict['TIME_OFF'].strip()) == 4:
