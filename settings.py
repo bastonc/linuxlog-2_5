@@ -1040,7 +1040,7 @@ class Menu (QWidget):
         #fileimport.setFilter()
         home_page = '~'
         fname = fileimport.getOpenFileName(self, 'Import adi file', home_page, "*.adi | *.ADI", options=options)[0]
-        time.sleep(0.150)
+        #time.sleep(0.150)
         if fname:
            # print(fname)
             self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
