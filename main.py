@@ -3269,6 +3269,7 @@ class LogForm(QMainWindow):
     def logSettings(self):
         # menu_window.show()
         self.menu = settings.Menu(
+            db,
             app_env,
             settingsDict,
             telnetCluster,
@@ -4522,6 +4523,15 @@ class Db(QObject):
             charset=self.db_charset,
             cursorclass=DictCursor
         )
+
+    def delete_all_qso(self):
+        query_string = f"DELETE FROM {self.settingsDict['my-call']} WHERE 1;"
+        sql_connect = self.connect_sql()
+        query = sql_connect.cursor()
+        query.execute(query_string)
+        result = sql_connect.commit()
+        return result
+
     def getQsoByCallPattern(self, patern):
         query = self.connect_sql().cursor()
         query.execute("SELECT * FROM " + self.settingsDict['my-call'] +

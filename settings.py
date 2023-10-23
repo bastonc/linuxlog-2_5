@@ -19,9 +19,10 @@ from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime
 
 class Menu (QWidget):
-    def __init__(self, app_env, settingsDict, telnetCluster, logForm, logSearch,
+    def __init__(self, db, app_env, settingsDict, telnetCluster, logForm, logSearch,
                  logWindow, internetSearch, tci_recv, tci_sndr, table_columns, parent=None):
         super(Menu, self).__init__(parent)
+        self.db_sql = db
         self.settingsDict = settingsDict
         self.label_style = "font: 12px;"
         self.initUI()
@@ -83,6 +84,8 @@ class Menu (QWidget):
         # Chekbox SWL
         self.swl_chekbox = QCheckBox("Enable SWL mode")
         self.swl_chekbox.setStyleSheet("color:" + self.settingsDict['color'] + "; font-size: 12px;")
+        self.clear_base_button = QPushButton("Clear base (DELETE all QSO)")
+        self.clear_base_button.clicked.connect(self.clear_base_qso)
         self.dlg = QColorDialog(self)
         self.back_color_label = QLabel("Window color")
         self.back_color_label.setStyleSheet(self.label_style)
@@ -174,6 +177,7 @@ class Menu (QWidget):
         self.call_lay.addWidget(self.call_label)
         self.call_lay.addWidget(self.call_input)
         self.call_lay.addWidget(self.swl_chekbox)
+        self.call_lay.addWidget(self.clear_base_button)
         self.general_tab.layout.addLayout(self.call_lay)
 
 
@@ -871,6 +875,16 @@ class Menu (QWidget):
         self.mainLayout.addLayout(self.button_panel)
         #self.mainLayout.addWidget(self.tab)
         self.setLayout(self.mainLayout)
+
+    def clear_base_qso(self):
+        confirm_dialog = QMessageBox.question(self, "WARNING",
+                                              "<p style='color: red; font-weight: bold'>DELETE all QSO from base</p>Are you shure?",
+                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm_dialog == QMessageBox.Yes:
+            delete_result = self.db_sql.delete_all_qso()
+            self.logWindow.refresh_data()
+            print(f"Delete {delete_result}")
+
 
     def context_country(self, point):
         context_country = QMenu()
