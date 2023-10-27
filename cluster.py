@@ -23,10 +23,10 @@ class ClusterThread(QThread):
         self.reciev_string = ""
 
     def connecting_telnet(self):
-        self.connect = Set_connect_thread(self.HOST, int(self.PORT))
-        self.connect.connect_socket_signal.connect(self.connect_ok)
-        self.connect.error_connect_signal.connect(self.connect_error)
-        self.connect.start()
+        self.connect_telnet = Set_connect_thread(self.HOST, int(self.PORT))
+        self.connect_telnet.connect_socket_signal.connect(self.connect_ok)
+        self.connect_telnet.error_connect_thread_signal.connect(self.connect_error)
+        self.connect_telnet.start()
 
     @pyqtSlot(object)
     def connect_ok(self, connect_object: socket.socket):

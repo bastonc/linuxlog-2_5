@@ -22,11 +22,11 @@ from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import QApplication, QProgressBar, QCheckBox, QMenu, QMessageBox, QAction, \
     QWidget, \
     QMainWindow, QTableWidget, QTabWidget, QTableWidgetItem, \
-    QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QPlainTextEdit
+    QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QPlainTextEdit, QFrame
 from PyQt5.QtCore import pyqtSignal, QObject, QEvent
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QThread
 from time import gmtime, strftime, localtime, sleep
 
@@ -320,9 +320,10 @@ class Log_Window_2(QWidget):
     def __init__(self):
         super().__init__()
         self.allCollumn = ['QSO_DATE', 'BAND', 'FREQ', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT', 'TIME_ON',
-                           'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id']
+                           'NAME', 'QTH', 'COMMENT', 'TIME_OFF', 'EQSL_QSL_SENT', 'CLUBLOG_QSO_UPLOAD_STATUS', 'id', 'select']  #todo add field, 'select' for multi select
         self.fill_flag = 0
         self.qso_last_id = None
+        self.select_id_list = []
         self.read_base_string = ReadStringDb(db=db, parent=self)
         self.read_base_string.dict_from_base.connect(self.fill_qso_table)
         self.read_base_string.fill_complite.connect(self.fill_complited)
@@ -376,6 +377,45 @@ class Log_Window_2(QWidget):
         self.refresh_button.setStyleSheet(button_style)
         self.refresh_button.clicked.connect(self.refresh_data_button)
 
+        # Multi delete button
+        self.multi_delete_qso_button = QPushButton("Delete")
+        self.multi_delete_qso_button.setFixedWidth(50)
+        self.multi_delete_qso_button.setFixedHeight(20)
+        self.multi_delete_qso_button.setStyleSheet(button_style)
+        self.multi_delete_qso_button.clicked.connect(self.multi_delete_qso)
+
+        # Multi export button
+        self.multi_export_button = QPushButton("Export to ADI")
+        self.multi_export_button.setFixedWidth(70)
+        self.multi_export_button.setFixedHeight(20)
+        self.multi_export_button.setStyleSheet(button_style)
+        self.multi_export_button.clicked.connect(self.multi_export_qso)
+
+        # Multi send eqsl button
+        self.multi_send_eqsl_button = QPushButton("Send eQSL")
+        self.multi_send_eqsl_button.setFixedWidth(60)
+        self.multi_send_eqsl_button.setFixedHeight(20)
+        self.multi_send_eqsl_button.setStyleSheet(button_style)
+        self.multi_send_eqsl_button.clicked.connect(self.multi_send_eqsl)
+
+        # Multi send to clublog button
+        self.multi_send_clublog_button = QPushButton("Send to ClubLog")
+        self.multi_send_clublog_button.setFixedWidth(80)
+        self.multi_send_clublog_button.setFixedHeight(20)
+        self.multi_send_clublog_button.setStyleSheet(button_style)
+        self.multi_send_clublog_button.clicked.connect(self.multi_send_clublog)
+
+        # Setup multi-function layer
+        self.multi_lay = QHBoxLayout()
+        self.multi_lay.addStretch()
+        self.multi_lay.addWidget(self.multi_export_button)
+        self.multi_lay.addWidget(self.multi_send_eqsl_button)
+        self.multi_lay.addWidget(self.multi_send_clublog_button)
+        self.multi_lay.addWidget(self.multi_delete_qso_button)
+        self.multi_lay.setAlignment(Qt.AlignRight)
+        self.multi_lay.setAlignment(Qt.AlignTop)
+        # self.multi_lay.setGeometry(QRect(0, 0, 300, 10))
+
         # QProgress Bar
         self.load_bar = QProgressBar()
         self.load_bar.setGeometry(30, 40, 200, 25)
@@ -388,6 +428,11 @@ class Log_Window_2(QWidget):
         self.menu_log_button = QHBoxLayout()
         self.menu_log_button.addWidget(self.refresh_button)
         self.menu_log_button.addWidget(self.load_bar)
+        self.multi_frame = QFrame()
+        self.multi_frame.setLayout(self.multi_lay)
+        self.multi_frame.setFixedHeight(30)
+        self.multi_frame.hide()
+        self.menu_log_button.addWidget(self.multi_frame)
         self.menu_log_button.setAlignment(Qt.AlignLeft)
 
         # Set layouts
@@ -1120,7 +1165,23 @@ class Log_Window_2(QWidget):
                 )
                 self.tableWidget_qso.item(row, col).setForeground(
                     QColor(settingsDict["color-table"]))
-
+            elif field == "select":
+                self.select_checkbox = QCheckBox()
+                self.select_checkbox.setStyleSheet("QCheckBox::indicator"
+                                                   "{ border : 1px solid " + settingsDict["color-table"] + "; "
+                                                   "width: 10px;"
+                                                   "height: 10px;"
+                                                   "border-radius: 3px; }"
+                                                   "QCheckBox::indicator:checked"
+                                                   "{border: 2px solid rgb(255, 90, 90);"
+                                                   "width: 10px;"
+                                                   "height: 10px;"
+                                                   "border-radius: 5px;"
+                                                   "background-color:" + settingsDict["color-table"] + ";"
+                                                    "}")
+                self.select_checkbox.stateChanged.connect(self.multi_select_cheked)
+                self.tableWidget_qso.setItem(row,col, QTableWidgetItem(""))
+                self.tableWidget_qso.setCellWidget(row, col, self.select_checkbox)
             else:
                 if dict_db[field] == "None":
                     dict_db[field] = ""
@@ -1137,6 +1198,43 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.item(row, col).setBackground(
                     QColor(settingsDict['eqsl-sent-color']))
         self.load_bar.setValue(round(row * 100 / len(self.allRows)))
+
+    def multi_select_cheked(self):
+        self.select_id_list.clear()
+        for row in range(self.tableWidget_qso.rowCount()):
+            if self.tableWidget_qso.cellWidget(row, self.tableWidget_qso.columnCount() - 1).isChecked():
+                self.select_id_list.append(self.tableWidget_qso.item(row, self.tableWidget_qso.columnCount() - 2).text())
+
+        if self.select_id_list:
+            self.show_action_buttons()
+        else:
+            self.hide_action_buttons()
+
+        print(f"id list {self.select_id_list}")
+        print("checked")
+
+    def show_action_buttons(self):
+        self.multi_frame.show()
+
+    def hide_action_buttons(self):
+        self.multi_frame.hide()
+
+    def multi_delete_qso(self):
+        ...
+    #todo multi delete
+
+    def multi_export_qso(self):
+        ...
+    #todo multi export
+
+    def multi_send_eqsl(self):
+        ...
+    #todo multi send eqsl
+
+    def multi_send_clublog(self):
+        ...
+    #todo multi send clublog
+
 
     @QtCore.pyqtSlot(name='fill_complited')
     def fill_complited(self):
@@ -2147,6 +2245,7 @@ class LogForm(QMainWindow):
     def fill_form(self, data):
         print(f"fill_form: {data}")
         if data is not None:
+            self.set_qrz_com_stat()
             if data["f_name"] is not None:
                 self.inputName.setText(data["f_name"])
             elif data["s_name"]:
