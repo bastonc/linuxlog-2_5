@@ -85,9 +85,10 @@ class QrzComApiThread(QThread):
             else:
                 self.error_connection.emit("Not 200 (HTTPS) from qrz.com")
         except BaseException:
+            #self.set_run_signal(False)
             self.error_connection.emit("Network error to qrz.com")
-        finally:
-            self.stop_flag = True
+        #finally:
+            #self.stop_flag = True
             #self.deleteLater()
     def get_actual_key(self):
         url = f"https://xmldata.qrz.com/xml/?username={self.username};password={self.password};agent=Linuxlog"
@@ -135,6 +136,7 @@ class QrzComApi(QObject):
     qrz_com_connect = pyqtSignal(bool)
 
     def __init__(self, username: str, password: str):
+        print(f"Starting qrz.com connecting")
         super().__init__()
         self.username = username
         self.password = password
@@ -169,6 +171,7 @@ class QrzComApi(QObject):
             self.qrz_com_thread.set_run_signal(False)
             std.std().message(xml_dom.getElementsByTagName('Error')[0].childNodes[0].data, "QRZ.COM ERROR")
         else:
+            print(f"set_key else {data}")
             self.key = xml_dom.getElementsByTagName('Key')[0].childNodes[0].data
             self.qrz_com_thread.set_key(self.key)
             self.qrz_com_connect.emit(True)
@@ -177,9 +180,8 @@ class QrzComApi(QObject):
     def error_connection(self, error_maessage):
         #self.stop_thread()
         print(f"qrz.com error: {error_maessage}")
+        #self.qrz_com_thread.set_run_signal(False)
         self.qrz_com_connect.emit(False)
-        print(
-            f"Error slot Worker thread running: {self.worker_thread.isRunning()}, finished: {self.worker_thread.isFinished()}")
 
     @staticmethod
     def xml_parse_info(xml_string):

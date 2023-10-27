@@ -11,8 +11,8 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
 class Set_connect_thread(QThread):
 
     connect_socket_signal = pyqtSignal(object)
+    error_connect_thread_signal = pyqtSignal(object)
     error_connect_signal = pyqtSignal(object)
-
     def __init__(self, host, port):
         super().__init__()
         self.HOST = host
@@ -36,7 +36,7 @@ class Set_connect_thread(QThread):
         # print("Get socket process")
         while self.try_connect:
             try:
-                # print(f"Try connected to {self.HOST}:{self.PORT} id thread: {id(self)}")
+                print(f"Try connected to {self.HOST}:{self.PORT} id thread: {id(self)}")
 
                 self.telnet_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 # self.telnet_socket.settimeout(5)
@@ -46,8 +46,8 @@ class Set_connect_thread(QThread):
                 break
             except:
                 #self.telnet_socket.close()
-                self.error_connect_signal.emit("Error")
-                # print(f"Except connect to {self.HOST}:{self.PORT}")
+                self.error_connect_thread_signal.emit("Error")
+                print(f"Except connection to {self.HOST}:{self.PORT}")
                 QThread.sleep(2)
                 continue
         #self.terminate()
@@ -203,7 +203,7 @@ class Rigctl_thread(QThread):
     def get_socket_connect(self):
         self.socket_connect = Set_connect_thread(self.HOST, self.PORT)
         self.socket_connect.connect_socket_signal.connect(self.connect_ok)
-        self.socket_connect.error_connect_signal.connect(self.not_connect)
+        self.socket_connect.error_connect_thread_signal.connect(self.not_connect)
         if self.socket_connect.get_status_socket() is not None:
             self.socket_connect.close_socket()
         self.socket_connect.start()
@@ -220,13 +220,13 @@ class Rigctl_thread(QThread):
     def not_connect(self, input_string):
         self.counter_repeat_connection += 1
         self.socket_connect.close_socket()
-        self.socket_connect.stop_tying_connect()
-        self.socket_connect.terminate()
+        #self.socket_connect.stop_tying_connect()
+        #self.socket_connect.terminate()
         self.socket = None
         #print(f"Failed connection to {self.HOST}:{self.PORT}. Socket: {self.socket}")
         #if self.counter_repeat_connection <= self.repeat_connection:
         #sleep(2)
-        self.get_socket_connect()
+        #self.get_socket_connect()
 
     def socket_shutdown(self):
         # print(f"SOCKET ID: {id(self.socket)}")
