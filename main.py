@@ -1220,7 +1220,12 @@ class Log_Window_2(QWidget):
         self.multi_frame.hide()
 
     def multi_delete_qso(self):
-        ...
+        for id in self.select_id_list:
+            print (f"select id: {id}")
+            db.delete_qso(id)
+        self.refresh_data()
+
+
     #todo multi delete
 
     def multi_export_qso(self):
@@ -1242,6 +1247,7 @@ class Log_Window_2(QWidget):
         self.tableWidget_qso.resizeRowsToContents()
         self.tableWidget_qso.resizeColumnsToContents()
         self.load_bar.hide()
+        self.hide_action_buttons()
         self.fill_flag = 0
 
     @QtCore.pyqtSlot(int, name="counter_qso")
@@ -1376,6 +1382,23 @@ class Log_Window_2(QWidget):
                 time = str(recordObject[self.allCollumn[col]])
                 time_formated = time[:2] + ":" + time[2:4] + ":" + time[4:]
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(time_formated))
+            elif self.allCollumn[col] == "select":
+                self.select_checkbox = QCheckBox()
+                self.select_checkbox.setStyleSheet("QCheckBox::indicator"
+                                                   "{ border : 1px solid " + settingsDict["color-table"] + "; "
+                                                   "width: 10px;"
+                                                   "height: 10px;"
+                                                   "border-radius: 3px; }"
+                                                   "QCheckBox::indicator:checked"
+                                                   "{border: 2px solid rgb(255, 90, 90);"
+                                                   "width: 10px;"
+                                                   "height: 10px;"
+                                                   "border-radius: 5px;"
+                                                   "background-color:" + settingsDict["color-table"] + ";"
+                                                   "}")
+                self.select_checkbox.stateChanged.connect(self.multi_select_cheked)
+                self.tableWidget_qso.setItem(0, col, QTableWidgetItem(""))
+                self.tableWidget_qso.setCellWidget(0, col, self.select_checkbox)
             else:
                 self.tableWidget_qso.setItem(0, col, QTableWidgetItem(str(recordObject[self.allCollumn[col]])))
             self.tableWidget_qso.item(0, col).setForeground(QColor(settingsDict['color-table']))
