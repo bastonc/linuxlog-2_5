@@ -61,7 +61,7 @@ source env/bin/activate
 echo -en '-> Install all dependency \n'
 if [[ "$dist_name" == "LinuxMint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
 then
-     sudo apt install python3-pip && sudo apt install python3-pyqt5 && pip3 install -r requirements.txt
+     sudo apt install python3-pip && sudo apt install python3-PyQt6 && pip3 install -r requirements.txt
 fi
 
 if [[ "$dist_name" == "Fedora Linux" || "$dist_name" == "Rad-hat" || "$dist_name" == "CentOS Linux" ]]

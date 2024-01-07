@@ -2,7 +2,7 @@ import re
 import socket
 from time import sleep
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot, QObject
 
 
 #from rigctl import Rigctl

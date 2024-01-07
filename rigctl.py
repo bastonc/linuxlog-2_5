@@ -1,6 +1,6 @@
 import socket
 
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 
 class Rigctl_sender(QObject):
 

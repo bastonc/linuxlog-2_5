@@ -32,7 +32,7 @@ then
     	sudo apt update
         sudo apt install -y git python3-pip # if git not installed - install it
         sudo apt install -y python3-venv &&
-        sudo apt install -y python3-pyqt5 &&
+        sudo apt install -y python3-PyQt6 &&
         sudo apt install -y mysql-server &&
         sudo systemctl enable mysql &&
         sudo systemctl start mysql &&

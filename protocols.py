@@ -1,5 +1,5 @@
 import std
-from PyQt5.QtCore import QObject
+from PyQt6.QtCore import QObject
 class Kenwood(QObject):
     def __init__(self, settingsDict, parent_window, serial_port):
         super().__init__()

@@ -5,10 +5,10 @@ import time
 from time import sleep
 
 import requests
-from PyQt5 import uic
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QPushButton, QCheckBox, QTableWidget
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot, QSize
+from PyQt6 import uic
+from PyQt6.QtWidgets import QWidget, QTableWidgetItem, QPushButton, QCheckBox, QTableWidget
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot, QSize
 from bs4 import BeautifulSoup
 
 import internetworker

@@ -4,7 +4,7 @@ import serial
 import time
 import std
 import protocols
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
 class Cat_reciever(QThread):
 

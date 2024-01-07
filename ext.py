@@ -1,10 +1,15 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import PyQt5.QtCore
-from PyQt5.QtWidgets import QWidget, QApplication, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, QPushButton, \
-    QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
-from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtCore import QObject
+#from PyQt6 import QtCore
+import signal
+
+
+from PyQt6 import QtCore
+from PyQt6.QtWidgets import QWidget, QApplication, QSizePolicy, QSpacerItem, QColorDialog, QTableWidget, \
+        QPushButton, \
+        QCalendarWidget, QLayout, QHBoxLayout, QLineEdit, QVBoxLayout, QLabel, QCheckBox, QTableWidgetItem, QComboBox
+from PyQt6.QtGui import QIcon, QColor
+from PyQt6.QtCore import QObject
 import settings
 import parse
 import json
@@ -146,7 +151,7 @@ class Diplom_form(QWidget):
         add_row = QPushButton("Add rows")
         add_row.clicked.connect(self.add_row)
         self.prefix_lay = QVBoxLayout()
-        self.prefix_lay.setAlignment(PyQt5.QtCore.Qt.AlignVCenter)
+        self.prefix_lay.setAlignment(QtCore.Qt.AlignVCenter)
         self.prefix_lay.addWidget(self.prefix_check_box)
         self.prefix_lay.addWidget(self.sps_text)
         self.sps_layout.addLayout(self.prefix_lay)
@@ -497,13 +502,13 @@ class diplom:
                 # print("Found QSO(s) in base", found_records_in_base_list)
                 if len(found_records_in_base_list) == 0:
                     for i in range(count_sps_call):
-                        if (mode == 'all'):
+                        if (self.decode_data[i]['mode'] == 'all'):
                             if call_dict['mode'] == self.decode_data[i]['mode'] \
                                     and call_dict['call'] == self.decode_data[i]['call']:
                                 return True
                             else:
                                 return False
-                        if (mode == 'prefix'):
+                        if (self.decode_data[i]['mode'] == 'prefix'):
                             if call_dict['mode'] == self.decode_data[i]['mode'] \
                                     and call_dict['call'].find(self.decode_data[i]['call']) != -1:
                                 return True
@@ -536,11 +541,11 @@ class diplom:
                 for i in range(count_sps_call):
                     # print("call_dict['mode']", call_dict['mode'], "self.decode_data[i]['mode']",
                     #  self.decode_data[i]['mode'])
-                    if (mode == 'all'):
+                    if (self.decode_data[i]['mode'] == 'all'):
                         if call_dict['mode'] == self.decode_data[i]['mode'] \
                                 and call_dict['call'] == self.decode_data[i]['call']:
                             mode_status = 1
-                    if (mode == 'prefix'):
+                    if (self.decode_data[i]['mode'] == 'prefix'):
                         if call_dict['mode'] == self.decode_data[i]['mode'] \
                                 and call_dict['call'].find(self.decode_data[i]['call']) != -1:
                             mode_status = 1
