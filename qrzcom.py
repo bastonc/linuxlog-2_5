@@ -2,7 +2,7 @@ import xml.dom.minidom
 from time import sleep
 
 import requests
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
 import std
 

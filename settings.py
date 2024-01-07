@@ -7,15 +7,15 @@ import parse
 import shutil
 import std
 import json
-from PyQt5.QtWidgets import QMenu, QApplication, QAction, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
+from PyQt6.QtWidgets import QMenu, QApplication, QWidget, QMainWindow, QTableView, QTableWidget, QTableWidgetItem, \
     QTextEdit, \
     QLineEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QComboBox, QFrame, QSizePolicy
-from PyQt5 import QtCore
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import  QWidget, QMessageBox, QLineEdit, QPushButton, QLabel, QColorDialog, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QFileDialog
-from PyQt5.QtGui import QIcon, QFocusEvent, QPixmap, QTextTableCell, QStandardItemModel, QPalette, QColor
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtCore import QThread
+from PyQt6 import QtCore
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtWidgets import  QWidget, QMessageBox, QLineEdit, QPushButton, QLabel, QColorDialog, QVBoxLayout, QHBoxLayout, QComboBox, QCheckBox, QFileDialog
+from PyQt6.QtGui import QIcon, QFocusEvent, QPixmap, QTextTableCell, QStandardItemModel, QPalette, QColor, QAction
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtCore import QThread
 from time import gmtime, strftime, localtime
 
 class Menu (QWidget):
@@ -122,7 +122,7 @@ class Menu (QWidget):
 
         # Fields DB
         self.label_db = QLabel()
-        self.label_db.setAlignment(Qt.AlignVCenter)
+        self.label_db.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.label_db.setStyleSheet(style+"text-align: center;")
         self.label_db.setText("Enter fields for MySQL database")
 
@@ -173,7 +173,7 @@ class Menu (QWidget):
 
         # setup all elements to vertical lay
         self.call_lay = QHBoxLayout()
-        self.call_lay.setAlignment(Qt.AlignCenter)
+        self.call_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.call_lay.addWidget(self.call_label)
         self.call_lay.addWidget(self.call_input)
         self.call_lay.addWidget(self.swl_chekbox)
@@ -187,7 +187,7 @@ class Menu (QWidget):
 
         self.horizontal_lay = QHBoxLayout()
         self.color_lay = QVBoxLayout()
-        self.color_lay.setAlignment(Qt.AlignCenter)
+        self.color_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.color_lay.addWidget(self.back_color_label)
         self.color_lay.addWidget(self.back_color_input)
         self.color_lay.addWidget(self.text_color_label)
@@ -198,7 +198,7 @@ class Menu (QWidget):
         self.color_lay.addWidget(self.text_form_color_button)
         self.horizontal_lay.addLayout(self.color_lay)
         self.db_lay = QVBoxLayout()
-        self.db_lay.setAlignment(Qt.AlignCenter)
+        self.db_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Setup label db
         self.db_lay.addWidget(self.label_db)
@@ -293,13 +293,13 @@ class Menu (QWidget):
         self.button_and_combo.addWidget(self.cluster_start_calibrate_button)
         self.combo_lay = QVBoxLayout()
         self.call_H = QHBoxLayout()
-        self.call_H.setAlignment(Qt.AlignRight)
+        self.call_H.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.cluster_call_label = QLabel("Call:")
 
         self.cluster_combo_call = QComboBox()
 
         self.freq_H = QHBoxLayout()
-        self.freq_H.setAlignment(Qt.AlignRight)
+        self.freq_H.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.cluster_freq_label = QLabel("Freq:")
         self.cluster_combo_freq = QComboBox()
         self.call_H.addWidget(self.cluster_call_label)
@@ -381,13 +381,13 @@ class Menu (QWidget):
 
         self.filters_lay = QVBoxLayout()
         self.filters_lay.addSpacing(10)
-        self.filters_lay.setAlignment(Qt.AlignCenter)
+        self.filters_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.filters_lay.addLayout(self.filters_Hlay)
         self.filters_lay.addWidget(self.filter_message_label)
         self.filters_lay.addSpacing(10)
         Separador = QFrame()
-        Separador.setFrameShape(QFrame.HLine)
-        Separador.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        Separador.setFrameShape(QFrame.Shape.HLine)
+        Separador.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         Separador.setLineWidth(1)
         self.filters_lay.addWidget(Separador)
 
@@ -411,14 +411,14 @@ class Menu (QWidget):
     # create TCI Tab
 
         self.tci_enable_combo_lay = QHBoxLayout()
-        self.tci_enable_combo_lay.setAlignment(Qt.AlignCenter)
+        self.tci_enable_combo_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.tci_enable_combo = QCheckBox("TCI Enable")
         self.tci_enable_combo.setStyleSheet("QWidget {"+self.settingsDict['color']+"}")
         self.tci_enable_combo_lay.addWidget(self.tci_enable_combo)
 
         # Layout and checkbox Rigctl
         self.rigctl_enable_combo_lay = QHBoxLayout()
-        self.rigctl_enable_combo_lay.setAlignment(Qt.AlignCenter)
+        self.rigctl_enable_combo_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.rigctl_enable_combo = QCheckBox("RIGctl Enable")
         self.rigctl_enable_combo.setStyleSheet("QWidget {" + self.settingsDict['color'] + "}")
         self.rigctl_enable_combo_lay.addWidget(self.rigctl_enable_combo)
@@ -530,7 +530,7 @@ class Menu (QWidget):
         self.baud_cat_combo.setStyleSheet(style)
         self.baud_cat_combo.addItems(['1200', '2400','4800', '9600', '19200', '38400', '57600', '115200'])
         self.baud_cat_lay = QHBoxLayout()                                       # BAUD lay
-        self.baud_cat_lay.setAlignment(Qt.AlignCenter)
+        self.baud_cat_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.baud_cat_lay.addWidget(self.baud_cat_label)
         self.baud_cat_lay.addWidget(self.baud_cat_combo)
         # Cat parity
@@ -543,7 +543,7 @@ class Menu (QWidget):
         self.parity_cat_combo.setStyleSheet(style)
         self.parity_cat_combo.addItems(['None', 'Odd', 'Even', 'Mark', 'Space'])
         self.parity_cat_lay = QHBoxLayout()                                     # PARITY lay
-        self.parity_cat_lay.setAlignment(Qt.AlignCenter)
+        self.parity_cat_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.parity_cat_lay.addWidget(self.parity_cat_label)
         self.parity_cat_lay.addWidget(self.parity_cat_combo)
         # Cat Data
@@ -556,7 +556,7 @@ class Menu (QWidget):
         self.data_cat_combo.setStyleSheet(style)
         self.data_cat_combo.addItems(['5', '6', '7', '8'])
         self.data_cat_lay = QHBoxLayout()                                       # DATA lay
-        self.data_cat_lay.setAlignment(Qt.AlignCenter)
+        self.data_cat_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.data_cat_lay.addWidget(self.data_cat_label)
         self.data_cat_lay.addWidget(self.data_cat_combo)
         # Cat Stop Bit
@@ -569,7 +569,7 @@ class Menu (QWidget):
         self.stop_cat_combo.setStyleSheet(style)
         self.stop_cat_combo.addItems(['1', '1.5', '2'])
         self.stop_cat_lay = QHBoxLayout()                                       # Stop lay
-        self.stop_cat_lay.setAlignment(Qt.AlignCenter)
+        self.stop_cat_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.stop_cat_lay.addWidget(self.stop_cat_label)
         self.stop_cat_lay.addWidget(self.stop_cat_combo)
         # Cat protocol
@@ -582,12 +582,12 @@ class Menu (QWidget):
         self.protocol_cat_combo.setStyleSheet(style)
         self.protocol_cat_combo.addItems(['ExpertSDR', 'Kenwood', 'Icom - not tested'])
         self.protocol_cat_lay = QHBoxLayout()                                   # Protocol lay
-        self.protocol_cat_lay.setAlignment(Qt.AlignCenter)
+        self.protocol_cat_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.protocol_cat_lay.addWidget(self.protocol_cat_label)
         self.protocol_cat_lay.addWidget(self.protocol_cat_combo)
 
         self.cat_layer = QVBoxLayout()
-        self.cat_layer.setAlignment(Qt.AlignCenter)
+        self.cat_layer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.cat_layer.addWidget(self.cat_enable)
         self.cat_layer.addLayout(self.port_cat_lay)
         self.cat_layer.addLayout(self.baud_cat_lay)
@@ -601,7 +601,7 @@ class Menu (QWidget):
 
     # Create io_tab
         self.io_tab_lay = QVBoxLayout()
-        self.io_tab_lay.setAlignment(Qt.AlignCenter)
+        self.io_tab_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.import_button = QPushButton("Import ADI")
         self.import_button.setFixedSize(150, 30)
         self.import_button.clicked.connect(self.import_adi)
@@ -622,17 +622,17 @@ class Menu (QWidget):
     # Create Services tab
 
         self.service_tab = QVBoxLayout()
-        self.service_tab.setAlignment(Qt.AlignCenter)
+        self.service_tab.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # create elements form
         self.eqsl_lay = QVBoxLayout()
-        self.eqsl_lay.setAlignment(Qt.AlignLeft)
+        self.eqsl_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.eqsl_label = QLabel("eQSL")
         self.eqsl_label.setStyleSheet(self.style_headers)
 
         self.eqsl_lay.addWidget(self.eqsl_label)
         self.eqsl_lay.addSpacing(10)
-        self.eqsl_lay.setAlignment(Qt.AlignCenter)
+        self.eqsl_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.eqsl_activate = QHBoxLayout()
         self.eqsl_chekBox = QCheckBox("Auto sent eQSL after QSO")
         self.eqsl_chekBox.setStyleSheet("color:" + self.settingsDict['color'] + "; font-size: 12px; border-color: white;")
@@ -644,7 +644,7 @@ class Menu (QWidget):
 
 
         self.login = QHBoxLayout()
-        self.login.setAlignment(Qt.AlignLeft)
+        self.login.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.eqsl_login = QLabel("Login:")
         self.eqsl_login.setStyleSheet(style)
         self.eqsl_login.setMaximumWidth(75)
@@ -655,7 +655,7 @@ class Menu (QWidget):
         self.login.addWidget(self.eqsl_login)
         #self.login.addSpacing(50)
         self.password = QHBoxLayout()
-        self.password.setAlignment(Qt.AlignLeft)
+        self.password.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.eqsl_pass_label = QLabel("Password:")
         self.eqsl_pass_label.setStyleSheet(style)
         self.eqsl_pass_label.setMaximumWidth(75)
@@ -677,7 +677,7 @@ class Menu (QWidget):
         self.color_button_eqsl.setFixedHeight(40)
         self.color_button_eqsl.clicked.connect(self.select_eqsl_color)
         self.color_button_layer=QHBoxLayout()
-        self.color_button_layer.setAlignment(Qt.AlignLeft)
+        self.color_button_layer.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.color_button_layer.addWidget(self.color_label_eqsl)
         self.color_button_layer.addWidget(self.color_button_eqsl)
         self.eqsl_lay.addLayout(self.color_button_layer)
@@ -685,9 +685,9 @@ class Menu (QWidget):
 
         # Create CLub log layer
         self.clublog_lay = QVBoxLayout()
-        self.clublog_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.clublog_login_lay = QHBoxLayout()
-        self.clublog_login_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_login_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.clublog_login_label = QLabel("Login:")
         self.clublog_login_label.setFixedWidth(75)
         self.clublog_login_label.setStyleSheet(style)
@@ -700,7 +700,7 @@ class Menu (QWidget):
 
         # set in pass lay
         self.clublog_pass_lay = QHBoxLayout()
-        self.clublog_pass_lay.setAlignment(Qt.AlignLeft)
+        self.clublog_pass_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.clublog_pass_label = QLabel("Password:")
         self.clublog_pass_label.setFixedWidth(75)
         self.clublog_pass_label.setStyleSheet(style)
@@ -720,8 +720,8 @@ class Menu (QWidget):
         self.clublog_label = QLabel("ClubLog service")
         self.clublog_label.setStyleSheet(self.style_headers)
         spacer = QFrame()
-        spacer.setFrameShape(QFrame.HLine)
-        spacer.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer.setFrameShape(QFrame.Shape.HLine)
+        spacer.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         spacer.setContentsMargins(1, 5, 1, 10)
         spacer.setLineWidth(1)
         self.clublog_lay.addWidget(spacer)
@@ -734,9 +734,9 @@ class Menu (QWidget):
         # Create qrz.com lay
         self.qrz_com_lay = QVBoxLayout()
         self.qrz_com_lay = QVBoxLayout()
-        self.qrz_com_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.qrz_com_login_lay = QHBoxLayout()
-        self.qrz_com_login_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_login_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.qrz_com_login_label = QLabel("Login:")
         self.qrz_com_login_label.setFixedWidth(75)
         self.qrz_com_login_label.setStyleSheet(style)
@@ -749,7 +749,7 @@ class Menu (QWidget):
 
         # set in pass lay
         self.qrz_com_pass_lay = QHBoxLayout()
-        self.qrz_com_pass_lay.setAlignment(Qt.AlignLeft)
+        self.qrz_com_pass_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.qrz_com_pass_label = QLabel("Password:")
         self.qrz_com_pass_label.setFixedWidth(75)
         self.qrz_com_pass_label.setStyleSheet(style)
@@ -770,8 +770,8 @@ class Menu (QWidget):
         self.qrz_com_label = QLabel("QRZ.com service")
         self.qrz_com_label.setStyleSheet(self.style_headers)
         spacer = QFrame()
-        spacer.setFrameShape(QFrame.HLine)
-        spacer.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer.setFrameShape(QFrame.Shape.HLine)
+        spacer.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         spacer.setContentsMargins(1,5,1,10)
         spacer.setLineWidth(1)
         self.qrz_com_lay.addWidget(spacer)
@@ -793,8 +793,8 @@ class Menu (QWidget):
         self.country_table.setStyleSheet(formstyle)
         self.country_table.setColumnCount(4)
         self.country_table.setHorizontalHeaderLabels(['Country', 'Prefixes', 'ITU', 'CQ-zone'])
-        self.country_table.sortByColumn(0, Qt.AscendingOrder)
-        self.country_table.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.country_table.sortByColumn(0, Qt.SortOrder.AscendingOrder)
+        self.country_table.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.country_table.customContextMenuRequested.connect(self.context_country)
         self.pb_add_country = QPushButton()
         self.pb_add_country.setStyleSheet(style)
@@ -815,7 +815,7 @@ class Menu (QWidget):
         self.country_lay = QHBoxLayout()
         self.country_lay.addWidget(self.country_found_label)
         self.country_lay.addWidget(self.country_found)
-        self.country_lay.setAlignment(Qt.AlignLeft)
+        self.country_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.pfx_found_label = QLabel()
         self.pfx_found_label.setFixedWidth(20)
@@ -832,7 +832,7 @@ class Menu (QWidget):
 
         self.pfx_lay.addWidget(self.pfx_found_label)
         self.pfx_lay.addWidget(self.pfx_found)
-        self.pfx_lay.setAlignment(Qt.AlignLeft)
+        self.pfx_lay.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.search_go_bt = QPushButton()
         self.search_go_bt.setStyleSheet(style)

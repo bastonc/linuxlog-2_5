@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMessageBox, QLineEdit, QWidget, QLabel, QPushButton, \
+from PyQt6.QtWidgets import QMessageBox, QLineEdit, QWidget, QLabel, QPushButton, \
     QVBoxLayout, QApplication
-from PyQt5 import QtCore
+from PyQt6 import QtCore
 
 class std:
     def __init__(self):
@@ -123,8 +123,8 @@ class std:
         message.setWindowTitle("Information")
         message.setText(text_short)
         message.setInformativeText(detail_text)
-        message.setStandardButtons(QMessageBox.Ok)
-        message.exec_()
+        message.setStandardButtons(QMessageBox.StandardButton.Ok)
+        message.exec()
 
     def std_time(self, string_time):
         time_formated = string_time

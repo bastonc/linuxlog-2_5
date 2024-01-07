@@ -2,7 +2,7 @@ import re
 import socket
 from time import sleep
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from threads_lib import Set_connect_thread
 

@@ -10,16 +10,17 @@ import shutil
 import os
 from os.path import expanduser
 from bs4 import BeautifulSoup
-from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem
+from PyQt6.QtGui import QPixmap, QColor
 # import urllib.request
 # import urllib.parse
 from urllib.request import urlretrieve
 from urllib.parse import quote
-from PyQt5.QtCore import QThread
-from PyQt5 import QtCore
+from PyQt6.QtCore import QThread
+from PyQt6 import QtCore
+import PyQt6.QtCore
 
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QApplication
+from PyQt6.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout, QApplication
 import main
 
 
@@ -42,7 +43,7 @@ class internetWorker(QThread):
             pixmap = QPixmap(info_from_internet_array.get('img'))
             pixmap_resized = pixmap.scaled(int(self.settings['search-internet-width']) - 20,
                                            int(self.settings['search-internet-height']) - 20,
-                                           QtCore.Qt.KeepAspectRatio)
+                                           QtCore.Qt.AspectRatioMode.KeepAspectRatio)
 
             self.internet_search_window.labelImage.setPixmap(pixmap_resized)
             # return info_from_internet_array

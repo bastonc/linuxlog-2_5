@@ -7,9 +7,9 @@ import time
 import websocket
 import std
 import traceback
-from PyQt5.QtCore import QThread,  pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QApplication
-from PyQt5 import QtCore
+from PyQt6.QtCore import QThread,  pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QApplication
+from PyQt6 import QtCore
 
 
 
