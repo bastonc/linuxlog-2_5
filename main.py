@@ -3351,10 +3351,15 @@ class LogForm(QMainWindow):
         logForm.close()
         telnetCluster.close()
         try:
-            if self.cw_machine.isEnabled():
+            if self.cw_machine.isVisible():
+                self.settings_dict["cw"] = "True"
                 self.cw_machine.close()
-        except Exception:
-            pass
+            else:
+                print("closed CW machine")
+                self.settings_dict["cw"] = "False"
+                settings_file.save_all_settings(self, self.settings_dict)
+        except BaseException:
+            ...
         try:
             if self.menu.isEnabled():
                 self.menu.before_close_save()
@@ -3988,7 +3993,7 @@ class CW(QWidget):
         self.settings_dict['cw-top'] = str(self.geometry().top())
         self.settings_dict['cw-width'] = str(self.geometry().width())
         self.settings_dict['cw-height'] = str(self.geometry().height())
-        self.settings_dict['cw'] = str(self.isVisible())
+        #self.settings_dict['cw'] = "False"
         settings_file.save_all_settings(self, self.settings_dict)
 
     def closeEvent(self, event):
