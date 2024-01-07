@@ -3727,7 +3727,7 @@ class CW(QWidget):
 
     def initUI(self):
         if settingsDict['cw-top'] == "":
-            desktop = QApplication.desktop()
+            desktop = QApplication.primaryScreen().availableGeometry()
             # self.setGeometry(100,100,210,100)
             width_coordinate = (desktop.width() / 2) - 100
             height_coordinate = (desktop.height() / 2) - 100
@@ -4477,7 +4477,7 @@ class hello_window(QWidget):
     def initUI(self):
         self.style_form = "background-color: " + settingsDict['form-background'] + "; color: " + settingsDict[
             'color-table'] + ";"
-        desktop = QApplication.desktop()
+        desktop = QApplication.primaryScreen().availableGeometry()
         width_coordinate = (desktop.width() / 2) - 200
         height_coordinate = (desktop.height() / 2) - 125
         # print("hello_window: ", desktop.width(), width_coordinate)
