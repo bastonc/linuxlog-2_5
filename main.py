@@ -459,30 +459,30 @@ class Log_Window_2(QWidget):
 
     def mousePressEvent(self, event):
 
-        if event.button() == 1:
-            self.offset = event.pos()
-            self.flag_button = "right"
-        if event.button() == 2:
-            self.resize_wnd = event.pos()
-            self.flag_button = "left"
+        if event.button() == Qt.MouseButton.RightButton:
             self.x = self.width()
             self.y = self.height()
+            self.resize_wnd = event.pos()
+            self.flag_button = "right"
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.offset = event.pos()
+            self.flag_button = "left"
 
         print(event.button())
 
     def mouseMoveEvent(self, event):
-        if self.flag_button == "right":
-            x = event.globalX()
-            y = event.globalY()
+        if self.flag_button == "left":
+            x = int(event.globalPosition().x())
+            y = int(event.globalPosition().y())
             x_w = self.offset.x()
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
-        if self.flag_button == "left":
+        if self.flag_button == "right":
             # x = self.width()
             # y = self.height()
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
-            print(event.globalY(), x_r, self.resize_wnd.x())
+            print(event.globalPosition().y(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
     def append_qso(self):
@@ -1528,23 +1528,24 @@ class LogSearch(QWidget):
         self.tableWidget.setRowCount(0)
 
     def mousePressEvent(self, event):
-        if event.button() == 1:
-            self.offset = event.pos()
-            self.flag_button = "right"
-        if event.button() == 2:
+        if event.button() == Qt.MouseButton.RightButton:
             self.resize_wnd = event.pos()
-            self.flag_button = "left"
             self.x = self.width()
             self.y = self.height()
+            self.flag_button = "right"
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.offset = event.pos()
+            self.flag_button = "left"
+
 
     def mouseMoveEvent(self, event):
-        if self.flag_button == "right":
-            x = event.globalX()
-            y = event.globalY()
+        if self.flag_button == "left":
+            x = int(event.globalPosition().x())
+            y = int(event.globalPosition().y())
             x_w = self.offset.x()
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
-        if self.flag_button == "left":
+        if self.flag_button == "right":
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
             self.resize(self.x - x_r, self.y - y_r)
@@ -3022,30 +3023,31 @@ class LogForm(QMainWindow):
 
     def mousePressEvent(self, event):
 
-        if event.button() == 1:
-            self.offset = event.pos()
-            self.flag_button = "right"
-        if event.button() == 2:
+        if event.button() == Qt.MouseButton.RightButton:
             self.resize_wnd = event.pos()
-            self.flag_button = "left"
             self.x = self.width()
             self.y = self.height()
+            self.flag_button = "right"
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.offset = event.pos()
+            self.flag_button = "left"
+
 
         print(event.button())
 
     def mouseMoveEvent(self, event):
-        if self.flag_button == "right":
-            x = event.globalX()
-            y = event.globalY()
+        if self.flag_button == "left":
+            x = int(event.globalPosition().x())
+            y = int(event.globalPosition().y())
             x_w = self.offset.x()
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
-        if self.flag_button == "left":
+        if self.flag_button == "right":
             # x = self.width()
             # y = self.height()
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
-            print(event.globalY(), x_r, self.resize_wnd.x())
+            print(event.pos().y(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
     def full_clear_form(self):
@@ -4127,30 +4129,31 @@ class TelnetCluster(QWidget):
 
     def mousePressEvent(self, event):
 
-        if event.button() == 1:
-            self.offset = event.pos()
-            self.flag_button = "right"
-        if event.button() == 2:
+        if event.button() == Qt.MouseButton.RightButton:
             self.resize_wnd = event.pos()
-            self.flag_button = "left"
             self.x = self.width()
             self.y = self.height()
+            self.flag_button = "right"
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.offset = event.pos()
+            self.flag_button = "left"
+
 
         print(event.button())
 
     def mouseMoveEvent(self, event):
-        if self.flag_button == "right":
-            x = event.globalX()
-            y = event.globalY()
+        if self.flag_button == "left":
+            x = int(event.globalPosition().x())
+            y = int(event.globalPosition().y())
             x_w = self.offset.x()
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
-        if self.flag_button == "left":
+        if self.flag_button == "right":
             # x = self.width()
             # y = self.height()
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
-            print(event.globalY(), x_r, self.resize_wnd.x())
+            print(event.globalPosition().y(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
     def parsing_telnet_string(self, telnet_string):
@@ -4412,30 +4415,31 @@ class InternetSearch(QWidget):
 
     def mousePressEvent(self, event):
 
-        if event.button() == 1:
-            self.offset = event.pos()
-            self.flag_button = "right"
-        if event.button() == 2:
+        if event.button() == Qt.MouseButton.RightButton:
             self.resize_wnd = event.pos()
-            self.flag_button = "left"
             self.x = self.width()
             self.y = self.height()
+            self.flag_button = "right"
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.offset = event.pos()
+            self.flag_button = "left"
+
 
         print(event.button())
 
     def mouseMoveEvent(self, event):
-        if self.flag_button == "right":
-            x = event.globalX()
-            y = event.globalY()
+        if self.flag_button == "left":
+            x = int(event.globalPosition().x())
+            y = int(event.globalPosition().y())
             x_w = self.offset.x()
             y_w = self.offset.y()
             self.move(x - x_w, y - y_w)
-        if self.flag_button == "left":
+        if self.flag_button == "right":
             # x = self.width()
             # y = self.height()
             x_r = self.resize_wnd.x() - event.pos().x()
             y_r = self.resize_wnd.y() - event.pos().y()
-            print(event.globalY(), x_r, self.resize_wnd.x())
+            print(event.globalPosition().y(), x_r, self.resize_wnd.x())
             self.resize(self.x - x_r, self.y - y_r)
 
     def changeEvent(self, event):
