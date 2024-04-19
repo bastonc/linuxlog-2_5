@@ -160,7 +160,7 @@ class wnd_what(QWidget):
         self.initUI()
 
     def initUI(self):
-        desktop = QApplication.desktop()
+        desktop = QApplication.primaryScreen().availableGeometry()
         width_coordinate = (desktop.width() / 2 - 75)
         height_coordinate = (desktop.height() / 2) - 40
         self.setGeometry(round(width_coordinate), round(height_coordinate), 300, 80)

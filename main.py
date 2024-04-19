@@ -3095,7 +3095,8 @@ class LogForm(QMainWindow):
     def changed_mode(self):
         self.comboMode.clearFocus()
         self.rememberMode(self.comboMode.currentText())
-        self.sender()
+        if self.sender is not None:
+            self.sender()
 
     def rememberMode(self, text):
         # print(self.comboMode.currentText())
