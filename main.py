@@ -645,7 +645,7 @@ class Log_Window_2(QWidget):
             context_menu.addAction(delete_record)
             # context_menu.addAction(send_to_clublog)
             context_menu.addMenu(clublog_menu)
-            context_menu.exec_(self.tableWidget_qso.mapToGlobal(point))
+            context_menu.exec(self.tableWidget_qso.mapToGlobal(point))
 
     # print(self.tableWidget_qso.mapToGlobal(point))
 
@@ -1384,7 +1384,7 @@ class Log_Window_2(QWidget):
                 self.tableWidget_qso.setItem(
                     0,
                     col,
-                    self.protectionItem(str(last_id[0]['LAST_INSERT_ID()']), Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    self.protectionItem(str(last_id[0]['LAST_INSERT_ID()']), Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 )
             elif header == 'QSO_DATE':
                 date = str(recordObject[self.allCollumn[col]])
@@ -2157,7 +2157,7 @@ class LogForm(QMainWindow):
         self.db = db
         self.db.search_in_db_like_signal.connect(self.olerlap_found_qso)
         self.diplomsCheck()
-        self.qrz_com_ready = True
+        self.qrz_com_ready = False
         self.rigctl_main_loop = None
         self.sender = None
         self.current_spot = None
@@ -3271,7 +3271,7 @@ class LogForm(QMainWindow):
             except BaseException:
                 print("LogFormInput:_> Can't connect to TCI server (set spot)")
 
-            logForm.inputCall.setFocus(True)
+            logForm.inputCall.setFocus()
 
             if settingsDict['mode-swl'] == 'enable':
                 self.inputCall.clear()
