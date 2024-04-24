@@ -200,7 +200,7 @@ class Eqsl_services(QtCore.QObject):
             self.start_sending()
 
     def enter_auth_data(self):
-        desktop = QApplication.desktop()
+        desktop = QApplication.primaryScreen().availableGeometry()
         self.window_auth = QWidget()
         self.window_auth.setGeometry(int(desktop.width() / 2) - 100, int(desktop.height() / 2) - 50, 200, 100)
         self.window_auth.setWindowTitle("Enter eQSL auth data")

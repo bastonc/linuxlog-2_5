@@ -30,6 +30,9 @@ class tci_connect:
                                          log_form=self.log_form, settingsDict=self.settingsDict)
         self.tci_reciever.set_flag("run")
         self.tci_reciever.start()
+        # self.tci_reciever_stream_port = Tci_reciever(host + ":" + "50040", log_form=self.log_form, settingsDict=self.settingsDict)
+        # self.tci_reciever_stream_port.set_flag("run")
+        # self.tci_reciever_stream_port.start()
 
     def stop_tci(self):
         try:
@@ -63,6 +66,12 @@ class Tci_reciever(QThread):
     def get_mode(self):
         return self.mode
 
+    def tci_send_command(self, string_command):
+        try:
+            self.ws.send(string_command)
+        except BaseException:
+            print(f"Error send command: {string_command}")
+
     def run(self):
 
         while self.flag == "run":
@@ -85,11 +94,22 @@ class Tci_reciever(QThread):
         while self.flag == "run":
             try:
                 #print("Connect to ")
+                #
                 reciever = self.ws.recv()
+                #print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 if reciever != old_reciever:
                     # print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
                     # reciev vfo (freq)
+                    if tci_string[0] == "ready;":
+                        #print("send RX_SENSOR_ENABLE")
+                        #if bool(self.settingsDict["rs-from-tci"]):
+                         self.tci_send_command("RX_SENSORS_ENABLE:" + self.settingsDict["rs-from-tci"] + "," + self.settingsDict["rs-time-update"] + ";")
+
+                    if tci_string[0] == "rx_channel_sensors":
+                        dBm = str(tci_string[1]).split(",")[-1].replace(";","")
+                        #print(f"dBm: {dBm}")
+                        self.log_form.set_rs_s(dBm)
 
                     if tci_string[0] == 'trx':
                         #self.tx = 'Enable'
@@ -180,13 +200,15 @@ class Tci_reciever(QThread):
 
 class Tci_sender (QtCore.QObject):
 
-    def __init__(self, uri, tx_flag, log_form):
+    def __init__(self, uri, tx_flag, log_form, settings_dict):
         super().__init__()
         self.log_form = log_form
+        self.settings_dict = settings_dict
         self.tx_flag = tx_flag
         self.uri = uri
         self.ws = websocket.WebSocket()
         self.web_socket_init(self.uri)
+        #self.rs_from_tci()
 
     def web_socket_init(self, uri):
         try:
@@ -208,9 +230,21 @@ class Tci_sender (QtCore.QObject):
     def send_command(self, string_command):
         if self.tx_flag != "Enable":
             try:
+                print(f"SEND COMMAND TO TCI: {string_command}")
                 self.ws.send(string_command)
             except Exception:
+                print(f"Exception send command: {string_command}")
                 pass
+
+    def rs_from_tci(self):
+        print(f"rs-from-tci: {self.settings_dict["rs-from-tci"], type(self.settings_dict["rs-from-tci"])}")
+        if bool(self.settings_dict["rs-from-tci"]):
+            if 30 < int(self.settings_dict["rs-time-update"]) < 1000:
+                self.send_command("RX_SENSORS_ENABLE:true;")
+                print(f"time_update: {self.settings_dict["rs-time-update"]}")
+            else:
+                print(f"time_update not in range (30 - 1000): {self.settings_dict["rs-time-update"]}")
+
 
     def set_freq(self, freq):
         print("set_freq:", freq)
