@@ -2418,7 +2418,59 @@ class LogForm(QMainWindow):
             tci_sndr.update_tx_tci()
 
     def sendMesageToTCI(self, message):
-        tci_sndr.send_command(message)
+        ...
+        #tci_recv.tci_reciever.tci_send_command("RX_SENSORS_ENABLE:true,500;")
+        #tci_sndr.send_command(message)
+
+    def dBm_to_S(self, dBm):
+        if float(dBm) <= (-121):
+            return "1"
+        elif (-121) <= float(dBm) < (-115):
+            return "1"
+        elif (-115) <= float(dBm) < (-109):
+            return "2"
+        elif (-109) <= float(dBm) < (-103):
+            return "3"
+        elif (-103) <= float(dBm) < (-97):
+            return "4"
+        elif (-97) <= float(dBm) < (-91):
+            return "5"
+        elif (-91) <= float(dBm) < (-85):
+            return "6"
+        elif (-85) <= float(dBm) < (-79):
+            return "7"
+        elif (-79) <= float(dBm) < (-73):
+            return "8"
+        elif (-73) <= float(dBm) < (-68):
+            return "9"
+        elif (-68) <= float(dBm) < (-63):
+            return "9+5"
+        elif (-63) <= float(dBm) < (-58):
+            return "9+10"
+        elif (-58) <= float(dBm) < (-53):
+            return "9+15"
+        elif (-53) <= float(dBm) < (-48):
+            return "9+20"
+        elif (-48) <= float(dBm) < (-43):
+            return "9+25"
+        elif (-43) <= float(dBm) < (-38):
+            return "9+30"
+        elif (-38) <= float(dBm) < (-33):
+            return "9+35"
+        elif (-33) <= float(dBm) < (-28):
+            return "9+40"
+        elif (-38) <= float(dBm) < (-23):
+            return "9+45"
+        elif (-23) <= float(dBm) < (-18):
+            return "9+50"
+        elif (-18) <= float(dBm) < (-13):
+            return "9+55"
+        elif (-13) <= float(dBm):
+            return "9+60"
+
+    def set_rs_s(self, dBm):
+        self.inputRstS.setText(f"5{self.dBm_to_S(dBm) if self.comboMode.currentText() != "DIGI" else dBm}")
+
 
     def set_data_qso(self, found_list):
         # print("Found_list:", found_list)
@@ -3018,6 +3070,8 @@ class LogForm(QMainWindow):
     def init_data(self):
         for index_band in range(self.comboBand.count()):
             self.spot_index_by_band.update({self.comboBand.itemText(index_band): -1})
+        self.sendMesageToTCI("RX_SENSORS_ENABLE:true;")
+        #self.sendMesageToTCI("RX_SENSORS_ENABLE:true;")
         # for band in sf"elf.comboBand.count():
         # self.index_spot[]
 
@@ -5123,6 +5177,5 @@ if __name__ == '__main__':
             # logForm.start_cat()
         if settingsDict['tci'] == 'enable':
             tci_recv.start_tci(settingsDict["tci-server"], settingsDict["tci-port"])
-        tci_sndr = tci.Tci_sender(settingsDict["tci-server"] + ":" + settingsDict["tci-port"], "Disable", logForm)
-
+        tci_sndr = tci.Tci_sender(settingsDict["tci-server"] + ":" + settingsDict["tci-port"], "Disable", logForm, settingsDict)
     sys.exit(app.exec())
