@@ -415,6 +415,9 @@ class Menu (QWidget):
         self.tci_enable_combo = QCheckBox("TCI Enable")
         self.tci_enable_combo.setStyleSheet("QWidget {"+self.settingsDict['color']+"}")
         self.tci_enable_combo_lay.addWidget(self.tci_enable_combo)
+        self.tci_auto_rs_checkbox = QCheckBox("RS from TCI")
+        self.tci_auto_rs_checkbox.setStyleSheet("QWidget {"+self.settingsDict['color']+"}")
+# + self.settingsDict['color']
 
         # Layout and checkbox Rigctl
         self.rigctl_enable_combo_lay = QHBoxLayout()
@@ -492,6 +495,7 @@ class Menu (QWidget):
         # Setup TCI port and host to Hlay
         self.host_port_lay.addLayout(self.host_lay)
         self.host_port_lay.addLayout(self.port_lay)
+        self.host_port_lay.addWidget(self.tci_auto_rs_checkbox)
 
         self.rigctl_host_port = QHBoxLayout()
         self.rigctl_host_port.addLayout(self.rigctl_host_lay)
@@ -968,6 +972,10 @@ class Menu (QWidget):
         host = self.settingsDict['tci-server'].replace("ws://", '')
         self.tci_host_input.setText(host)
         self.tci_port_input.setText(self.settingsDict['tci-port'])
+        if self.settingsDict['rs-from-tci'] == "True":
+            self.tci_auto_rs_checkbox.setChecked(True)
+
+
 
         # Init data Rigctl
         if self.settingsDict['rigctl-enabled'] == "enable":
@@ -1248,6 +1256,10 @@ class Menu (QWidget):
             self.settingsDict['tci'] = 'disable'
         self.settingsDict['tci-server'] = "ws://" + self.tci_host_input.text().strip()
         self.settingsDict['tci-port'] = self.tci_port_input.text().strip()
+        if self.tci_auto_rs_checkbox.isChecked():
+            self.settingsDict['rs-from-tci'] = 'True'
+        else:
+            self.settingsDict['rs-from-tci'] = 'False'
 
         # Save Rigctl
         if self.rigctl_enable_combo.isChecked():
