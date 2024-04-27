@@ -54,7 +54,8 @@ class Tci_reciever(QThread):
         self.uri = uri
         self.log_form = log_form
         #print("uri:_>", self.uri)
-
+        self.active_rx = 0
+        self.active_vfo = 0
         self.ws = websocket.WebSocket()
         self.settingsDict = settingsDict
         self.mode = self.settingsDict['mode']
@@ -96,7 +97,7 @@ class Tci_reciever(QThread):
                 #print("Connect to ")
                 #
                 reciever = self.ws.recv()
-                #print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 if reciever != old_reciever:
                     # print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
@@ -106,10 +107,23 @@ class Tci_reciever(QThread):
                         #if bool(self.settingsDict["rs-from-tci"]):
                          self.tci_send_command("RX_SENSORS_ENABLE:" + self.settingsDict["rs-from-tci"] + "," + self.settingsDict["rs-time-update"] + ";")
 
+                    if tci_string[0] == "ecoder_switch_rx":
+                        self.active_rx = str(tci_string[1]).split(",")[-1].replace(";","")
+                        self.active_vfo = str(tci_string[1]).split(",")[0]
+                        self.tci_send_command(f"VFO:{self.active_rx},{self.active_vfo};")
+
+                    if tci_string[0] == "ecoder_switch_channel":
+                        self.active_vfo = str(tci_string[1]).split(",")[-1].replace(";","")
+                        self.tci_send_command(f"VFO:{self.active_rx},{self.active_vfo};")
+                        #self.active_rx = str(tci_string[1]).split(",")[0]
+
                     if tci_string[0] == "rx_channel_sensors":
                         dBm = str(tci_string[1]).split(",")[-1].replace(";","")
+                        rx = str(tci_string[1]).split(",")[0]
+                        vfo = str(tci_string[1]).split(",")[1]
+                        if rx == self.active_rx and vfo == self.active_vfo:
                         #print(f"dBm: {dBm}")
-                        self.log_form.set_rs_s(dBm)
+                            self.log_form.set_rs_s(dBm)
 
                     if tci_string[0] == 'trx':
                         #self.tx = 'Enable'
@@ -126,7 +140,7 @@ class Tci_reciever(QThread):
 
                     if tci_string[0] == 'vfo':
                         values = tci_string[1].split(",")
-                        if values[1] == '0' and values[0] == '0':
+                        if values[1] == self.active_vfo and values[0] == self.active_rx:
                             #print("set freq:")
                             self.log_form.set_freq(values[2].replace(';', ''))
 
