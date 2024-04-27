@@ -178,7 +178,7 @@ class Tci_reciever(QThread):
                 time.sleep(0.002)
 
             except Exception:
-                #print("Tci_reciever: Exception in listen port loop", Exception)
+                print("Tci_reciever: Exception in listen port loop", Exception)
                 self.log_form.set_tci_stat('')
                 #self.log_form.set_tci_label_found()
                 try:
@@ -192,7 +192,7 @@ class Tci_reciever(QThread):
                     QThread.sleep(2)
                     # self.log_form.set_tci_label_found()
                     #time.sleep(2)
-                continue
+                    continue
 
         #else:
             #self.ws.close()
@@ -237,13 +237,13 @@ class Tci_sender (QtCore.QObject):
                 pass
 
     def rs_from_tci(self):
-        print(f"rs-from-tci: {self.settings_dict["rs-from-tci"], type(self.settings_dict["rs-from-tci"])}")
+        print(f"rs-from-tci: {self.settings_dict['rs-from-tci'], type(self.settings_dict['rs-from-tci'])}")
         if bool(self.settings_dict["rs-from-tci"]):
             if 30 < int(self.settings_dict["rs-time-update"]) < 1000:
                 self.send_command("RX_SENSORS_ENABLE:true;")
-                print(f"time_update: {self.settings_dict["rs-time-update"]}")
+                print(f"time_update: {self.settings_dict['rs-time-update']}")
             else:
-                print(f"time_update not in range (30 - 1000): {self.settings_dict["rs-time-update"]}")
+                print(f"time_update not in range (30 - 1000): {self.settings_dict['rs-time-update']}")
 
 
     def set_freq(self, freq):

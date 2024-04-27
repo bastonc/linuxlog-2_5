@@ -2469,7 +2469,7 @@ class LogForm(QMainWindow):
             return "9+60"
 
     def set_rs_s(self, dBm):
-        self.inputRstS.setText(f"5{self.dBm_to_S(dBm) if self.comboMode.currentText() != "DIGI" else dBm}")
+        self.inputRstS.setText(f"5{self.dBm_to_S(dBm) if self.comboMode.currentText() != 'DIGI' else dBm}")
 
 
     def set_data_qso(self, found_list):
@@ -4231,7 +4231,7 @@ class TelnetCluster(QWidget):
                 "complete": complete,
                 "comment": comment,
                 "de": de,
-                "timestamp": datetime.datetime.now(datetime.UTC)
+                "timestamp": datetime.datetime.now(datetime.timezone.utc)
             })
             return spot_data_dict
 
@@ -5090,7 +5090,7 @@ if __name__ == '__main__':
     ]
     settingsDict.update({"db_fields": [field[0] for field in table_columns]})
 
-    file = open('settings.cfg', "r")
+    file = open("settings.cfg", "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
             configstring = configstring.strip()
