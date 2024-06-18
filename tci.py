@@ -97,7 +97,7 @@ class Tci_reciever(QThread):
                 #print("Connect to ")
                 #
                 reciever = self.ws.recv()
-                print("Tci_reciever.run: from socket (esdr):_>", reciever)
+                # print("Tci_reciever.run: from socket (esdr):_>", reciever)
                 if reciever != old_reciever:
                     # print("Tci_reciever.run: from socket (esdr):_>", reciever)
                     tci_string=reciever.split(":")
