@@ -24,6 +24,7 @@ from PyQt6 import QtGui, QtCore
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtCore import QThread
 
+
 def SIGSEGV_signal_arises(signalNum, stack):
     print(f"{signalNum} : SIGSEGV arises")
     # Your code
@@ -189,20 +190,19 @@ class Adi_file:
         :return:
         '''
         index = len(list_data)
-        columns_in_base = fields_list
         with open(name_file, 'w') as file:
             file.write(self.get_header())
-            for index_input in range(index):
-                for field in columns_in_base:
-                    if list_data[index_input].get(field) is None:
-                        list_data[index_input][field] = ''
+            for qso in list_data:
+                for field in fields_list:
+                    if field[0] in qso is False or qso.get(field[0]) is None:
+                        qso[field[0]] = ""
 
             for i in range(index):
                 time_on_dirty = list_data[i].get('TIME_ON')
                 time_on = str(time_on_dirty).replace(":", '')
                 time_off_dirty = list_data[i].get('TIME_OFF')
                 time_off = str(time_off_dirty).replace(":", '')
-                qso_date_dirty = list_data[i].get('QSO_DATE')
+                qso_date_dirty = str(list_data[i].get('QSO_DATE'))
                 qso_date = qso_date_dirty.replace("-", '')
                 # qso_date = str(qso_date_dirty).replace("-", '')
                 # qso_date = datetime.datetime.strptime(qso_date_dirty, '%Y-%m-%d')
@@ -2163,6 +2163,7 @@ class LogForm(QMainWindow):
         self.current_spot = None
         self.prev_spots = None
         self.trx = None
+
         self.initUI()
         if self.settings_dict["qrz-com-enable"] == "enable" and \
             self.settings_dict["qrz-com-username"] != "" and \
@@ -2174,6 +2175,7 @@ class LogForm(QMainWindow):
                 self.qrz_com.qrz_com_error.connect(self.qrz_com_error)
                 #self.qrz_com_ready = True
         self.rigctl_init_base_data()
+
 
     def set_current_spot(self, spot_dict):
         self.current_spot = spot_dict
@@ -2471,7 +2473,6 @@ class LogForm(QMainWindow):
     def set_rs_s(self, dBm):
         self.inputRstS.setText(f"5{self.dBm_to_S(dBm) if self.comboMode.currentText() != 'DIGI' else dBm}")
 
-
     def set_data_qso(self, found_list):
         # print("Found_list:", found_list)
         if len(found_list) > 0:
@@ -2608,6 +2609,8 @@ class LogForm(QMainWindow):
                 try:
                     tci_sndr.set_freq(self.current_spot['freq'])
                     if self.current_spot['mode'] != 'ERROR':
+                        tci_sndr.set_mode('0', self.current_spot['mode'])
+                        tci_sndr.set_mode('0', self.current_spot['mode'])
                         tci_sndr.set_mode('0', self.current_spot['mode'])
                 except BaseException:
                     print("Set_freq_cluster: Can't connection to server:", settingsDict['tci-server'], ":",
@@ -5154,6 +5157,8 @@ if __name__ == '__main__':
             "APP_VERSION": APP_VERSION
         }
         app_env = AppEnv(env_dict)
+
+
 
         if settingsDict['cw'] == "True":
             logForm.cw_machine_gui()

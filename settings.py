@@ -1056,12 +1056,9 @@ class Menu (QWidget):
 
     def import_adi(self):
         fileimport = QFileDialog()
-        options = QFileDialog.Options()
-        #options |= QFileDialog.DontUseNativeDialog
-        #fileimport.setNameFilter("Adi file(*.adi)")
-        #fileimport.setFilter()
+        #options = QFileDialog.options()
         home_page = '~'
-        fname = fileimport.getOpenFileName(self, 'Import adi file', home_page, "*.adi | *.ADI", options=options)[0]
+        fname = fileimport.getOpenFileName(self, 'Import adi file', home_page, "*.adi | *.ADI")[0]
         #time.sleep(0.150)
         if fname:
            # print(fname)
@@ -1110,11 +1107,8 @@ class Menu (QWidget):
                 std.std.message(self, traceback.format_exc(), "STOP!")
 
     def export_adi(self):
-
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
         file_name, _ = QFileDialog.getSaveFileName(self, "Export adi", "",
-                                                  "Adi (*.adi)", options=options)
+                                                  "Adi (*.adi)")
         if file_name:
 
             allRecords = main.Db(self.settingsDict).get_all_records()
@@ -1122,7 +1116,7 @@ class Menu (QWidget):
                 list_data=allRecords,
                 fields_list=self.table_columns,
                 name_file=file_name+'.adi')
-            std.std.message(self, "Export to\n"+file_name+"\n completed", "Export complited")
+            std.std.message(self, f"Export to\n{file_name}\n completed", "Export complited")
 
 
     def export_adi_clublog(self):
