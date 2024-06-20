@@ -883,8 +883,8 @@ class Menu (QWidget):
     def clear_base_qso(self):
         confirm_dialog = QMessageBox.question(self, "WARNING",
                                               "<p style='color: red; font-weight: bold'>DELETE all QSO from base</p>Are you shure?",
-                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if confirm_dialog == QMessageBox.Yes:
+                                              QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if confirm_dialog == QMessageBox.StandardButton.Yes:
             delete_result = self.db_sql.delete_all_qso()
             self.logWindow.refresh_data()
             print(f"Delete {delete_result}")
