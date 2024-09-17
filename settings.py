@@ -1059,21 +1059,24 @@ class Menu (QWidget):
         #options = QFileDialog.options()
         home_page = '~'
         fname = fileimport.getOpenFileName(self, 'Import adi file', home_page, "*.adi | *.ADI")[0]
-        #time.sleep(0.150)
         if fname:
-           # print(fname)
-            self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
-                               'NAME', 'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'EQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
+            self.allCollumn = ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT', 'NAME',
+                               'QTH', 'COMMENT', 'ITUZ', 'TIME_OFF', 'EQSL_QSL_RCVD', 'OPERATOR', 'EQSL_QSL_SENT',
                                'CLUBLOG_QSO_UPLOAD_STATUS', 'STATION_CALLSIGN']
             try:
                 good_qso_count = 0
                 double_qso = []
                 bad_qso = []
                 allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
+                print(f"All records {allRecords}")
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
                 for i, qso_in_file in enumerate(allRecords):
-
+                    if len(qso_in_file["TIME_ON"].strip()) < 6:
+                        while len(qso_in_file["TIME_ON"]) < 6:
+                            qso_in_file["TIME_ON"] += "0"
+                    if len(qso_in_file["TIME_ON"].strip()) > 6:
+                        qso_in_file["TIME_ON"] = qso_in_file["TIME_ON"][:6]
                     if len(qso_in_file["QSO_DATE"].strip()) != 8 or len(qso_in_file["TIME_ON"].strip()) != 6:
                         bad_qso.append(qso_in_file)
                         continue
@@ -1100,9 +1103,9 @@ class Menu (QWidget):
                                   self.settingsDict).record_dict_qso(bad_qso, self.allCollumn, name_file="bad_adi.adi")
                 self.logWindow.refresh_data()
                 message = f"Added QSO: {good_qso_count} \n"
-                message += f"Bad QSO: {len(bad_qso)} Incorect QSO_DATE or TIME_ON \n Bad records in /home/linlog/bad_adi.adi" if bad_qso != [] else ""
-                message += f"\nDouble QSO: {len(double_qso)} \n Double records in /home/linlog/double_adi.adi" if double_qso != [] else ""
-                std.std.message(self, message, "Import" )
+                message += f"Bad QSO: {len(bad_qso)} Incorect QSO_DATE or TIME_ON \n The bad records save in /home/linlog/bad_adi.adi" if bad_qso != [] else ""
+                message += f"\nDouble QSO: {len(double_qso)} \n The double records save in /home/linlog/double_adi.adi" if double_qso != [] else ""
+                std.std.message(self, message, "Import")
             except Exception:
                 std.std.message(self, traceback.format_exc(), "STOP!")
 
