@@ -5075,7 +5075,7 @@ class AppEnv:
 
 if __name__ == '__main__':
     #exit(0)
-    APP_VERSION = '2.5.0'
+    APP_VERSION = '2.5.1'
     settingsDict = {}
     settingsDict.update({"APP_VERSION": APP_VERSION})
     settingsDict.update({"adi_fields": ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
