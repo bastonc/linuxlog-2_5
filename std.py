@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PyQt6.QtWidgets import QMessageBox, QLineEdit, QWidget, QLabel, QPushButton, \
     QVBoxLayout, QApplication
 from PyQt6 import QtCore
@@ -5,7 +7,7 @@ from PyQt6 import QtCore
 class std:
     def __init__(self):
         self.band_rules = {}
-        file = open("bandplan.cfg", "r")
+        file = open(Path(__file__).parent / "bandplan.cfg", "r")
         for rules_in_band in file:
             if rules_in_band != '' and rules_in_band != ' ' and rules_in_band[0] != '#':
                 rulesstring = rules_in_band.strip()

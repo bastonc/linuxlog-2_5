@@ -1,5 +1,7 @@
-import telnetlib
+#import telnetlib
 import time
+from pathlib import Path
+
 import main
 import internetworker
 import traceback
@@ -45,7 +47,7 @@ class Menu (QWidget):
                          300,
                          600,
                          300)
-        self.setWindowTitle('LinLog | Settings')
+        self.setWindowTitle('LinuxLog | Settings')
 
         self.setWindowIcon(QIcon('logo.png'))
         style = "QWidget{background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";}"
@@ -73,6 +75,7 @@ class Menu (QWidget):
     # create General Tab
         formstyle = "background: "+self.settingsDict['form-background']+"; color: "+\
                     self.settingsDict['color-table']+"; "
+        self.style_checkbox = "color:" + self.settingsDict['color'] + "; font-size: 12px;"
         self.style_headers = "font-weight: bold; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
         self.style_small = "font-style: italic; font-size: 12px; background-color:" + self.settingsDict['background-color'] + "; color:" + self.settingsDict['color'] + ";"
         self.general_tab.layout = QVBoxLayout(self) # create vertical lay
@@ -81,9 +84,13 @@ class Menu (QWidget):
         self.call_input = QLineEdit()
         self.call_input.setFixedWidth(100)
         self.call_input.setStyleSheet(formstyle)
+        # Checkbox Window border
+        self.window_border = QCheckBox("Show window border (will be applied after restarting)")
+        self.window_border.setStyleSheet(self.style_checkbox)
         # Chekbox SWL
         self.swl_chekbox = QCheckBox("Enable SWL mode")
-        self.swl_chekbox.setStyleSheet("color:" + self.settingsDict['color'] + "; font-size: 12px;")
+        self.swl_chekbox.setStyleSheet(self.style_checkbox)
+        # Button clear base
         self.clear_base_button = QPushButton("Clear base (DELETE all QSO)")
         self.clear_base_button.clicked.connect(self.clear_base_qso)
         self.dlg = QColorDialog(self)
@@ -188,6 +195,7 @@ class Menu (QWidget):
         self.horizontal_lay = QHBoxLayout()
         self.color_lay = QVBoxLayout()
         self.color_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.color_lay.addWidget(self.window_border)
         self.color_lay.addWidget(self.back_color_label)
         self.color_lay.addWidget(self.back_color_input)
         self.color_lay.addWidget(self.text_color_label)
@@ -910,7 +918,7 @@ class Menu (QWidget):
         self.country_table.scrollToBottom()
 
     def fill_country(self):
-        with open(self.settingsDict['country-file'], 'r') as f:
+        with open(Path(__file__).parent/self.settingsDict['country-file'], 'r') as f:
             country_dict = json.load(f)
         self.country_table.setRowCount(0)
 
@@ -944,6 +952,8 @@ class Menu (QWidget):
     def initData (self):
         #init data in general tab
         self.call_input.setText(self.settingsDict["my-call"])
+        if self.settingsDict['border_wnd'] == "enable":
+            self.window_border.setChecked(True)
         #self.text_color_input.setText(self.settingsDict['color'])
         #self.form_color_input.setText(self.settingsDict['form-background'])
         #self.back_color_input.setText(self.settingsDict['background-color'])
@@ -1121,7 +1131,6 @@ class Menu (QWidget):
                 name_file=file_name+'.adi')
             std.std.message(self, f"Export to\n{file_name}\n completed", "Export complited")
 
-
     def export_adi_clublog(self):
 
         try:
@@ -1214,6 +1223,10 @@ class Menu (QWidget):
         self.settingsDict['db-pass'] = self.db_pass.text().strip()
         self.settingsDict['db-name'] = self.db_name.text().strip()
         self.settingsDict['db-host'] = self.db_host.text().strip()
+        if self.window_border.isChecked():
+            self.settingsDict['border_wnd'] = "enable"
+        else:
+            self.settingsDict['border_wnd'] = "disable"
 
         # Save eQSL data
         self.settingsDict['eqsl_user'] = self.eqsl_login.text()
@@ -1336,7 +1349,7 @@ class Menu (QWidget):
                 print("Exception in update country list str: 1149")
             #print(data_object)
 
-        with open(self.settingsDict['country-file'], 'w') as f:
+        with open(Path(__file__).parent/self.settingsDict['country-file'], 'w') as f:
             json.dump(data_object, f)
 
     def apply_button(self):
@@ -1371,7 +1384,7 @@ class Menu (QWidget):
         cluster_change_flag = self.store_new_settingsDict()
         self.logForm.refresh_interface()
         filename = 'settings.cfg'
-        with open(filename, 'r') as f:
+        with open(Path(__file__).parent/filename, 'r') as f:
             old_data = f.readlines()
         for index, line in enumerate(old_data):
             key_from_line = line.split('=')[0]
@@ -1381,7 +1394,7 @@ class Menu (QWidget):
                 if key_from_line == key:
                     #print("key",key , "line", line)
                     old_data[index] = key+"="+self.settingsDict[key]+"\n"
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.writelines(old_data)
         #print ("Save_and_Exit_button: ", old_data)
         self.close()
@@ -1448,7 +1461,8 @@ class cluster_in_Thread(QThread):
         self.parent_window.line_text.setText(' '.join(cleanList))
         self.parent_window.telnetCluster.start_cluster()
 
-        self.currentThread().terminate()
+        self.currentThread().exit()
+        self.currentThread().wait()
 
 
 

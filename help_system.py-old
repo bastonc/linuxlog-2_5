@@ -156,7 +156,7 @@ class Help(QMainWindow):
     def update_file_to_disk(self):
         # self.settingsDict = self
         filename = 'settings.cfg'
-        with open(filename, 'r') as f:
+        with open(Path(__file__).parent/filename, 'r') as f:
             old_data = f.readlines()
         for index, line in enumerate(old_data):
             key_from_line = line.split('=')[0]
@@ -171,7 +171,7 @@ class Help(QMainWindow):
             if key_from_line == "db-name":
                 old_data[index] = "db-name=" + self.base_db.text().strip() + "\n"
 
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.writelines(old_data)
         # print("Update_to_disk: ", old_data)
         return True
@@ -202,7 +202,7 @@ class Help(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     settingsDict = {}
-    file = open('settings.cfg', "r")
+    file = open(Path(__file__).parent/'settings.cfg', "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
             configstring = configstring.strip()

@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 from time import sleep
 
 import requests
@@ -59,6 +60,7 @@ class EqslWindow(QWidget):
         self.db = db
         self.settings_dict = settings_dict
         self.log_window = log_window
+        self.adi_normalizer = parse.adi_normilzer
         self.CONFIRMED = "Confirmed"
         self.ADDED = "In log"
         self.SEND = "Sent"
@@ -66,7 +68,7 @@ class EqslWindow(QWidget):
         self.auth_parameter = f"?UserName={self.settings_dict['eqsl_user']}&Password={self.settings_dict['eqsl_password']}"
         self.url_get_link_to_adi = f"/qslcard/DownloadInBox.cfm"
         self.upload_qsl_url = "/qslcard/DownloadADIF.cfm"
-        uic.loadUi("eqsl_inbox.ui", self)
+        uic.loadUi(Path(__file__).parent/"eqsl_inbox.ui", self)
         style = "background-color:" + self.settings_dict['background-color'] + "; color:" + settings_dict[
             'color'] + ";"
         self.setStyleSheet(style)
@@ -78,7 +80,7 @@ class EqslWindow(QWidget):
         self.status_lbl.setText("")
         self.chek_btn.clicked.connect(self.get_new_eqsl)
         self.img_name = "default"
-        self.path = os.path.join(os.getcwd(), "eqsl")
+        self.path = Path(__file__).parent/"eqsl"
         self.date_chkbx.stateChanged.connect(self.state_date)
         self.date_start_lbl.hide()
         self.date_finish_lbl.hide()
@@ -150,7 +152,10 @@ class EqslWindow(QWidget):
         if answer_from_eqsl.status_code == 200:
             self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
             self.status_lbl.setText("Complete")
-            with open("eqsl_import.adi", "w") as f:
+            # self.adi_normalizer(tags=answer_from_eqsl.text,
+            #                     fields_adi_standart=self.settings_dict['adi_fields'],
+            #                     settings_dict=self.settings_dict)
+            with open(Path(__file__).parent/"eqsl_import.adi", "w") as f:
                 f.write(answer_from_eqsl.text)
             self.output_adi_to_table(answer_from_eqsl.text)
         else:
@@ -168,23 +173,25 @@ class EqslWindow(QWidget):
     @pyqtSlot(object)
     def processing_img_eqsl(self, response):
         self.thread_connection.exit(0)
-
-        with open(f'{self.path}/{self.img_name}', 'wb') as f:
-            f.write(response.content)
-        self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
-        self.status_lbl.setText("Complete")
+        try:
+            with open(Path(__file__).parent/f'{self.path}/{self.img_name}', 'wb') as f:
+                f.write(response.content)
+            self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
+            self.status_lbl.setText("Complete")
+        except FileNotFoundError:
+            self.img_name = "default.png"
         self.show_image_eqsl(f'{self.path}/{self.img_name}')
 
     # slot for processing connection error
     @pyqtSlot()
     def error_connection_processing(self):
         self.thread_connection.exit(0)
+        self.thread_connection.wait()
         self.chek_btn.setEnabled(True)
         self.status_lbl.setStyleSheet("color: #BB4444;")
         self.status_lbl.setText("Connection error")
 
     def get_new_eqsl(self):
-        # self.tableWidget.clear()
         self.chek_btn.setEnabled(False)
         self.status_lbl.setStyleSheet(f"color: {self.settings_dict['color']}")
         self.status_lbl.setText("Connecting to eQSL.cc")
@@ -217,7 +224,6 @@ class EqslWindow(QWidget):
                 return str(link["href"]).replace("../", self.base_url_eqsl + "/")
 
     def output_adi_to_table(self, answer_from_eqsl, mode='eqsl_server'):
-
         self.all_confirm_chkbox = QCheckBox("All")
         self.all_confirm_chkbox.stateChanged.connect(self.all_state_confirm)
         self.all_confirm_chkbox.setChecked(self.all_confirm)
@@ -229,10 +235,6 @@ class EqslWindow(QWidget):
         if not self.upload_chkbx.isChecked():
             self.tableWidget.setCellWidget(0, 6, self.all_confirm_chkbox)
         self.tableWidget.setCellWidget(0, 7, self.all_add_chkbox)
-        #self.tableWidget.horizontalHeader().setWidget(5, self.all_confirm_chkbox)
-
-        # table = QTableWidget()
-        # table.removeRow(2)
         if mode == 'eqsl_server':
             self.all_confirm_chkbox.setChecked(True)
             self.all_add_chkbox.setChecked(True)
@@ -241,7 +243,8 @@ class EqslWindow(QWidget):
             strings = str(answer_from_eqsl).split("\n")
             self.all_qso_list.clear()
             for string in strings:
-                qso_dict = parse.parseStringAdi(string)
+                qso_dict = parse.parseStringAdi(string, self.settings_dict['adi_fields'], self.settings_dict)
+                print(f"qso_dict")
                 if qso_dict.get("CALL"):
                     self.all_qso_list.append(qso_dict) if qso_dict is not None else None
         for row, qso in enumerate(self.all_qso_list, start=1):
@@ -260,10 +263,7 @@ class EqslWindow(QWidget):
             self.tableWidget.setItem(row, 4, QTableWidgetItem(qso['MODE']))
             self.tableWidget.setCellWidget(row, 5, show_btn)
             if self.upload_chkbx.isChecked():
-                # t = QTableWidget()
-                # t.item(0,6).
                 self.tableWidget.setHorizontalHeaderItem(6, QTableWidgetItem("Sent"))
-                # self.tableWidget.setItem(0, 6, QTableWidgetItem(""))
                 self.tableWidget.setItem(row, 6, QTableWidgetItem(self.SEND))
                 qso["EQSL_QSL_SENT"] = "Y"
             else:
@@ -277,7 +277,6 @@ class EqslWindow(QWidget):
                         not self.unconfirmed_chkbx.isChecked() and \
                         records != () and records[0]["EQSL_QSL_SENT"] == "Y":
                     self.tableWidget.setItem(row, 6, QTableWidgetItem(self.CONFIRMED))
-
                 else:
                     self.tableWidget.setCellWidget(row, 6, confirm_checkbox)
             if records != ():
@@ -291,7 +290,6 @@ class EqslWindow(QWidget):
         self.chek_btn.setEnabled(True)
 
     def get_image_eqsl(self, qso: dict):
-
         self.img_name = f"{str(qso['CALL']).replace('/', '_')}_{qso['MODE']}_{qso['BAND']}_{qso['QSO_DATE']}.jpg"
         if os.path.exists(os.path.join(self.path, self.img_name)):
             self.show_image_eqsl(os.path.join(self.path, self.img_name))
@@ -426,6 +424,7 @@ class EqslWindow(QWidget):
             add_ckbx = self.tableWidget.cellWidget(row, index_cell)
             if add_ckbx is not None and add_ckbx.isChecked():
                 for qso in self.all_qso_list:
+                    print(qso)
                     if qso["CALL"] == self.tableWidget.item(row, 2).text() and \
                         qso["QSO_DATE"] == self.tableWidget.item(row, 0).text() and \
                         qso["MODE"] == self.tableWidget.item(row, 4).text() and \
@@ -439,6 +438,7 @@ class EqslWindow(QWidget):
                             qso["added"] = True
                         else:
                             qso["added"] = False
+                        qso["OPERATOR"] = self.settings_dict["my-call"]
                         all_qso.append(qso)
         return all_qso
 

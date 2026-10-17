@@ -1,120 +1,175 @@
 #!/bin/bash
-name_app='linlog'
-git_path='https://github.com/bastonc/linuxlog-2_5.git'
-de=$XDG_CURRENT_DESKTOP
-dist=`cat /etc/*release | grep -w NAME`
-dist_name_dirty=${dist:5}
-dist_name=${dist_name_dirty//\"/}
-step_run=0 # default step instalation
 
-clear
-echo "******************* Install infrastructure components ***********************"
-if [[ "$dist_name" == "Fedora" || "$dist_name" == "Fedora Linux" || "$dist_name" == "Rad-hat" || "$dist_name" == "CentOS Linux" ]]
-	then
-        	sudo dnf install -y git python3-pip python3-qt5 mariadb-server # if git not installed - install it
-        	echo "Activate mariadb server for autostart"
-        	sudo systemctl enable mariadb
-        	echo "Starting mariadb server"
-        	sudo systemctl start mariadb
-        	sudo dnf install -y socat
-        	# sudo dnf install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3
-        	((step_run=$step_run + 1))
-	fi
-if [[ "$dist_name" == "Linux Mint" || "$dist_name" == "Ubuntu" || "$dist_name" == "\"Ubuntu\"" || "$dist_name" == "Xubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Lubuntu" || "$dist_name" == "Debian" ]]
-	then
-    		sudo apt update
-        	sudo apt install -y git python3-pip python3-venv python3-pyqt5 mysql-server # if git not installed - install it
-        	echo "Activate mariadb server for autostart"
-        	sudo systemctl enable mysql
-        	echo "Starting mariadb server"
-        	sudo systemctl start mysql
-        	sudo apt install -y socat
-       		# sudo apt install gcc gobject-introspection-devel cairo-gobject-devel pkg-config python3-devel gtk3
-       		((step_run=$step_run + 1))
-	fi
+# Выход при любой ошибке
+set -e
 
-if [[ "$step_run" == 1 ]]
-	then
-		echo "****************************** Create linuxlog user for DB ********************************************"
-		sudo mysql  -e "FLUSH PRIVILEGES;"
-		sudo mysql  -e "CREATE USER 'linuxlog'@'localhost' IDENTIFIED BY 'Linuxlog12#';"
-		sudo mysql  -e "GRANT ALL PRIVILEGES ON *.* TO 'linuxlog'@'localhost' WITH GRANT OPTION;"
-		sudo mysql  -e "FLUSH PRIVILEGES;"
-		echo "All databases (test for user)"
-		mysql -u linuxlog -pLinuxlog12# -Bse "show databases;"
-		((step_run=$step_run + 1))
-	fi
+# Цвета для вывода в консоль
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-if [[ "$step_run" == 2 ]]
-	then
-		echo "****************************** Get Source code Linuxlog ********************************************"
-		cd $HOME
-		if git clone $git_path $name_app
-			then
-				#echo "Download source code from git repository"
-				cd ./$name_app
-				((step_run=$step_run + 1))
-			else
-				echo -en "ERROR: Directory $name_app is not empty or Git not install.\n"
-				exit 1
-		fi
-	fi
+echo -e "BLUE=== Запуск универсального инсталлятора LinuxLog ==={NC}"
 
-if [[ "$step_run" == 3 ]]
-	then
-		echo '****************************** Create  and activate virtual env ********************************************'
-		python3 -m venv env
-		source env/bin/activate
-		echo 'OK'
-		echo "****************************** Install Python requrements ********************************************"
-		python3 -m pip install --upgrade pip
-		pip3 install -r ~/${name_app}/requirements.txt
-		deactivate
-		((step_run=$step_run + 1))
-	fi
+# Проверка на запуск без root-прав (sudo запросится внутри)
+if [ "\$EUID" -eq 0 ]; then
+    echo -e "REDОшибка: Не запускайте скрипт через sudo ./install.sh.{NC}"
+    echo "Запустите как обычный пользователь: ./install.sh"
+    exit 1
+fi
 
-if [[ "$step_run" == 4   ]]
-	then
-		echo '****************************** Creating run file ********************************************'
-		# Create run file
-		cat <<EOF > $HOME/$name_app/linlog
+# 1. Определение дистрибутива через /etc/os-release
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    DISTRO=\$ID
+    # Поддержка производных (например, Linux Mint базируется на ubuntu/debian)
+    ID_LIKE_LIST=\$ID_LIKE
+else
+    echo -e "REDОшибка: Не удалось определить операционную систему.{NC}"
+    exit 1
+fi
+
+# Пути установки
+USER_HOME=\$HOME
+INSTALL_DIR="\$USER_HOME/.local/share/linuxlog"
+DESKTOP_ENTRY_DIR="\$USER_HOME/.local/share/applications"
+
+# Переменные для пакетов
+PM=""
+PKGS=""
+ARCH_SETUP_DB=false
+
+echo -e "Обнаружена система: \${GREEN}NAME{NC}"
+
+# 2. Настройка под конкретный менеджер пакетов
+case "\$DISTRO" in
+    fedora)
+        PM="dnf"
+        PKGS="mariadb mariadb-server python3 python3-devel python3-virtualenv qt6-qtbase-devel mesa-libGL rsync"
+        ;;
+    ubuntu|debian|mint)
+        PM="apt"
+        PKGS="mariadb-server mariadb-client python3 python3-dev python3-venv qt6-base-dev libgl1-mesa-glx rsync"
+        ;;
+    arch)
+        PM="pacman"
+        PKGS="mariadb python python-virtualenv qt6-base mesa rsync"
+        ARCH_SETUP_DB=true
+        ;;
+    *)
+        # Проверка по вторичным признакам (ID_LIKE), если дистрибутив редкий
+        if [[ "\(ID_LIKE_LIST" =~ "ubuntu" \vert{}\vert{} "\)ID_LIKE_LIST" =~ "debian" ]]; then
+            PM="apt"
+            PKGS="mariadb-server mariadb-client python3 python3-dev python3-venv qt6-base-dev libgl1-mesa-glx rsync"
+        elif [[ "\$ID_LIKE_LIST" =~ "arch" ]]; then
+            PM="pacman"
+            PKGS="mariadb python python-virtualenv qt6-base mesa rsync"
+            ARCH_SETUP_DB=true
+        else
+            echo -e "\${RED}Извините, ваш дистрибутив (DISTRO) пока не поддерживается автоматически.{NC}"
+            exit 1
+        fi
+        ;;
+esac
+
+# 3. Установка системных зависимостей
+echo -e "\${BLUE}[1/6] Установка MariaDB и системных библиотек через PM...{NC}"
+if [ "\$PM" == "apt" ]; then
+    sudo apt update -y
+    sudo apt install -y \$PKGS
+elif [ "\$PM" == "dnf" ]; then
+    sudo dnf install -y \$PKGS
+elif [ "\$PM" == "pacman" ]; then
+    sudo pacman -Syu --needed --noconfirm \$PKGS
+fi
+
+# 4. Инициализация базы данных (специфика Arch Linux)
+if [ "\$ARCH_SETUP_DB" = true ]; then
+    # На Arch нужно создать системные таблицы перед запуском
+    if [ ! -d "/var/lib/mysql/mysql" ]; then
+        echo -e "BLUEИнициализация системных таблиц MariaDB (Специфика Arch)...{NC}"
+        sudo mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+    fi
+fi
+
+echo -e "\({BLUE}[2/6] Активация и запуск службы MariaDB...\){NC}"
+sudo systemctl enable --now mariadb
+
+# Создание базы и пользователя
+DB_NAME="linuxlog_db"
+DB_USER="log_user"
+DB_PASS="LogPass123!"
+
+echo -e "BLUEНастройка базы данных проекта в MariaDB...{NC}"
+# UNIX сокет позволяет root-пользователю выполнять команды без пароля внутри sudo
+sudo mariadb -u root <<EOF
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '\({DB_USER}'@'localhost' IDENTIFIED BY '\){DB_PASS}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '\${DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+
+# 5. Копирование файлов лога
+echo -e "\({BLUE}[3/6] Развертывание файлов логгера...\){NC}"
+mkdir -p "\$INSTALL_DIR"
+rsync -av --exclude='__pycache__' --exclude='.git' --exclude='.idea' ./ "\$INSTALL_DIR/"
+
+# 6. Создание изолированного виртуального окружения Python
+echo -e "\({BLUE}[4/6] Настройка виртуального окружения (venv)...\){NC}"
+cd "\$INSTALL_DIR"
+python3 -m venv .venv || python -m venv .venv
+source .venv/bin/activate
+
+# Обновляем менеджеры пакетов внутри venv
+pip install --upgrade pip setuptools wheel
+
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt
+else
+    # Запасной вариант установки, если файла зависимостей нет
+    pip install PyQt6 pyserial requests
+fi
+deactivate
+
+# 7. Создание стартового скрипта с фиксацией путей
+echo -e "\({BLUE}[5/6] Создание исполняемого скрипта-стартера...\){NC}"
+cat <<EOF > "\$INSTALL_DIR/linuxlog-run.sh"
 #!/bin/bash
-cd $HOME/$name_app/
-source env/bin/activate
-python3 main.py
+cd "\$INSTALL_DIR"
+source .venv/bin/activate
+python3 main.py "\$@"
+deactivate
 EOF
+chmod +x "\$INSTALL_DIR/linuxlog-run.sh"
 
-		if [[ `chmod +x $HOME/$name_app/linlog` -ne 0 ]]
-			then
-				echo -en "\nERROR: Can't setup executable bit\n\n"
-				exit 1
-			fi
-		echo 'OK'
-		echo '****************************** Creating .desktop file ********************************************'
-		# Create desktop.file
-		cat > $HOME/$name_app/linlog.desktop << EOF
+# 8. Создание ярлыка в меню приложений системы
+echo -e "\({BLUE}[6/6] Создание ярлыка в меню приложений...\){NC}"
+mkdir -p "\$DESKTOP_ENTRY_DIR"
+
+ICON_PATH="\$INSTALL_DIR/logo.png"
+if [ ! -f "\(ICON_PATH" ] && [ -f "\)INSTALL_DIR/icon.svg" ]; then
+    ICON_PATH="\$INSTALL_DIR/icon.svg"
+fi
+
+cat <<EOF > "\$DESKTOP_ENTRY_DIR/linuxlog.desktop"
 [Desktop Entry]
-Name=LinLog
-Comment=Logger for HAM radiostation
-Exec= $HOME/$name_app/linlog
-Icon=$HOME/$name_app/icon.svg
-Terminal=false
+Version=1.0
 Type=Application
-Categories=Amateur radio;
+Name=LinuxLog Ham Radio
+Comment=Логгер для радиолюбителей (CAT, TCI, eQSL)
+Exec=\$INSTALL_DIR/linuxlog-run.sh
+Icon=\$ICON_PATH
+Terminal=false
+Categories=Utility;Development;HamRadio;
+StartupNotify=true
+Path=\$INSTALL_DIR
 EOF
-		destination='/usr/share/applications'
-		echo "--> copying linlog.desktop file to $destination"
-		sudo cp $HOME/$name_app'/linlog.desktop' $destination
-		echo 'OK'
-		((step_run=$step_run + 1))
-	fi
 
-echo "Steps complited: $step_run"
-if [[ "$step_run" == 5   ]]
-	then
-		echo '****************************** Installation complite ********************************************'
-		echo 'UR4LGA GL es 73'
-	else
-		echo "Problem after: $step_run step"
-	fi
-#echo $dist_name
+# Обновление системного меню (для немедленного отображения ярлыка)
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database "\$DESKTOP_ENTRY_DIR"
+fi
+
+echo -e "\${GREEN}=== Установка успешно завершена на системе NAME! ==={NC}"
+echo -e "Данные для подключения вашего Python-кода к MariaDB:"
+echo -e "База: \${BLUE}\(DB_NAME\){NC} | Пользователь: BLUEDB_USERNC | Пароль: {BLUE}\(DB_PASS\){NC}"

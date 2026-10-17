@@ -33,7 +33,7 @@ class test:
                  "score": "10"}
 
                 ]
-        with open("rules.json", 'w') as f:
+        with open(Path(__file__).parent/"rules.json", 'w') as f:
             f.write(json.dumps(list))
         # print("json.dumps", json.dumps(list))
 
@@ -334,7 +334,7 @@ class Diplom_form(QWidget):
 
     def write_rules_to_file(self, data_to_json, name_output_file):
         filename = str(name_output_file).strip() + '.rules'
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.write(json.dumps(data_to_json))
 
 
@@ -382,7 +382,7 @@ class Diplom(QObject):
         return qsoDataList
 
     def getRules(self):
-        with open(self.name + ".rules", 'r') as rules:
+        with open(Path(__file__).parent/self.name + ".rules", 'r') as rules:
             s = rules.readline()
             # print("s", s)
             rulesObject = json.loads(s)
@@ -429,7 +429,7 @@ class diplom:
             self.settingsDict = settingsDict
 
     def get_rules(self, name):
-        with open(name, "r") as f:
+        with open(Path(__file__).parent/name, "r") as f:
             return json.load(f)
 
     def search_call_in_base(self, call):
@@ -606,7 +606,7 @@ class diplom:
                 '''
         # print("List_data", list_data)
         index = len(list_data)
-        with open(self.file, 'a') as file:
+        with open(Path(__file__).parent/self.file, 'a') as file:
             stringToAdiFile = "<BAND:" + str(len(list_data['BAND'])) + ">" + list_data['BAND'] + "<CALL:" + \
                               str(len(list_data['CALL'])) + ">"
 

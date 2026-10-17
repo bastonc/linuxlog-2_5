@@ -2,6 +2,8 @@
 # vim:fileencoding=utf-8
 
 import urllib
+from pathlib import Path
+
 import std
 import requests
 import datetime
@@ -75,8 +77,8 @@ class internetWorker(QThread):
 
         try:
             if img != None:
-                urllib.request.urlretrieve(img['src'], "image/" + file_name + ".jpg")
-                data_dictionary.update({'img': "image/" + file_name + ".jpg"})
+                urllib.request.urlretrieve(img['src'], f"{Path(__file__).parent}/image/{file_name}.jpg")
+                data_dictionary.update({'img': f"{Path(__file__).parent}/image/{file_name}.jpg"})
             else:
                 dict_qrz_ru = self.search_qrz_ru()
                 data_dictionary.update({'name': dict_qrz_ru['name'], 'qth': dict_qrz_ru['qth'], 'loc': dict_qrz_ru['loc']})
@@ -299,7 +301,7 @@ class Eqsl_send_file(QThread):
         self.url_post = "https://www.eQSL.cc/qslcard/ImportADIF.cfm"
 
     def run(self):
-        files = {'Filename': open(self.file_name, 'rb')}
+        files = {'Filename': open(Path(__file__).parent/self.file_name, 'rb')}
         values = {'EQSL_USER': self.settings_dict['eqsl_user'],
                   'EQSL_PSWD': self.settings_dict['eqsl_password']}
         try:
@@ -392,7 +394,7 @@ class check_update(QThread):
 
                     # read and replace string in new settings.cfg
 
-                    file = open(home + "/linlog/settings.cfg", "r")
+                    file = open(Path(__file__).parent/home + "/linlog/settings.cfg", "r")
                     settings_list = {}
                     for configstring in file:
                         if configstring != '' and configstring != ' ' and configstring[0] != '#':
@@ -410,7 +412,7 @@ class check_update(QThread):
                     # print("settings list^_>", settings_list)
 
                     filename = home + "/linlog/settings.cfg"
-                    with open(filename, 'r') as f:
+                    with open(Path(__file__).parent/filename, 'r') as f:
                         old_data = f.readlines()
                     for index, line in enumerate(old_data):
                         key_from_line = line.split('=')[0]
@@ -420,7 +422,7 @@ class check_update(QThread):
                             if key_from_line == key:
                                 # print("key",key , "line", line)
                                 old_data[index] = key + "=" + settings_list[key] + "\n"
-                    with open(filename, 'w') as f:
+                    with open(Path(__file__).parent/filename, 'w') as f:
                         f.writelines(old_data)
                     # done!
 
@@ -495,7 +497,7 @@ class Clublog(QtCore.QObject):
                 "callsign": self.settingsDict['my-call'],
                 "api": self.key
             }
-            file_data = {"file": ('log.ADI', open(file, 'rb'),'text/plain')}
+            file_data = {"file": ('log.ADI', open(Path(__file__).parent/file, 'rb'),'text/plain')}
 
             #print(multipart_data)
         response = requests.post(self.upload_file_url, files=file_data, data=multipart_data, headers={'enctype': 'multipart/form-data' })
