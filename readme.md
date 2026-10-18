@@ -1,7 +1,8 @@
 LinuxLog  - logger for amateur Ham radio station.
 Used PyQt6.
-For correct instalation on you PC - please download installer from application site http://linuxlog.com.ua
+For correct instalation on you PC - please download archive of code, unzip and run install.sh 
 
-More information about project on http://linuxlog.com.ua
+Tested in Fedora, Ubuntu, Manjaro
+<img width="1920" height="1080" alt="Знімок екрана з 2026-10-18 23-52-15" src="https://github.com/user-attachments/assets/e00bc01d-d27b-4ff9-bd1c-e0a8d34d5131" />
 
-Test new installer (in progress) - https://drive.google.com/file/d/1E11sZcFkuw3N2Ba_e4dYwE_07K4POzlo/view?usp=sharing
+
