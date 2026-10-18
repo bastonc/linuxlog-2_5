@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
+from pathlib import Path
 
-def parseStringAdi(string):
+
+def parseStringAdi(string, adi_fields_standart, settings_dict):
     """
-    This function recieving string from adi-file, and parse it. Function returning result in Phyton dictionary type, where key - it key from ADI-tag, 		value - information from ADI
+    This function recieving string from adi-file, and parse it.
+    Function returning result in Phyton dictionary type, where key - it key from ADI-tag,
+    value - information from ADI
     """
 
-    # print(len(string.decode('utf-8')))
+    print(string)
     counter = 0
     name = ''
     digitInTagString = ''
@@ -25,7 +29,7 @@ def parseStringAdi(string):
                 while string[counterChar] != ':':
                     name = name + string[counterChar]
                     #print(f"string {string} len string {len(string)} counter {counterChar}")
-                    if str(name).upper() == 'EOR':
+                    if str(name).upper() in ('EOR',     'EOH'):
                         break
                     counterChar = counterChar + 1
                 if string[counterChar] == ':':
@@ -48,7 +52,24 @@ def parseStringAdi(string):
 
         except Exception:
             print("Exception in parse")
+        adi_normilzer(tags, adi_fields_standart, settings_dict)
     return tags
+
+def adi_normilzer(tags: dict, fields_adi_standart: list, settings_dict):
+    #print(tags)
+    #for tag
+    for field in fields_adi_standart:
+        if tags.get(field) is not None:
+            continue
+        if field == "OPERATOR":
+            tags[field] = settings_dict['my-call']
+        else:
+         tags[field]=""
+    #print(f"Adi_normalizer. Output tags: {tags}")
+    return tags
+
+
+
 
 
 ## Poles which used in programm (they will found into dictionary from file)
@@ -57,14 +78,14 @@ def getAllRecord(poles, filename, key=''):
     is_qso_string = False
     allrecord = []
     if key == "import":
-        with open(filename, 'r', errors="ignore") as fin:
+        with open(Path(__file__).parent/filename, 'r', errors="ignore") as fin:
             lines = fin.readlines()
-            with open('import_tmp.adi', 'w', encoding='utf-8') as fout:
+            with open(Path(__file__).parent/'import_tmp.adi', 'w', encoding='utf-8') as fout:
                 fout.writelines(lines)
             filename = 'import_tmp.adi'
     else:
         pass
-    file = open(filename, 'r', encoding="utf-8", errors='ignore')
+    file = open(Path(__file__).parent/filename, 'r', encoding="utf-8", errors='ignore')
     iterator_string_file = 0
     iterator_records = 0
     record = {}

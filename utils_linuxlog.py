@@ -85,7 +85,7 @@ def reset_country_file(country_dict={}):
                         'cq-zone': '12'},
         }
 
-    with open(settingsDict['country-file'], 'w') as f:
+    with open(Path(__file__).parent/settingsDict['country-file'], 'w') as f:
         json.dump(country_dict, f)
 
 def csv_to_json_country(csv_file):
@@ -94,7 +94,7 @@ def csv_to_json_country(csv_file):
                     "pfx,pfx;country;cq-zone;itu"
     :return: convert CSV to JSON and create file and settingsDict['country-file']
     """
-    with open(csv_file, 'r') as f:
+    with open(Path(__file__).parent/csv_file, 'r') as f:
         lines = f.readlines()
 
     object_to_json = {}
@@ -212,13 +212,13 @@ def generate_adif(count, name_file):
             header_string += "<PROGRAMID:8>LinuxLog\n"
             header_string += "<PROGRAMVERSION:" + str(len("0.1")) + ">" + "0.1\n"
             header_string += "<EOH>\n\n"
-        with open(name_file, "w") as f:
+        with open(Path(__file__).parent/name_file, "w") as f:
             f.write(header_string)
             f.writelines(strings_list)
 
 parameter = sys.argv[1]
 settingsDict = {}
-file = open('settings.cfg', "r")
+file = open(Path(__file__).parent/'settings.cfg', "r")
 for configstring in file:
     if configstring != '' and configstring != ' ' and configstring[0] != '#':
         configstring = configstring.strip()

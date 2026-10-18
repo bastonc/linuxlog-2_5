@@ -13,6 +13,7 @@ import subprocess
 
 import ext
 import cat
+from pathlib import  Path
 import PyQt6.QtCore
 from PyQt6.QtWidgets import QApplication, QProgressBar, QCheckBox, QMenu, QMessageBox, \
     QWidget, \
@@ -59,7 +60,7 @@ class Settings_file:
     def update_file_to_disk(self):
         # self.settingsDict = self
         filename = 'settings.cfg'
-        with open(filename, 'r') as f:
+        with open(Path(__file__).parent/filename, 'r') as f:
             old_data = f.readlines()
         for index, line in enumerate(old_data):
             key_from_line = line.split('=')[0]
@@ -69,7 +70,7 @@ class Settings_file:
                 if key_from_line == key:
                     # print("key",key , "line", line)
                     old_data[index] = key + "=" + self.settingsDict[key] + "\n"
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.writelines(old_data)
         # print("Update_to_disk: ", old_data)
         return True
@@ -82,7 +83,7 @@ class Adi_file:
         self.settingsDict = settingsDict
         self.filename = filename
         try:
-            with open(self.filename, 'r') as file:  # read all strings
+            with open(Path(__file__).parent/self.filename, 'r') as file:  # read all strings
 
                 self.strings_in_file = file.readlines()
         except Exception:
@@ -136,20 +137,20 @@ class Adi_file:
         print("store_changed_qso: stringToAdiFile", stringToAdiFile)
 
         self.strings_in_file[int(obj['string_in_file']) - 1] = stringToAdiFile
-        with open(self.filename, 'w') as file:
+        with open(Path(__file__).parent/self.filename, 'w') as file:
             # file.seek(0, 2)
             file.writelines(self.strings_in_file)
 
         # print("this:", self.strings_in_file[int(object['string_in_file'])-1])
 
     def delete_qso_from_file(self, row_in_file):
-        with open(self.filename, 'r') as file:
+        with open(Path(__file__).parent/self.filename, 'r') as file:
             # file.seek(0, 2)
             lines_in_file = file.readlines()
 
         print("Delete QSO from file \nAll lines", len(lines_in_file), "\nrow_in_files:_>", row_in_file)
         lines_in_file[int(row_in_file) - 1] = ''
-        with open(self.filename, 'w') as file:
+        with open(Path(__file__).parent/self.filename, 'w') as file:
             # file.seek(0, 2)
             file.writelines(lines_in_file)
 
@@ -174,6 +175,20 @@ class Adi_file:
     def get_all_qso(self):
         return self.strings_in_file
 
+    @staticmethod
+    def band_to_freq(band):
+        print(band)
+        band_table = {160: 1800,
+                      80: 3500,
+                      40: 7000,
+                      30: 10000,
+                      20: 14000,
+                      17: 18000,
+                      15: 21000,
+                      12: 24890,
+                      10: 28000}
+        return band_table[int(band)]
+
     def record_dict_qso(self, list_data, fields_list, name_file='log.adi'):
         '''
         This function recieve List (list_data) with Dictionary with QSO-data
@@ -190,7 +205,7 @@ class Adi_file:
         :return:
         '''
         index = len(list_data)
-        with open(name_file, 'w') as file:
+        with open(Path(__file__).parent/name_file, 'w') as file:
             file.write(self.get_header())
             for qso in list_data:
                 for field in fields_list:
@@ -204,16 +219,15 @@ class Adi_file:
                 time_off = str(time_off_dirty).replace(":", '')
                 qso_date_dirty = str(list_data[i].get('QSO_DATE'))
                 qso_date = qso_date_dirty.replace("-", '')
-                # qso_date = str(qso_date_dirty).replace("-", '')
-                # qso_date = datetime.datetime.strptime(qso_date_dirty, '%Y-%m-%d')
-                # print(i,list_data[i]['QSO_DATE'])
+                print(list_data)
+                if list_data[i].get("FREQ") in (None,""):
+                    freq = self.band_to_freq(int(list_data[i]["BAND"][:2]))
 
                 stringToAdiFile = "<BAND:" + str(len(list_data[i]['BAND'])) + ">" + list_data[i][
                     'BAND'] + " <CALL:" + str(
                     len(list_data[i]['CALL'])) + ">"
-
                 stringToAdiFile = stringToAdiFile + list_data[i]['CALL'] + " <FREQ:" + str(
-                    len(list_data[i]['FREQ'])) + ">" + list_data[i]['FREQ']
+                    len(str(freq))) + ">" + str(freq)
                 stringToAdiFile = stringToAdiFile + " <MODE:" + str(len(list_data[i]['MODE'])) + ">" + list_data[i][
                     'MODE'] + " <OPERATOR:" + str(len(list_data[i]['OPERATOR']))
                 stringToAdiFile = stringToAdiFile + ">" + list_data[i]['OPERATOR'] + " <QSO_DATE:" + str(len(qso_date)) + ">"
@@ -237,7 +251,7 @@ class Adi_file:
 
 
     def create_adi(self, name):
-        with open(name, 'w') as f:
+        with open(Path(__file__).parent/name, 'w') as f:
             f.writelines(self.get_header())
 
 
@@ -349,14 +363,16 @@ class Log_Window_2(QWidget):
             Design of log window
 
         '''
-
         self.setGeometry(int(settingsDict['log-window-left']),
                          int(settingsDict['log-window-top']),
                          int(settingsDict['log-window-width']),
                          int(settingsDict['log-window-height']))
+
+
         self.setWindowTitle('LinuxLog | All QSO')
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        if settingsDict['border_wnd'] == "disable":
+            self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['logWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
@@ -1309,6 +1325,7 @@ class Log_Window_2(QWidget):
                          int(settingsDict['log-window-top']),
                          int(settingsDict['log-window-width']),
                          int(settingsDict['log-window-height']))
+
         self.update_color_schemes()
 
     def update_color_schemes(self):
@@ -1503,8 +1520,8 @@ class LogSearch(QWidget):
                          int(settingsDict['log-search-window-width']), int(settingsDict['log-search-window-height']))
         self.setWindowTitle('LinuxLog | Search')
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-
+        if settingsDict['border_wnd'] == "disable":
+            self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['logSearch-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + "; font: 12px;"
@@ -1734,8 +1751,8 @@ class RealTime(QThread):
         self.logformwindow = logformwindow
         self.run_flag = True
 
-    def set_run_flag(self, bool_set):
-        self.run_flag = bool_set
+    def stop_(self):
+        self.run_flag = False
 
     def run(self):
         while self.run_flag:
@@ -2143,6 +2160,7 @@ class FreqWindow(QWidget):
 
 
 class LogForm(QMainWindow):
+    change_mode_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, settings_dict, log_search):
         super().__init__()
@@ -2219,7 +2237,8 @@ class LogForm(QMainWindow):
     def rigctl_restart_main_loop(self, input_thread: RigctlMainLoop):
         self.set_rigctl_stat(color="#aaaaaa")
         if self.rigctl_main_loop.isRunning():
-            self.rigctl_main_loop.terminate()
+            self.rigctl_main_loop.stop_()
+            self.rigctl_main_loop.wait()
         print(f"stoped: {input_thread.isRunning()}")
         self.trx.socket_shutdown()
         self.rigctl_init_base_data()
@@ -2490,7 +2509,7 @@ class LogForm(QMainWindow):
 
     def get_country_dict(self):
 
-        with open(settingsDict['country-file'], 'r') as f:
+        with open(Path(__file__).parent / settingsDict['country-file'], 'r') as f:
             country_json = json.load(f)
 
         return country_json
@@ -2791,7 +2810,7 @@ class LogForm(QMainWindow):
         logSearch.hide()
 
     def cw_machine_gui(self):
-        self.cw_machine = CW(self, settingsDict)
+        self.cw_machine = CW(parent_window=self, settings_dict=settingsDict)
         self.cw_machine.show()
 
     def get_call(self):
@@ -2823,8 +2842,8 @@ class LogForm(QMainWindow):
                          int(settingsDict['log-form-window-width']), int(settingsDict['log-form-window-height']))
         self.setWindowTitle('LinuxLog | Form')
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-
+        if self.settings_dict['border_wnd'] == "disable":
+            self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         style = f"background-color:{settingsDict['background-color']}; color: {settingsDict['color']};"
         self.setStyleSheet(style)
         self.menu()
@@ -3132,7 +3151,7 @@ class LogForm(QMainWindow):
         self.comboBand.clearFocus()
         self.rememberBand(self.comboBand.currentText().strip())
     def rememberBand(self, text):
-        with open('settings.cfg', 'r') as file:
+        with open(Path(__file__).parent/'settings.cfg', 'r') as file:
             # read a list of lines into data
             data = file.readlines()
         for i in range(len(data)):
@@ -3146,18 +3165,21 @@ class LogForm(QMainWindow):
                 if string[0] == 'band':
                     string[1] = self.comboBand.currentText().strip()
                 data[i] = string[0] + '=' + string[1] + '\n'
-                with open('settings.cfg', 'w') as file:
+                with open(Path(__file__).parent/'settings.cfg', 'w') as file:
                     file.writelines(data)
 
     def changed_mode(self):
         self.comboMode.clearFocus()
         self.rememberMode(self.comboMode.currentText())
+        self.change_mode_signal.emit(self.comboMode.currentText())
+        self.mode = self.comboMode.currentText()
+        self.change_mode_signal.emit(self.mode)
         if self.sender is not None:
             self.sender()
 
     def rememberMode(self, text):
         # print(self.comboMode.currentText())
-        with open('settings.cfg', 'r') as file:
+        with open(Path(__file__).parent/'settings.cfg', 'r') as file:
             # read a list of lines into data
             data = file.readlines()
         for i in range(len(data)):
@@ -3170,7 +3192,7 @@ class LogForm(QMainWindow):
             if data[i][0] != "#" and string[0] == 'mode':
                     string[1] = self.comboMode.currentText().strip()
                     data[i] = string[0] + '=' + string[1] + '\n'
-                    with open('settings.cfg', 'w') as file:
+                    with open(Path(__file__).parent/'settings.cfg', 'w') as file:
                         file.writelines(data)
 
     def key_lay_reverse(self, string: str):
@@ -3221,7 +3243,7 @@ class LogForm(QMainWindow):
             if (not re.search('[А-Я]', text) and text.isupper() and text.isalnum()):
                 print(f"Start Search")
                 self.db.search_like_qsos(text)
-                # self.get_info_from_qrz(text)
+                self.get_info_from_qrz(text)
         else:
             self.logSearch.clear_table()
 
@@ -3402,12 +3424,13 @@ class LogForm(QMainWindow):
         Stop real-time thread
         Close app
         '''
-        #self.run_time.set_run_flag(False)
+        self.run_time.stop_()
+        self.run_time.wait()
         self.parameter = self.get_coordinate_windows()
         logWindow.close()
         internetSearch.close()
         logSearch.close()
-        self.run_time.terminate()
+
         logForm.close()
         telnetCluster.close()
         try:
@@ -3452,7 +3475,7 @@ class LogForm(QMainWindow):
         :return:
         '''
         filename = 'settings.cfg'
-        with open(filename, 'r') as f:
+        with open(Path(__file__).parent/filename, 'r') as f:
             old_data = f.readlines()
         for line, string in enumerate(old_data):
             key_in_file = string.split('=')
@@ -3462,7 +3485,7 @@ class LogForm(QMainWindow):
                     # print(key, string)
                     string = key + "=" + parameter[key] + "\n"
                     old_data[line] = string
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.writelines(old_data)
 
     def logSettings(self):
@@ -3789,6 +3812,7 @@ class CW(QWidget):
         self.settings_dict = settings_dict
         self.mode = self.parent_window.get_mode()
         self.initUI()
+        self.parent_window.change_mode_signal.connect(self.update_mod)
 
     def initUI(self):
         if settingsDict['cw-top'] == "":
@@ -3941,14 +3965,29 @@ class CW(QWidget):
 
         self.setLayout(self.v_lay)
         self.set_mode()
+    @QtCore.pyqtSlot(str)
+    def update_mod(self):
+        print("update mod")
+        self.set_mode()
 
     def set_mode(self):
         self.mode = self.parent_window.get_mode()
-        if self.mode == "cw":
+        print(self.mode)
+        if self.mode == "CW":
             self.mode_label.setStyleSheet(self.style + " font-size: 10px; font-weight: bold; color: #337733;")
+            self.enabled_control(True)
         else:
             self.mode_label.setStyleSheet(self.style + " font-size: 10px; color: #774444;")
+            self.enabled_control(False)
         self.mode_label.setText("Mode: " + str(self.mode).upper())
+
+    def enabled_control(self, enable_flag: bool):
+        self.answer_button_1.setEnabled(enable_flag)
+        self.cq_button_1.setEnabled(enable_flag)
+        self.final_button_1.setEnabled(enable_flag)
+        self.stop_button.setEnabled(enable_flag)
+        self.user_button_1.setEnabled(enable_flag)
+        self.user_button_2.setEnabled(enable_flag)
 
     def set_wpm_speed(self, wpm):
         self.wpm_speed = wpm
@@ -4098,7 +4137,8 @@ class TelnetCluster(QWidget):
                          int(settingsDict['telnet-cluster-window-height']))
         self.setWindowTitle('Telnet cluster')
         self.setWindowIcon(QIcon('logo.png'))
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        if self.settings_dict['border_wnd'] == "disable":
+            self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['clusterWindow-opacity']))
         style = "background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";"
@@ -4449,7 +4489,7 @@ class InternetSearch(QWidget):
 
     def initUI(self):
         self.hbox = QHBoxLayout(self)
-        self.pixmap = QPixmap("logo.png")
+        self.pixmap = QPixmap(f"{Path(__file__).parent}/logo.png")
         self.labelImage = QLabel(self)
         self.labelImage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.labelImage.setPixmap(self.pixmap)
@@ -4462,9 +4502,10 @@ class InternetSearch(QWidget):
                          int(settingsDict['search-internet-width']),
                          int(settingsDict['search-internet-height']))
         self.setWindowTitle('Telnet cluster')
-        self.setWindowIcon(QIcon('logo.png'))
+        self.setWindowIcon(QIcon(f"{Path(__file__).parent}/logo.png"))
         self.setWindowTitle('Image from internet')
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        if settingsDict['border_wnd'] == "disable":
+            self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowOpacity(float(settingsDict['searchInetWindow-opacity']))
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict[
             'color'] + ";}"
@@ -4514,7 +4555,7 @@ class InternetSearch(QWidget):
         QWidget.changeEvent(self, event)
 
     def update_photo(self):
-        pixmap = QPixmap("logo.png")
+        pixmap = QPixmap(Path(__file__).parent/"logo.png")
 
         # self.labelImage.setFixedWidth(self.settings['image-width'])
         self.labelImage.setPixmap(pixmap)
@@ -4640,7 +4681,7 @@ class settings_file:
     def save_all_settings(self, settingsDict):
         # print("save_all_settings", settingsDict)
         filename = 'settings.cfg'
-        with open(filename, 'r') as f:
+        with open(Path(__file__).parent/filename, 'r') as f:
             old_data = f.readlines()
         for index, line in enumerate(old_data):
             key_from_line = line.split('=')[0]
@@ -4651,7 +4692,7 @@ class settings_file:
                     # print("key",key , "line", line)
                     old_data[index] = key + "=" + settingsDict[key] + "\n"
 
-        with open(filename, 'w') as f:
+        with open(Path(__file__).parent/filename, 'w') as f:
             f.writelines(old_data)
         # print("Save_and_Exit_button: ", old_data)
 
@@ -4944,26 +4985,10 @@ class Db(QObject):
         return records_dict
 
     def search_like_qsos(self, text):
-        #self.record_dict = {}
         sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
         self.found_thread = FoundThread(connection=self.connect_to_sql, query=sql_query)
         self.found_thread.result.connect(self.like_qso_return)
-        # self.found_thread.busy_signal.connect(self.busy_search_thread)
-        # self.found_thread.vacant_signal.connect(self.vacant_search_thread)
-        # self.found_thread.add_to_stack(sql_query)
         self.found_thread.start()
-
-
-    # @QtCore.pyqtSlot()
-    # def vacant_search_thread(self):
-    #     if self.found_thread.isRunning():
-    #         print("vacant_search_thread")
-    #         self.found_thread.terminate()
-    #     self.possible_search_qso_in_base = True
-
-    # @QtCore.pyqtSlot()
-    # def busy_search_thread(self):
-    #     self.possible_search_qso_in_base = False
 
     @QtCore.pyqtSlot(object)
     def like_qso_return(self, obj):
@@ -4971,7 +4996,6 @@ class Db(QObject):
         self.search_in_db_like_signal.emit(obj)
 
     def search_qso_in_base(self, call):
-        #print(f"Call in search_db_in_base {call}")
         connection = self.connect_sql()
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`=%s", [call.strip()])
@@ -5051,7 +5075,7 @@ class AppEnv:
 
 if __name__ == '__main__':
     #exit(0)
-    APP_VERSION = '2.5.0'
+    APP_VERSION = '2.5.1'
     settingsDict = {}
     settingsDict.update({"APP_VERSION": APP_VERSION})
     settingsDict.update({"adi_fields": ['QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'FREQ', 'MODE', 'RST_RCVD', 'RST_SENT',
@@ -5093,7 +5117,7 @@ if __name__ == '__main__':
     ]
     settingsDict.update({"db_fields": [field[0] for field in table_columns]})
 
-    file = open("settings.cfg", "r")
+    file = open(Path(__file__).parent/ "settings.cfg", "r")
     for configstring in file:
         if configstring != '' and configstring != ' ' and configstring[0] != '#':
             configstring = configstring.strip()
@@ -5102,7 +5126,9 @@ if __name__ == '__main__':
             splitString = configstring.split('=')
             settingsDict.update({splitString[0]: splitString[1]})
     file.close()
+
     ####
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
     app = QApplication(sys.argv)
     settingsDict.update({"app":app})
     flag = 1
