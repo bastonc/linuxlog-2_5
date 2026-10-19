@@ -19,7 +19,7 @@
   <li><strong>RIGctl</strong> system. Full control for you transciever by net</li>
   <li><strong>TCI</strong> system. Modern interface for control you transciever</li>
   <li><strong>Telnet cluster</strong> service. Work with telnet clusters (click by spot, console to clusters, spots on panadapter (TCI only))</li>
-  <li><strong>Frequency control</strong>Frequency control with memory</li>
+  <li><strong>Frequency control</strong> frequency control with memory</li>
   <li><strong>Multi window</strong> interface. This allows you to arrange windows as you see fit. It features window coordinate memory, as well as presets that can be saved for different desktop situations.</li>
   <li><strong>Color control</strong> interface. This allows you to adapt Linuxlog to your interface.</li>
   
