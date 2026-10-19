@@ -37,11 +37,12 @@
 <img width="1680" height="1050" alt="Linuxlog - ham radio logger for Ubunt, Fedora, Manjaro" src="https://github.com/user-attachments/assets/19904624-2e91-44fd-a7d6-8e2c89fd4eb5" />
 <img width="1680" height="1050" alt="linuxlog3" src="https://github.com/user-attachments/assets/7714fe6a-0ac7-4d42-a32d-bcaabcede2c7" />
 <hr>
-<p> If you have Linux another Fedora/Ubuntu/Manjaro distributives install as:
+<p> If you are using a Linux distribution other than Fedora/Ubuntu/Manjaro, install it as follows:
 <ol>
-    <li>Install mariaDB database</li>
-    <li>Use virtual environment from archive <code>source .venv/bin/activate</code></li>
-    <li>Install all dependincies <code>pip install -r requirements.txt</code></li>
-    <li>Create .desktop file for applications menu and copy it to ~/.local/share/applications/</li>
+    <li>Install the MariaDB database</li>
+    <li>Use the virtual environment from the archive <code>source .venv/bin/activate</code></li>
+    <li>Install all dependencies <code>pip install -r requirements.txt</code></li>
+    <li>Create a .desktop file for the applications menu and copy it to ~/.local/share/applications/</li>
+    <li>To connect to the database, enter the appropriate values ​​for your DB server in the settings.cfg file for the db-host, db-user, db-pass, db-name fields.</li>
 </ol>
 
