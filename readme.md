@@ -1,4 +1,4 @@
-<div style="display: inline-flex; align-items: center; gap: 10px;">
+<div style="display: inline-flex; align-items: center; gap: 10px;" flex-wrap: nowrap;>
     <img width="128" height="128" alt="HAM Logger for Linux - Linuxlog" style="width: 50px; height: 50px;" src="https://github.com/user-attachments/assets/90b187bd-56d7-4d26-b582-de6515c81ed0" />
     <h1 style="margin: 0; font-size: 24px;">LinuxLog  - logger for amateur Ham radio station</h1>
 </div>
