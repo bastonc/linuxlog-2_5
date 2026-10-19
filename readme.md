@@ -19,7 +19,7 @@
 <p>Tested in Fedora, Ubuntu, Manjaro </p>
 <h3>Functional</h3>
 <ul>
-  <li><strong>processing QSO's</strong> add/edit/delete></li>
+  <li><strong>Processing QSO's</strong> add/edit/delete></li>
   <li><strong>eQSL</strong> service. Reciving/sent eQSL in manual mode. Automatic send eQSL after QSO. Image download from eQSL into local FS</li>
   <li><strong>QRZ.com</strong> service. Find image for corespondent. Recieving info about corespondent. Add into qrz.com logbook</li>
   <li><strong>Clublog</strong> service. Reciving/sent QSO in manual mode. Automatic send after QSO</li>
