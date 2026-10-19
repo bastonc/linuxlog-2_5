@@ -26,4 +26,6 @@
 </ul>
 <img width="1920" height="1080" alt="Linuxlog - ham radio logger Linux OS" src="https://github.com/user-attachments/assets/e00bc01d-d27b-4ff9-bd1c-e0a8d34d5131" />
 <img width="1680" height="1050" alt="Linuxlog - ham radio logger for Ubunt, Fedora, Manjaro" src="https://github.com/user-attachments/assets/19904624-2e91-44fd-a7d6-8e2c89fd4eb5" />
+<img width="1680" height="1050" alt="linuxlog3" src="https://github.com/user-attachments/assets/7714fe6a-0ac7-4d42-a32d-bcaabcede2c7" />
+
 
