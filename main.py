@@ -25,6 +25,7 @@ from PyQt6 import QtGui, QtCore
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtCore import QThread
 
+from eventBus import event_bus
 
 def SIGSEGV_signal_arises(signalNum, stack):
     print(f"{signalNum} : SIGSEGV arises")
@@ -331,11 +332,6 @@ class Filter(QObject):
             # we don't care about other events
             return False
 
-
-
-class Communicate(QObject):
-    signalComplited = pyqtSignal(int)
-
 class Qso_counter:
     def __init__(self, counter):
         self.counter = counter
@@ -351,8 +347,8 @@ class Log_Window_2(QWidget):
         self.qso_last_id = None
         self.select_id_list = []
         self.read_base_string = ReadStringDb(db=db, parent=self)
-        self.read_base_string.dict_from_base.connect(self.fill_qso_table)
-        self.read_base_string.fill_complite.connect(self.fill_complited)
+        event_bus.dict_from_base.connect(self.fill_qso_table)
+        event_bus.fill_complite.connect(self.fill_complited)
         self.tableWidget_qso = QTableWidget()
         self.qrz_com_logbook = QrzLogbook(settingsDict)
         self.initUI()
@@ -1669,7 +1665,6 @@ class check_update:
         self.parrent.check_update.setEnabled(True)
 
 class Check_update_thread(QtCore.QObject):
-    update_response = QtCore.pyqtSignal(object)
 
     def __init__(self, url_query):
         super().__init__()
@@ -1679,7 +1674,7 @@ class Check_update_thread(QtCore.QObject):
         # print("Test")
         try:
             self.response_upd_server = requests.get(self.url_query)
-            self.update_response.emit(self.response_upd_server)
+            event_bus.update_response.emit(self.response_upd_server)
         except Exception:
             print("Can't check update")
 
@@ -1744,7 +1739,6 @@ class About_window(QWidget):
 
 
 class RealTime(QThread):
-    real_time_signal = pyqtSignal(object)
 
     def __init__(self, logformwindow, parent=None):
         super().__init__(logformwindow)
@@ -1756,18 +1750,17 @@ class RealTime(QThread):
 
     def run(self):
         while self.run_flag:
-            self.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
+            event_bus.real_time_signal.emit((strftime("%H:%M:%S", localtime()), strftime("%H:%M:%S", gmtime())))
             time.sleep(0.1)
 
 class ClikableLabel(QLabel):
-    click_signal = QtCore.pyqtSignal()
     change_value_signal = QtCore.pyqtSignal()
 
     def __init__(self, parrent=None):
         QLabel.__init__(self, parrent)
 
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
-        self.click_signal.emit()
+        event_bus.click_signal.emit()
 
 
 class FreqWindow(QWidget):
@@ -2160,7 +2153,6 @@ class FreqWindow(QWidget):
 
 
 class LogForm(QMainWindow):
-    change_mode_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, settings_dict, log_search):
         super().__init__()
@@ -2173,7 +2165,7 @@ class LogForm(QMainWindow):
         self.country_dict = self.get_country_dict()
         self.mode = settingsDict['mode']
         self.db = db
-        self.db.search_in_db_like_signal.connect(self.olerlap_found_qso)
+        event_bus.search_in_db_like_signal.connect(self.olerlap_found_qso)
         self.diplomsCheck()
         self.qrz_com_ready = False
         self.rigctl_main_loop = None
@@ -2976,7 +2968,7 @@ class LogForm(QMainWindow):
         self.labelFreq = ClikableLabel()
         self.labelFreq.setFont(QtGui.QFont('SansSerif', 7))
         self.labelFreq.setText("Freq control (F12)")
-        self.labelFreq.click_signal.connect(self.freq_window)
+        event_bus.click_signal.connect(self.freq_window)
         self.labelFreq.change_value_signal.connect(self.change_freq_event)
 
         # Callsign label
@@ -3081,7 +3073,7 @@ class LogForm(QMainWindow):
 
         # run time in Thread
         self.run_time = RealTime(logformwindow=self)  # run time in Thread
-        self.run_time.real_time_signal.connect(self.set_time)
+        event_bus.real_time_signal.connect(self.set_time)
         self.run_time.start()
         self.init_data()
 
@@ -3171,9 +3163,9 @@ class LogForm(QMainWindow):
     def changed_mode(self):
         self.comboMode.clearFocus()
         self.rememberMode(self.comboMode.currentText())
-        self.change_mode_signal.emit(self.comboMode.currentText())
+        event_bus.change_mode_signal.emit(self.comboMode.currentText())
         self.mode = self.comboMode.currentText()
-        self.change_mode_signal.emit(self.mode)
+        event_bus.change_mode_signal.emit(self.mode)
         if self.sender is not None:
             self.sender()
 
@@ -3812,7 +3804,7 @@ class CW(QWidget):
         self.settings_dict = settings_dict
         self.mode = self.parent_window.get_mode()
         self.initUI()
-        self.parent_window.change_mode_signal.connect(self.update_mod)
+        event_bus.change_mode_signal.connect(self.update_mod)
 
     def initUI(self):
         if settingsDict['cw-top'] == "":
@@ -3837,6 +3829,7 @@ class CW(QWidget):
 
         self.setGeometry(int(width_coordinate), int(height_coordinate), int(width), int(height))
         self.setStyleSheet(self.style)
+        self.setWindowTitle("CW Machine")
         self.cq_button_1 = QPushButton("CQ")
         # self.cq_button_1.setStyleSheet(self.parent_window.)
         self.cq_button_1.setFixedWidth(30)
@@ -3965,7 +3958,7 @@ class CW(QWidget):
 
         self.setLayout(self.v_lay)
         self.set_mode()
-    @QtCore.pyqtSlot(str)
+    #@QtCore.pyqtSlot()
     def update_mod(self):
         print("update mod")
         self.set_mode()
@@ -4697,8 +4690,6 @@ class settings_file:
 
 
 class ReadStringDb(QThread):
-    dict_from_base = pyqtSignal(object)
-    fill_complite = pyqtSignal()
 
     def __init__(self, db, parent):
         super().__init__(parent)
@@ -4709,13 +4700,13 @@ class ReadStringDb(QThread):
         records_dict = db.get_all_records(0)
         self.parent.allRows = records_dict
         for qso in records_dict:
-            self.dict_from_base.emit(qso)
-        self.fill_complite.emit()
+            event_bus.dict_from_base.emit(qso)
+        event_bus.fill_complite.emit()
 
 
 class FoundThread(QThread):
 
-    result = QtCore.pyqtSignal(object)
+
 
     def __init__(self, connection, query):
         super().__init__()
@@ -4730,11 +4721,10 @@ class FoundThread(QThread):
         self.cursor = self.connection.cursor()
         self.cursor.execute(self.query)
         records_dict = self.cursor.fetchall()
-        self.result.emit(records_dict)
+        event_bus.result.emit(records_dict)
 
 class Db(QObject):
 
-    search_in_db_like_signal = pyqtSignal(object)
     def __init__(self, settingsDict, db_name='', db_charset='utf8mb4', first_run=False):
         super().__init__()
 
@@ -4986,13 +4976,12 @@ class Db(QObject):
     def search_like_qsos(self, text):
         sql_query = "SELECT * FROM `" + self.settingsDict['my-call'] + "` WHERE `CALL`  LIKE '" + text + "%';"
         self.found_thread = FoundThread(connection=self.connect_to_sql, query=sql_query)
-        self.found_thread.result.connect(self.like_qso_return)
+        event_bus.result.connect(self.like_qso_return)
         self.found_thread.start()
 
     @QtCore.pyqtSlot(object)
     def like_qso_return(self, obj):
-        print("I am Object", obj)
-        self.search_in_db_like_signal.emit(obj)
+        event_bus.search_in_db_like_signal.emit(obj)
 
     def search_qso_in_base(self, call):
         connection = self.connect_sql()
