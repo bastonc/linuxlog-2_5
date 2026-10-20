@@ -1,8 +1,8 @@
 <div style="display: inline-flex; align-items: center; gap: 10px;" flex-wrap: nowrap;>
     <img width="128" height="128" alt="HAM Logger for Linux - Linuxlog" style="width: 50px; height: 50px;" src="https://github.com/user-attachments/assets/90b187bd-56d7-4d26-b582-de6515c81ed0" />
-    <h1 style="margin: 0; font-size: 24px;">LinuxLog  - logger for amateur Ham radio station</h1>
+    <h1 style="margin: 0; font-size: 24px;">LinuxLog  - ham logger for amateur radio station</h1>
 </div>
-<p>This is a log for the "lazy" amateur radio operator. It allows you to keep a log for everyday radio communications.</p>
+<p>This is a ham logger for the "lazy" amateur radio operator. It allows you to keep a log for everyday radio communications.</p>
 <p>This logbook is also for radio amateurs who use the Linux operating system and need a simple, functional logbook.</p>
 <p>There are no features for contestmans in this log, as I personally don't participate in contests and don't know exactly what's needed for contests. And so far, no contestmans has been able to clearly describe the specific functionality for contests.</p>
 <hr>
