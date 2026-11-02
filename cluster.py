@@ -33,7 +33,9 @@ class ClusterThread(QThread):
         message = (self.settings_dict['my-call'] + "\n").encode('ascii')
         self.telnet_socket = connect_object
         while 1:
+            print("Wait data from the Cluster")
             in_message = self.telnet_socket.recv(1024)
+            print(f"Reciev data from the Cluster {in_message}")
             self.reciev_spot_signal.emit(in_message)
             if in_message.decode(self.settings_dict['encodeStandart']).lower().strip().find("login:") or \
                 in_message.decode(self.settings_dict['encodeStandart']).lower().strip().find("please enter your call:"):
@@ -41,6 +43,7 @@ class ClusterThread(QThread):
                     self.parent.set_telnet_stat()
                     break
             sleep(0.1)
+
         self.start()
         print('>Starting Telnet cluster:', self.HOST, ':', self.PORT, '\nCall:', self.settings_dict['my-call'], '\n')
 

@@ -187,7 +187,9 @@ class Adi_file:
                       17: 18000,
                       15: 21000,
                       12: 24890,
-                      10: 28000}
+                      10: 28000,
+                      6: 50000,
+                      144: 144500}
         return band_table[int(band)]
 
     def record_dict_qso(self, list_data, fields_list, name_file='log.adi'):
@@ -222,8 +224,9 @@ class Adi_file:
                 qso_date = qso_date_dirty.replace("-", '')
                 print(list_data)
                 if list_data[i].get("FREQ") in (None,""):
-                    freq = self.band_to_freq(int(list_data[i]["BAND"][:2]))
-
+                    freq = self.band_to_freq(int(list_data[i]["BAND"][:-1]))
+                else:
+                    freq = list_data[i].get('FREQ')
                 stringToAdiFile = "<BAND:" + str(len(list_data[i]['BAND'])) + ">" + list_data[i][
                     'BAND'] + " <CALL:" + str(
                     len(list_data[i]['CALL'])) + ">"
@@ -3167,7 +3170,7 @@ class LogForm(QMainWindow):
         self.mode = self.comboMode.currentText()
         event_bus.change_mode_signal.emit(self.mode)
         if self.sender is not None:
-            self.sender()
+            self.sender.send_command(f"M {self.mode}")
 
     def rememberMode(self, text):
         # print(self.comboMode.currentText())
