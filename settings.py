@@ -1077,7 +1077,7 @@ class Menu (QWidget):
                 good_qso_count = 0
                 double_qso = []
                 bad_qso = []
-                allRecords = parse.getAllRecord(self.allCollumn, fname, key="import")
+                allRecords = parse.getAllRecord(self.allCollumn, fname, key="import", settings_dict=self.settingsDict)
                 print(f"All records {allRecords}")
                 self.logWindow.load_bar.show()
                 all_records_count = len(allRecords)
