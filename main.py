@@ -190,7 +190,7 @@ class Adi_file:
                       10: 28000,
                       6: 50000,
                       144: 144500,
-                      "GEN":000000}
+                      "GEN":000000,}
         return band_table[int(band)]
 
     def record_dict_qso(self, list_data, fields_list, name_file='log.adi'):
