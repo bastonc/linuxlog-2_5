@@ -1700,7 +1700,7 @@ class About_window(QWidget):
         self.setFixedWidth(320)
 
         self.setGeometry(int(width_coordinate), int(height_coordinate), 200, 300)
-        self.setWindowIcon(QIcon(f'{Path(__file__).parent }/logo.png'))
+        self.setWindowIcon(QIcon(f'{Path(__file__).parent}/logo.png'))
         self.setWindowTitle('About | LinuxLog')
         style = "QWidget{background-color:" + settingsDict['background-color'] + "; color:" + settingsDict['color'] + ";}"
         self.setStyleSheet(style)
@@ -1708,10 +1708,11 @@ class About_window(QWidget):
         self.capture.setStyleSheet("font-size: 18px")
         self.capture.setFixedHeight(30)
         self.text = QLabel(self.text_string)
+        self.text.setOpenExternalLinks(True)
         # self.text.setFixedHeight(200)
         self.text.setStyleSheet("font-size: 12px")
         self.about_layer = QVBoxLayout()
-        self.image = QPixmap("logo.png")
+        self.image = QPixmap(f'{Path(__file__).parent}/logo.png')
         self.image_label = QLabel(self)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setPixmap(self.image)
@@ -5170,7 +5171,10 @@ if __name__ == '__main__':
         telnetCluster = TelnetCluster()
         tci_recv = tci.tci_connect(settingsDict, log_form=logForm)
         about_window = About_window("LinuxLog",
-                                    "Version: " + APP_VERSION + "<br><a href='http://linuxlog.com.ua'>http://linuxlog.com.ua</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+                                    "Version: " + APP_VERSION +
+                                    "<br>"
+                                    "<a href='https://github.com/bastonc/linuxlog-2_5#linuxlog----ham-logger-for-amateur-radio-station'>Linux Log on GitHub</a><br>Baston Sergey<br>UR4LGA<br>bastonsv@gmail.com")
+
         env_dict = {
             "APP_VERSION": APP_VERSION
         }
