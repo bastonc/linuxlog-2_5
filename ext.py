@@ -375,7 +375,7 @@ class Diplom(QObject):
         Parse .adi file and generated the dictionary object for QSOs
         :return: qsoDataList - object [{... QSO 1 info...},{...QSO 2 info...}]
         '''
-        qsoDataList = parse.getAllRecord(self.allCollumn, self.diplomDataList[0]['name'] + ".adi", key="import")
+        qsoDataList = parse.getAllRecord(self.allCollumn, self.diplomDataList[0]['name'] + ".adi", key="import", settings_dict=self.settingsDict)
         print("->-" * 10)
         print(qsoDataList)
         print("==" * 10)
@@ -417,16 +417,17 @@ class diplom:
     This class work with extended functions for diplom module
     '''
 
-    def __init__(self, file, file_rules, settingsDict=''):
+    def __init__(self, file, file_rules, settingsDict=None):
         self.file = file
         self.file_rules = file_rules.strip()
+        if settingsDict is not None:
+            self.settingsDict = settingsDict
         self.allCollumn = ['records_number', 'QSO_DATE', 'TIME_ON', 'BAND', 'CALL', 'MODE', 'RST_RCVD', 'RST_SENT',
                            'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
-        self.allRecord = parse.getAllRecord(self.allCollumn, self.file)
+        self.allRecord = parse.getAllRecord(self.allCollumn, self.file, settings_dict=settingsDict)
         # print("diplom:", self.allRecord)
         self.decode_data = self.get_rules(self.file_rules)
-        if settingsDict != '':
-            self.settingsDict = settingsDict
+
 
     def get_rules(self, name):
         with open(Path(__file__).parent/name, "r") as f:
@@ -728,7 +729,7 @@ class static_diplom(QWidget):
                            'NAME', 'QTH', 'COMMENTS', 'TIME_OFF', 'eQSL_QSL_RCVD']
         self.rules = diplom.get_rules(diplom, self.diplom_name + '.rules')
         self.score_final_label.setText("Total score need: " + str(self.rules[0]['score_complite']))
-        self.all_records = parse.getAllRecord(self.all_column, self.diplom_name + '.adi')
+        self.all_records = parse.getAllRecord(self.all_column, self.diplom_name + '.adi', settings_dict=self.settingsDict)
         records_count = len(self.all_records)
         column_count = len(self.all_column)
         self.table_widget.move(0, 0)

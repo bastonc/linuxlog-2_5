@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:fileencoding=utf-8
 from pathlib import Path
+from const import ADI_FIELDS
 
 
 def parseStringAdi(string, adi_fields_standart, settings_dict):
@@ -73,7 +74,7 @@ def adi_normilzer(tags: dict, fields_adi_standart: list, settings_dict):
 
 
 ## Poles which used in programm (they will found into dictionary from file)
-def getAllRecord(poles, filename, key=''):
+def getAllRecord(poles, filename, key='', settings_dict=None):
     # poles=['QSO_DATE','TIME_ON','FREQ','CALL','MODE','RST_RCVD','RST_SENT','NAME','QTH']
     is_qso_string = False
     allrecord = []
@@ -94,7 +95,7 @@ def getAllRecord(poles, filename, key=''):
         # string='<BAND:3>20M <CALL:6>DL1BCL <CONT:2>EU <CQZ:2>14 <DXCC:3>230 <FREQ:9>14.000000 <ITUZ:2>28 <MODE:3>SSB <OPERATOR:6>UR4LGA <PFX:3>DL1 <QSLMSG:19>TNX For QSO TU 73!. <QSO_DATE:8:D>20131011 <TIME_ON:6>184700 <RST_RCVD:2>57 <RST_SENT:2>57 <TIME_OFF:6>184700 <eQSL_QSL_RCVD:1>Y <APP_LOGGER32_QSO_NUMBER:1>1 <EOR>'
         iterator_string_file += 1
         if is_qso_string and string != '\n':    # checked key by ready parsing processing (1-ready) and cheked on empty string
-            tags = parseStringAdi(string)
+            tags = parseStringAdi(string, ADI_FIELDS, settings_dict)
             # calling function parse processing/ Function returning all tags from file in Python-Dictionary object
             print(f"tags: {tags}")
             if tags:
